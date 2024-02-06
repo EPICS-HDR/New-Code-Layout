@@ -1,0 +1,197 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:400,600,700");
+@import url("https://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css");
+
+*, *:before, *:after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font: 14px/1 'Open Sans', sans-serif;
+  color: #555;
+  background: #eee;
+}
+
+h1 {
+  padding: 50px 0;
+  font-weight: 400;
+  text-align: center;
+}
+
+p {
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+main {
+  min-width: 320px;
+  max-width: 800px;
+  padding: 50px;
+  margin: 0 auto;
+  background: #fff;
+}
+
+section {
+  display: none;
+  padding: 20px 0 0;
+  border-top: 1px solid #ddd;
+}
+
+input {
+  display: none;
+}
+
+label {
+  display: inline-block;
+  margin: 0 0 -1px;
+  padding: 15px 25px;
+  font-weight: 600;
+  text-align: center;
+  color: #bbb;
+  border: 1px solid transparent;
+}
+
+label:before {
+  font-family: fontawesome;
+  font-weight: normal;
+  margin-right: 10px;
+}
+
+label:hover {
+  color: #888;
+  cursor: pointer;
+}
+
+input:checked + label {
+  color: #555;
+  border: 1px solid #ddd;
+  border-top: 2px solid rgb(89, 58, 185);
+  border-bottom: 1px solid #fff;
+}
+
+#tab1:checked ~ #content1,
+#tab2:checked ~ #content2,
+#tab3:checked ~ #content3{
+  display: block;
+}
+
+@media screen and (max-width: 650px) {
+  label {
+    font-size: 0;
+  }
+
+  label:before {
+    margin: 0;
+    font-size: 18px;
+  }
+}
+@media screen and (max-width: 400px) {
+  label {
+    padding: 15px;
+  }
+}
+
+select {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    font-size: 14px;
+  }
+  
+  /* Style checkboxes and labels */
+  .container .ks-cboxtags li {
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .container .ks-cboxtags input[type="checkbox"] {
+    display: none;
+  }
+  
+  .container .ks-cboxtags input[type="checkbox"] + label {
+    padding: 10px 15px;
+    background-color: #eee;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .container .ks-cboxtags input[type="checkbox"]:checked + label {
+    background-color: rgb(89, 58, 185);
+    color: white;
+    border: 1px solid rgb(89, 58, 185);
+  }
+  
+  /* Add media queries for responsiveness */
+  @media screen and (max-width: 650px) {
+    /* Add styles for select elements at smaller screen sizes */
+    select {
+      font-size: 12px;
+    }
+  
+    /* Adjust checkbox label styles */
+    .container .ks-cboxtags input[type="checkbox"] + label {
+      font-size: 12px;
+    }
+  }
+  
+  @media screen and (max-width: 400px) {
+    /* Further adjustments for very small screens if needed */
+  }
+
+  
+  /* Style buttons */
+  button[type="submit"] {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: rgb(89, 58, 185);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  button[type="submit"]:hover {
+    background-color: #ff6600;
+  }
+  
+  /* Adjust button styles for smaller screens if needed */
+  @media screen and (max-width: 650px) {
+  
+    button[type="submit"] {
+      font-size: 12px;
+    }
+  }
+  
+  @media screen and (max-width: 400px) {
+    /* Further adjustments for very small screens if needed */
+  }
+
+  input[type="date"]{
+    display: inline-block;
+    background-color: #ffffff;
+    padding: 15px;
+    font-family: "Roboto Mono",monospace;
+    color:  rgba(22, 76, 167, 0.6);
+    font-size: 18px;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+}
+::-webkit-calendar-picker-indicator{
+    background-color: #ffffff;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 3px;
+}

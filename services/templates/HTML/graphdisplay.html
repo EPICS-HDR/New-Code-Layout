@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name ="viewport" content = "width=device-width, initial-scale=1.0, shrink-to-fit=yes">
+
+        <title>Your Generated Graph</title>
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'css/graphdisplay.css' %}">
+    </head>
+    <header>
+        <form action="/home/" method="get">
+        <button type="submit">Back To Home</button><br />
+      </form>
+    </header>
+    <body>
+        <center>
+          {% autoescape off %}
+          {{ plot }}  
+
+          <br><br/>
+            <button style="text-align: left" type="submit">Download Graph</button> &nbsp &nbsp &nbsp
+            <button style="text-align: left" type="submit">Download Table</Table></button> &nbsp &nbsp &nbsp
+            <button style="text-align: left" type="submit">Download All</button>
+
+          <br><br/>
+          {{ table }}
+          {% endautoescape %}
+          {% load static %}
+          <!-- <br><a href="{% static 'customdata/currentfile.csv' %}" download>
+            Download File
+          </a> -->
+
+          <br><br/><br><br/>
+          <form action="/maptabs" method="get">
+              <button style="text-align: left" type="submit">Create Another Graph</button><br />
+          </form>            
+
+
+        </center>
+    </body>
+</html>
