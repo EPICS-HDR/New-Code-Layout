@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favorites</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #d18080; 
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        h1 {
+            color: #d8c8c8; 
+        }
+        ul {
+            list-style-type: none; 
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px; 
+        }
+        form {
+            margin-top: 20px; 
+        }
+        input[type="text"] {
+            width: 300px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #5f2f13;
+            color: rgb(9, 7, 7);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #9b3104;
+        }
+    </style>
+</head>
+<body>
+    <h1>Favorites</h1>
+
+    <h2>Saved Links:</h2>
+    <ul>
+        {% for link in saved_links %}
+            <li><a href="{{ link }}">{{ link }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <h2>Add New Link:</h2>
+    <form action="/favorites/" method="post">
+        {% csrf_token %}
+        <label for="link">Link:</label>
+        <input type="text" id="link" name="link" required>
+        <button type="submit">Add to Favorites</button>
+    </form>
+</body>
+</html>
