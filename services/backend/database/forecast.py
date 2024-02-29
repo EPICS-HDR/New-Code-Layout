@@ -6,6 +6,9 @@ import json
 from datadict import updateDictionary
 
 def getForecasts(location, dataset):
+    """
+    Function documentation:
+    """
 
     # Get Points: https://aviationweather.gov/gfa/#obs
     # Get Gridpoints: https://api.weather.gov/points/x,y
@@ -162,8 +165,8 @@ def forecastdatacall(dataset):
             dataList.append(valueList)
 
             # Updates dictionary for each location
-            updateDictionary(timeList, valueList, location, dataset)
+            # updateDictionary(timeList, valueList, location, dataset)
 
     # After all iterations, dumps all data pulled        
-    with open(f'map/static/forecasts/{dataset}.json', 'w') as file:
+    with open(f'./services/static/JSON/{dataset}.json', 'w') as file:
         file.write(json.dumps(dataList))

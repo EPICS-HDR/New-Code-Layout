@@ -151,9 +151,9 @@ def pullGaugeData(city):
         
     response = requests.get(url)
 
-    file_name = f"./map/static/newdata/{city}"
+    file_name = f"./services/static/JSON{city}"
 
-    with open('./map/static/newdata/data.txt', "w") as f: # writes text from the website to text
+    with open('./services/static/JSONdata.txt', "w") as f: # writes text from the website to text
         writer = csv.writer(f)
         for line in response.text.split("\n"):
             writer.writerow(line.split("\t"))
@@ -162,7 +162,7 @@ def pullGaugeData(city):
     count = 0
     alternate = 0
 
-    with open('./map/static/newdata/data.txt', "r") as file: 
+    with open('./services/static/JSONdata.txt', "r") as file: 
         for line in file:
             if count == linecount:
                 data.append(line)
@@ -181,7 +181,7 @@ def pullGaugeData(city):
         for line in data:
             file.write(f"{line}")    
         
-    with open ('./map/static/newdata/data.txt', "w") as file:
+    with open ('./services/static/JSONdata.txt', "w") as file:
         for line in data:
             file.write(f"{line}")
         
@@ -279,8 +279,8 @@ def pullGaugeData(city):
         updateDictionary(times, gauge_height, city, "Gauge Height")
         updateDictionary(times, discharge, city, "Discharge")
 
-    os.remove(f"./map/static/newdata/{city}.csv")
-    os.remove(f'./map/static/newdata/data.txt')
+    os.remove(f"./services/static/JSON{city}.csv")
+    os.remove(f'./services/static/JSONdata.txt')
 
 def pullDamData(dam_location):
 
@@ -291,8 +291,8 @@ def pullDamData(dam_location):
                 'Fort Randall': ['FTRA'],
                 'Gavins Point': ['GAPT']}
 
-    file_name = f'./map/static/newdata/{dam_location}.txt'
-    file_name_csv = f'./map/static/newdata/{dam_location}.csv'
+    file_name = f'./services/static/JSON{dam_location}.txt'
+    file_name_csv = f'./services/static/JSON{dam_location}.csv'
     location_data = DAM_dict[f'{dam_location}']
     location_code = location_data[0]
 
@@ -365,7 +365,7 @@ def pullDamData(dam_location):
     Temp_Air = ParseData(Temp_Air)
 
     # Removes pulled file from storage once used, and no longer needed
-    os.remove(f'./map/static/newdata/{dam_location}.txt')
+    os.remove(f'./services/static/JSON{dam_location}.txt')
 
     index = 0
     times = []
@@ -395,7 +395,7 @@ def pullMesonetData(location):
     location_dict = NODAK_dict[f'{location}']
     station = location_dict[0]
 
-    file_name = f'./map/static/newdata/{location}.csv'
+    file_name = f'./services/static/JSON{location}.csv'
 
     url_csv = f'https://ndawn.ndsu.nodak.edu/table.csv?ttype=hourly&station={station}&begin_date={year1}-{month1}-{day1}&end_date={year2}-{month2}-{day2}'
 
@@ -617,26 +617,19 @@ def pull():
     massJSON()
     # After map JSONs have been created, continues with forecast and shadehill pulling.
 
-    # Clears existing forecast JSON data
-    folder_path = "./map/static/forecasts/"
-    # Empty current contents of folder
-    for filename in os.listdir(folder_path):
-        file_path = os.path.join(folder_path, filename)
-        os.unlink(file_path)
-
     # Pulls and stores all forecast data given a certain dataset, also creates JSON files
     # STILL HAVE TO FIGURE OUT WHICH DATASETS WE WANT
     forecastdatacall("temperature")
     forecastdatacall("dewpoint")
     forecastdatacall("relativeHumidity")
     forecastdatacall("windChill")
-    createForecastJson("Stanley", ["temperature", "dewpoint", "windChill"])
+    # createForecastJson("Stanley", ["temperature", "dewpoint", "windChill"])
     # Pulls all Shadehill data, takes a long time to run. Recommend running separately
     pullShadeHill()
 
 def massJSON():
     
-    folder_path = "./map/static/newdata/"
+    folder_path = "./services/static/JSON"
     # Empty current contents of folder
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
@@ -673,9 +666,9 @@ def massJSON():
     createMonthJson("Linton", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
     createMonthJson("Mott", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
 
-# pull()
+pull()
 
-pullMesonetData("Carson")
+""" pullMesonetData("Carson")
 pullMesonetData("Fort Yates")
 pullMesonetData("Linton")
 pullMesonetData("Mott")
@@ -684,3 +677,4 @@ createMonthJson("Carson", ["Average Air Temperature", "Average Relative Humidity
 createMonthJson("Fort Yates", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
 createMonthJson("Linton", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
 createMonthJson("Mott", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
+ """

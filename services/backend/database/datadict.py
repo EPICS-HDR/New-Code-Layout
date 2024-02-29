@@ -177,7 +177,7 @@ def createMonthJson(location, datasets):
     json_str = json.dumps(datalists)
 
     # Write the JSON string to a text file
-    with open(f'./map/static/newdata/{location.lower()}graphs.json', 'w') as f:
+    with open(f'./services/static/JSON/{location.lower()}graphs.json', 'w') as f:
         f.write(json_str)
 
 def deleteDatasetEntries(dataset):
@@ -223,5 +223,5 @@ def createForecastJson(location, datasets):
     json_str = json.dumps(datalists)
 
     # Write the JSON string to a text file
-    with open(f'./map/static/forecasts/{location.lower()}.json', 'w') as f:
+    with open(f'./services/static/JSON/{location.lower()}.json', 'w') as f:
         f.write(json_str)
