@@ -1,0 +1,94 @@
+
+*{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-decoration: none;
+}
+
+
+header{
+  width: 100vw;
+  height: 100px;
+  border-bottom: solid 10px rgba(255, 0, 0, 0.3);
+  font-family: 'Poppins';
+  position: absolute;
+ 
+  z-index: 1;
+  background-color: #ffff;
+  padding: 10px;
+  border: 2px solid rgba(22, 76, 167, 0.6);
+  border-radius: 4px;
+  z-index: 100;
+
+}
+
+header .inner{
+  width: 1000px; 
+  display: block;
+  margin: 0 auto;
+}
+
+header .logo{
+  display: table;
+  height: 100%;
+  float: left;
+}
+
+header .logo div{
+  height: 100%;
+  display: table-cell;
+  vertical-align: middle;
+}
+
+header .logo img{
+  height: 50px;
+  margin-top: 5px; 
+}
+
+header nav{
+  float: right;
+  height: 100%;
+}
+
+header nav li{
+  display: table;
+  height: 100%;
+  float: left;
+  margin-right: 30px;
+}
+
+header nav li:last-of-type{
+  margin-right: 0;
+}
+
+header nav span {
+  display: table-cell;
+  vertical-align: middle;
+  
+}
+
+header nav a{
+  color: #101010;
+}
+
+header nav .button{
+  background-color: #CD5C5C; 
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+
+header nav .button:hover{
+  filter: brightness(1.25);
+}
+
+.imgcontainer {
+  position: fixed;
+  top: 10px; /* Adjust the top position as needed */
+  left: 10px; /* Adjust the right position as needed */
+}
+
+.imgcontainer img {
+  width: 80px; /* Adjust the width to scale the image */
+  height: auto; /* Maintain aspect ratio */
+}
