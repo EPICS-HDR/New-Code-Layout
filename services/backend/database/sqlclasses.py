@@ -2,6 +2,7 @@ import sqlite3 as sql
 import json
 import datetime
 
+# TODO Add new global lists, add sql conversions
 gauges = ("Hazen", "Stanton", "Washburn", "Price", "Bismarck", "Schmidt", "Judson", "Breien", "Mandan", "Cash", "Wakpala", "Whitehorse", "Little Eagle")
 dams = ("Fort Peck", "Garrison", "Oahe", "Big Bend", "Fort Randall", "Gavins Point")
 mesonets = ("Carson", "Fort Yates", "Linton", "Mott")
@@ -49,14 +50,12 @@ class SQLHandle:
     def update_old_data(self):
         pass
         
-
+# UNUSED
 class Mesonet(SQLHandle):
     def __init__(self):
         super().__init__()
         self.table = "mesonet"
         self.columns = ""
-
-
 
 class Dams(SQLHandle):
     def __init__(self):
@@ -70,7 +69,11 @@ class Gauge(SQLHandle):
         super().__init__()
         self.table = "gauge"
         self.columns = ""
+# UNUSED
     
+# Running this would overwrite current data
+# Creates each table with specified names and headers
+# TODO Run a single cur.execute with desired table and headers
 def create_tables() -> None:
     conn = sql.connect("./Measurements.db")
     cur = conn.cursor()
@@ -106,18 +109,20 @@ def clear_db():
         cur.execute("DROP TABLE ? ", table_name)
     
     
-
+# Was used previouly to convert the old JSON dictionary into SQL
 def fill_sql_tables(full_dict: dict) -> None:
     conn = sql.connect("./Measurements.db")
     cur = conn.cursor()
 
     
-    for location in data_dict:
-        for variable in data_dict[location]:
-            for day in data_dict[location][variable]:
-                for time in data_dict[location][variable][day]:
-                    value = data_dict[location][variable][day][time]
+    for location in full_dict:
+        for variable in full_dict[location]:
+            for day in full_dict[location][variable]:
+                for time in full_dict[location][variable][day]:
+                    value = full_dict[location][variable][day][time]
                     table = "misc"
+                    # Checks locations from global variable lists
+                    # Currently relies on no overlap
                     if(location in gauges):
                         table = "gauge"
                     if(location in dams):
@@ -139,7 +144,7 @@ def fill_sql_tables(full_dict: dict) -> None:
 
     return
 
-
+# TODO Going to need to add new tables here
 def get_table_name(location:str) -> str:
     table = "error"
     if(location in gauges):
@@ -150,6 +155,7 @@ def get_table_name(location:str) -> str:
         table = "mesonet"
     return table
 
+# Might not be in use
 def fill_dict(db_name: str) ->dict:
     conn = sql.connect("./Measurements.db")
     cur = conn.cursor()
@@ -162,7 +168,7 @@ def fill_dict(db_name: str) ->dict:
     pass
 
     
-
+# Taking SQL data and putting it into a graphable format
 def create_lists(db_name: str, location: str, variable:str, start_date: str, end_date: str) -> list:
     conn = sql.connect("./Measurements.db")
     cur = conn.cursor()
@@ -181,7 +187,7 @@ def create_lists(db_name: str, location: str, variable:str, start_date: str, end
     list_of_lists.append(variable_list)
     return list_of_lists
 
-
+# TODO call this function elsewhere
 def updateDictionary(times: list, data: list, location: str, variable: str) -> None:
     conn = sql.connect("./Measurements.db")
     cur = conn.cursor()

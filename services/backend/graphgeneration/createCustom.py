@@ -2,7 +2,6 @@
 import plotly.graph_objs as go
 import plotly.offline
 import numpy as np
-import xlsxwriter
 
 #dictionary to check if any location in locations list matches one of these
 dam_dict = {"Fort Peck": "Feet",
@@ -60,7 +59,7 @@ def createExcel(locations, times, datalist):
      # Close the workbook to save changes
     workbook.close()
 
-def customGraph(times, locations, datalist, data2see): #returns the graph to be displayed for custom creation
+def customGraph(times, locations, datalist, data2see, cache): #returns the graph to be displayed for custom creation
     
     index = 0
     traces = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -83,7 +82,7 @@ def customGraph(times, locations, datalist, data2see): #returns the graph to be 
 
     # Creates and Downloads Excel File, Commented out due to Errors
     # createExcel(locations, times, datalist)
-    plot = makeGraph(traces, title, ylabels, index, colors, data2see, locations)
+    plot = makeGraph(traces, title, ylabels, index, colors, data2see, locations, cache)
         
     return plot
 
@@ -103,7 +102,7 @@ def makeTrace(times, location, graphdata, data2graph, index, colors): #creates a
 
     return trace, ylabel
 
-def makeGraph(traces, title, ylabels, index, colors, data2see, locations): #makes the graph by adding all the traces onto a plotly graph
+def makeGraph(traces, title, ylabels, index, colors, data2see, locations, cache): #makes the graph by adding all the traces onto a plotly graph
 
     tracelist = [traces[0], [traces[0], traces[1]], [traces[0], traces[1], traces[2]], [traces[0], traces[1], traces[2], traces[3]],
                  [traces[0], traces[1], traces[2], traces[3], traces[4]], [traces[0], traces[1], traces[2], traces[3], traces[4], traces[5]],
@@ -153,14 +152,17 @@ def makeGraph(traces, title, ylabels, index, colors, data2see, locations): #make
                           side = 'left',titlefont=dict(color= 'black'), tickfont=dict(color= 'black'))
                          ))
                     data = tracelist[i]
-             
-    plot = plotly.offline.plot({"data": data, "layout": layout}, output_type = 'div')
 
-    return plot
+    if cache == 0:
+        plot = plotly.offline.plot({"data": data, "layout": layout}, output_type = 'div')
+        return plot
+    else:
+        file_name = f'./services/static/graphs/{title}.html'
+        plotly.offline.plot({"data": data, "layout": layout}, filename = file_name, auto_open=False)
 
-def makeTable(graphdata): #creates a chart to display statistical data under graph
+def makeTable(graphdata, title): #creates a chart to display statistical data under graph
     statistics_list = [[], [], [], [], [], []]
-    custom_height = 25
+    custom_height = 50
     
     listy = []
 
@@ -202,6 +204,9 @@ def makeTable(graphdata): #creates a chart to display statistical data under gra
     data.update_layout(margin=dict(l=0, r=0, b=0, t=15),
                        height=custom_height)
 
-    plot = plotly.offline.plot({'data': data}, output_type = 'div')
-
-    return plot
+    if title == 0:
+        plot = plotly.offline.plot({'data': data}, output_type = 'div')
+        return plot
+    else:
+        file_name = f'./services/static/graphs/{title}.html'
+        plotly.offline.plot({"data": data}, filename = file_name, auto_open=False)

@@ -153,8 +153,8 @@ def customgaugegraph(request):
         datalist.append(data)
         index += 1
         
-    plot = customGraph(times, sites, datalist, data2see)
-    table = makeTable(datalist)
+    plot = customGraph(times, sites, datalist, data2see, 0)
+    table = makeTable(datalist, 0)
 
     return render(request, "HTML/graphdisplay.html", context={'plot': plot, 'table': table})
 
@@ -182,8 +182,8 @@ def customdamgraph(request):
         datalist.append(data)
         index += 1
         
-    plot = customGraph(times, sites, datalist, data2see)
-    table = makeTable(datalist)
+    plot = customGraph(times, sites, datalist, data2see, 0)
+    table = makeTable(datalist, 0)
 
     return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
 
@@ -209,7 +209,7 @@ def custommesonetgraph(request):
         datalist.append(data)
         index += 1
         
-    plot = customGraph(times, sites, datalist, data2see)
-    table = makeTable(datalist)
+    plot = customGraph(times, sites, datalist, data2see, 0)
+    table = makeTable(datalist, 0)
 
     return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
