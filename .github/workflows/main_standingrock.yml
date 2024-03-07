@@ -61,6 +61,13 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
+      - name: Collect static files
+        run: |
+          source venv/bin/activate
+          python manage.py collectstatic --noinput
+        env:
+          DJANGO_SETTINGS_MODULE: your_project.settings
+
       
       - name: Login to Azure
         uses: azure/login@v1
