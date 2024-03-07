@@ -7,12 +7,10 @@ import plotly.graph_objs as go
 import os
 import numpy as np
 from datadict import createMonthJson, createForecastJson
-
-
 from sqlclasses import updateDictionary
 import json
 from forecast import forecastdatacall
-    
+
 def getDates():
     
     # Decides how many days to pull
@@ -608,10 +606,10 @@ def pull():
     pullDamData("Gavins Point")
 
     # Pulls and stores all North Dakota mesonet data by location
-    #pullMesonetData("Carson")
-    #pullMesonetData("Fort Yates")
-    #pullMesonetData("Linton")
-    #pullMesonetData("Mott")
+    pullMesonetData("Carson")
+    pullMesonetData("Fort Yates")
+    pullMesonetData("Linton")
+    pullMesonetData("Mott")
     
     # Moved MassJSON call to here, so that the data pulling will pause when enough data for JSON creation has been pulled. 
     massJSON()
@@ -667,14 +665,3 @@ def massJSON():
     createMonthJson("Mott", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
 
 pull()
-
-""" pullMesonetData("Carson")
-pullMesonetData("Fort Yates")
-pullMesonetData("Linton")
-pullMesonetData("Mott")
-
-createMonthJson("Carson", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
-createMonthJson("Fort Yates", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
-createMonthJson("Linton", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
-createMonthJson("Mott", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
- """
