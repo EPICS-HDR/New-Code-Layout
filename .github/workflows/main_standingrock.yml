@@ -68,7 +68,7 @@ jobs:
           pip install -r requirements.txt
           python manage.py collectstatic --noinput
         env:
-          DJANGO_SETTINGS_MODULE: your_project.settings
+          DJANGO_SETTINGS_MODULE: config.settings
 
       
       - name: Login to Azure
