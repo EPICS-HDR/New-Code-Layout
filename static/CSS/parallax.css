@@ -1,0 +1,171 @@
+    @import url('https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&display=swap');
+    
+    :root{
+    --color: #008D8E; 
+    }
+    
+    body {
+      font-family: 'Red Hat Text', sans-serif;
+    }
+    
+    .container {
+      text-align: center;
+      color: black;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-image: url('/static/images/tepe.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    
+    h1 {
+      font-weight: 700;
+      font-size: 3rem;
+    }
+    
+    p {
+      max-width: 52ch;
+      line-height: 1.5;
+      padding: 1em;
+    }
+    
+    a {
+      display: inline-block;
+      padding: 1em 3.5em;
+      background-color: var(--color);
+      color: white;
+      text-decoration: none;
+      text-transform: uppercase;
+      border-radius: 0.3em;
+      font-weight: 700;
+      letter-spacing: .5px;
+      font-size: .875rem;
+    }
+    
+    .blank,
+    .other {
+      width: 100%;
+      min-height: 60vh;
+      background-color: var(--color);
+    }
+    
+    .blank {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+      
+    .blank img {
+      max-width: 60%;
+      max-height: 60%;
+      border: 8px solid #12bbd4;
+   }
+    
+    .miniblank {
+      width: 100%;
+      min-height: 20vh;
+      background-color: var(--color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .miniblank img {
+      max-width: 80%;
+      max-height: 80%;
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+    }
+
+    .cyanblank {
+      width: 100%;
+      min-height: 10vh;
+      background-color: #12bbd4;
+    }
+
+    .second {
+      background-image:url('/static/images/buffalo.jpg');
+      background-attachment: fixed;
+      height: 1200px;
+    }
+    
+    h3 {
+      font-weight: 700;
+      font-size: 1.6rem;
+      margin-top: 1em;
+    }
+    
+    .card > a {
+      margin-bottom: 2em;
+    }
+    
+    .item {
+      display: flex;
+      max-width: 320px;
+      background-color: white;;
+      flex-direction: column;
+      align-items: center;
+      border-radius: .5em;
+      -webkit-box-shadow: 0px 29px 38px -15px rgba(0,0,0,0.43);
+      -moz-box-shadow: 0px 29px 38px -15px rgba(0,0,0,0.43);
+      box-shadow: 0px 29px 38px -15px rgba(0,0,0,0.43);
+    }
+    
+    .item2 {
+      display: flex;
+      max-width: 800px;
+      background-color: white;;
+      flex-direction: column;
+      align-items: center;
+      border-radius: .5em;
+      -webkit-box-shadow: 0px 29px 38px -15px rgba(0,0,0,0.43);
+      -moz-box-shadow: 0px 29px 38px -15px rgba(0,0,0,0.43);
+      box-shadow: 0px 29px 38px -15px rgba(0,0,0,0.43);
+    }
+
+    .img {
+      width: 90%;
+      height: 200px;
+      background-color: lightgrey;
+      background-size: cover;
+      background-position: center;
+      margin-top: 20px;
+      border-radius: .3em;;
+    }
+    
+    .img-first {
+      background-image: url('/static/images/fortpeckdam.jpg');
+    }
+    
+    .img-second {
+      background-image: url('/static/images/stantongauge.jpg');
+    }
+    
+    .img-third {
+      background-image: url('/static/images/lintonstation.jpg');
+    }
+    
+    .img-fourth {
+      background-image: url('/static/images/newmapa.jpg');
+      height: 300px
+    }
+    .second {
+      flex-direction: row;
+      gap: 1.6em;
+    }
+    .box {
+      width: 2000px;
+      height: 1000px;
+      border: 1px solid black;
+      padding: 10px;
+      margin: 10px;
+      background-color: #eee;
+      z-index: 999;
+    }

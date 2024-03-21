@@ -15,6 +15,27 @@ from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
 
 # Create your views here.
+
+from django.shortcuts import render, redirect
+from django.urls import reverse
+
+def favorites(request):
+    # Retrieve saved_links from the session or initialize it as an empty list
+    saved_links = request.session.get('saved_links', [])
+
+    if request.method == 'POST':
+        link = request.POST.get('link')
+        saved_links.append(link)
+        # Save updated saved_links to the session
+        request.session['saved_links'] = saved_links
+        return redirect('favorites')
+
+    return render(request, 'HTML/favorites.html', {'saved_links': saved_links})
+
+    # Retrieve all saved links from the database
+    saved_links = Link.objects.all()
+    return render(request, 'favorites.html', {'saved_links': saved_links})
+
 def register(request):
     return render(request, "HTML/register.html")
 
