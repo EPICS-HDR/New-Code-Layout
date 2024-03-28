@@ -262,20 +262,20 @@ def pullGaugeData(city):
             dataset1 = discharge
             
     if category == 1:
-        updateDictionary(times, stream_level, city, "Elevation")
-        updateDictionary(times, gauge_height, city, "Gauge Height")
-        updateDictionary(times, discharge, city, "Discharge")
+        updateDictionary(times, stream_level, city, "Elevation", "gauge")
+        updateDictionary(times, gauge_height, city, "Gauge Height", "gauge")
+        updateDictionary(times, discharge, city, "Discharge", "gauge")
     elif category == 2:
-        updateDictionary(times, stream_level, city, "Elevation")
-        updateDictionary(times, gauge_height, city, "Gauge Height")
+        updateDictionary(times, stream_level, city, "Elevation", "gauge")
+        updateDictionary(times, gauge_height, city, "Gauge Height", "gauge")
     elif category == 3:
-        updateDictionary(times, stream_level, city, "Elevation")
-        updateDictionary(times, gauge_height, city, "Gauge Height")
-        updateDictionary(times, discharge, city, "Discharge")
-        updateDictionary(times, water_temp, city, "Water Temperature")
+        updateDictionary(times, stream_level, city, "Elevation", "gauge")
+        updateDictionary(times, gauge_height, city, "Gauge Height", "gauge")
+        updateDictionary(times, discharge, city, "Discharge", "gauge")
+        updateDictionary(times, water_temp, city, "Water Temperature", "gauge")
     elif category == 4:
-        updateDictionary(times, gauge_height, city, "Gauge Height")
-        updateDictionary(times, discharge, city, "Discharge")
+        updateDictionary(times, gauge_height, city, "Gauge Height", "gauge")
+        updateDictionary(times, discharge, city, "Discharge", "gauge")
 
     os.remove(f"./services/static/JSON{city}.csv")
     os.remove(f'./services/static/JSONdata.txt')
@@ -372,14 +372,14 @@ def pullDamData(dam_location):
         times.append(Date[index] + " " + Hour[index])
         index += 1
 
-    updateDictionary(times, Elevation, dam_location, "Elevation")
-    updateDictionary(times, Flow_Spill, dam_location, "Flow Spill")
-    updateDictionary(times, Flow_Powerhouse, dam_location, "Flow Powerhouse")
-    updateDictionary(times, Flow_Out, dam_location, "Flow Out")
-    updateDictionary(times, Elev_Tailwater, dam_location, "Tailwater Elevation")
-    updateDictionary(times, Energy, dam_location, "Energy")
-    updateDictionary(times, Temp_Water, dam_location, "Water Temperature")
-    updateDictionary(times, Temp_Air, dam_location, "Air Temperature")
+    updateDictionary(times, Elevation, dam_location, "Elevation", "dam")
+    updateDictionary(times, Flow_Spill, dam_location, "Flow Spill", "dam")
+    updateDictionary(times, Flow_Powerhouse, dam_location, "Flow Powerhouse", "dam")
+    updateDictionary(times, Flow_Out, dam_location, "Flow Out", "dam")
+    updateDictionary(times, Elev_Tailwater, dam_location, "Tailwater Elevation", "dam")
+    updateDictionary(times, Energy, dam_location, "Energy", "dam")
+    updateDictionary(times, Temp_Water, dam_location, "Water Temperature", "dam")
+    updateDictionary(times, Temp_Air, dam_location, "Air Temperature", "dam")
     
 def pullMesonetData(location):
 
@@ -492,17 +492,17 @@ def pullMesonetData(location):
     avg_dew_point = ParseData(avg_dew_point)
     avg_wind_chill = ParseData(avg_wind_chill)
     
-    updateDictionary(times, avg_air_temp, location, "Average Air Temperature")
-    updateDictionary(times, avg_rel_hum, location, "Average Relative Humidity")
-    updateDictionary(times, avg_bare_soil_temp, location, "Average Bare Soil Temperature")
-    updateDictionary(times, avg_turf_soil_temp, location, "Average Turf Soil Temperature")
-    updateDictionary(times, avg_wind_speed, location, "Maximum Wind Speed")
-    updateDictionary(times, avg_wind_dir, location, "Average Wind Direction")
-    updateDictionary(times, tot_sol_rad, location, "Total Solar Radiation")
-    updateDictionary(times, tot_rainfall, location, "Total Rainfall")
-    updateDictionary(times, avg_baro_press, location, "Average Baromatric Pressure")
-    updateDictionary(times, avg_dew_point, location, "Average Dew Point")
-    updateDictionary(times, avg_wind_chill, location, "Average Wind Chill")
+    updateDictionary(times, avg_air_temp, location, "Average Air Temperature", "mesonet")
+    updateDictionary(times, avg_rel_hum, location, "Average Relative Humidity", "mesonet")
+    updateDictionary(times, avg_bare_soil_temp, location, "Average Bare Soil Temperature", "mesonet")
+    updateDictionary(times, avg_turf_soil_temp, location, "Average Turf Soil Temperature", "mesonet")
+    updateDictionary(times, avg_wind_speed, location, "Maximum Wind Speed", "mesonet")
+    updateDictionary(times, avg_wind_dir, location, "Average Wind Direction", "mesonet")
+    updateDictionary(times, tot_sol_rad, location, "Total Solar Radiation", "mesonet")
+    updateDictionary(times, tot_rainfall, location, "Total Rainfall", "mesonet")
+    updateDictionary(times, avg_baro_press, location, "Average Baromatric Pressure", "mesonet")
+    updateDictionary(times, avg_dew_point, location, "Average Dew Point", "mesonet")
+    updateDictionary(times, avg_wind_chill, location, "Average Wind Chill", "mesonet")
 
     os.remove(file_name)
 
@@ -578,8 +578,6 @@ def shadehillrequest(startyear, startmonth, startday, endyear, endmonth, endday,
     del times[-1]
     del datas[-1]
     
-    updateDictionary(times, datas, "Shadehill", dataname)
-
 def pull():
     
     # Pulls and stores all gauge data by location
@@ -634,34 +632,34 @@ def massJSON():
         os.unlink(file_path)
         
     # Creates Recent Data JSON files for North Dakota Gauge Sites
-    createMonthJson("Hazen", ["Elevation", "Gauge Height", "Discharge"])
-    createMonthJson("Stanton", ["Elevation", "Gauge Height"])
-    createMonthJson("Washburn", ["Elevation", "Gauge Height"])
-    createMonthJson("Price", ["Elevation", "Gauge Height"])
-    createMonthJson("Bismarck", ["Elevation", "Gauge Height", "Discharge", "Water Temperature"])
-    createMonthJson("Schmidt", ["Elevation", "Gauge Height"])
-    createMonthJson("Judson", ["Elevation", "Gauge Height", "Discharge"])
-    createMonthJson("Breien", ["Elevation", "Gauge Height", "Discharge"])
-    createMonthJson("Mandan", ["Elevation", "Gauge Height", "Discharge"])
+    createMonthJson("Hazen", ["Elevation", "Gauge Height", "Discharge"], "gauge")
+    createMonthJson("Stanton", ["Elevation", "Gauge Height"], "gauge")
+    createMonthJson("Washburn", ["Elevation", "Gauge Height"], "gauge")
+    createMonthJson("Price", ["Elevation", "Gauge Height"], "gauge")
+    createMonthJson("Bismarck", ["Elevation", "Gauge Height", "Discharge", "Water Temperature"], "gauge")
+    createMonthJson("Schmidt", ["Elevation", "Gauge Height"], "gauge")
+    createMonthJson("Judson", ["Elevation", "Gauge Height", "Discharge"], "gauge")
+    createMonthJson("Breien", ["Elevation", "Gauge Height", "Discharge"], "gauge")
+    createMonthJson("Mandan", ["Elevation", "Gauge Height", "Discharge"], "gauge")
 
     # Creates Recent Data JSON files for South Dakota Gauge Sites
-    createMonthJson("Cash", ["Gauge Height", "Discharge"])
-    createMonthJson("Wakpala", ["Gauge Height", "Discharge"])
-    createMonthJson("Whitehorse", ["Gauge Height", "Discharge"])
-    createMonthJson("Little Eagle", ["Gauge Height", "Discharge"])
+    createMonthJson("Cash", ["Gauge Height", "Discharge"], "gauge")
+    createMonthJson("Wakpala", ["Gauge Height", "Discharge"], "gauge")
+    createMonthJson("Whitehorse", ["Gauge Height", "Discharge"], "gauge")
+    createMonthJson("Little Eagle", ["Gauge Height", "Discharge"], "gauge")
 
     # Creates Recent Data JSON files for Dam Sites
-    createMonthJson("Fort Peck", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"])
-    createMonthJson("Garrison", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"])
-    createMonthJson("Oahe", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"])
-    createMonthJson("Big Bend", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"])
-    createMonthJson("Fort Randall", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"])
-    createMonthJson("Gavins Point", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"])
+    createMonthJson("Fort Peck", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"], "dam")
+    createMonthJson("Garrison", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"], "dam")
+    createMonthJson("Oahe", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"], "dam")
+    createMonthJson("Big Bend", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"], "dam")
+    createMonthJson("Fort Randall", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"], "dam")
+    createMonthJson("Gavins Point", ["Elevation", "Flow Spill", "Flow Powerhouse", "Flow Out", "Tailwater Elevation", "Energy", "Water Temperature", "Air Temperature"], "dam")
 
     # Creates Recent Data JSON files for Mesonet Sites
-    createMonthJson("Carson", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
-    createMonthJson("Fort Yates", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
-    createMonthJson("Linton", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
-    createMonthJson("Mott", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"])
+    createMonthJson("Carson", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"], "mesonet")
+    createMonthJson("Fort Yates", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"], "mesonet")
+    createMonthJson("Linton", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"], "mesonet")
+    createMonthJson("Mott", ["Average Air Temperature", "Average Relative Humidity", "Average Bare Soil Temperature", "Average Turf Soil Temperature", "Maximum Wind Speed", "Average Wind Direction", "Total Solar Radiation", "Total Rainfall", "Average Baromatric Pressure", "Average Dew Point", "Average Wind Chill"], "mesonet")
 
 pull()

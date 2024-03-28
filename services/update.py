@@ -1,8 +1,8 @@
 from backend.graphgeneration.createCustom import customGraph, makeTable
 from backend.database.sqlclasses import dictpull
 
-start_date = "2024-02-01"
-end_date = "2024-03-02"
+start_date = "2024-02-26"
+end_date = "2024-03-26"
 
 locations = ["Hazen", "Stanton", "Washburn", "Price", "Bismarck", 
             "Schmidt", "Judson", "Mandan", "Breien", "Wakpala", "Little Eagle",

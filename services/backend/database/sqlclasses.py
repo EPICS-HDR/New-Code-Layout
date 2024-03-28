@@ -4,8 +4,18 @@ import datetime
 
 # TODO Add new global lists, add sql conversions
 gauges = ("Hazen", "Stanton", "Washburn", "Price", "Bismarck", "Schmidt", "Judson", "Breien", "Mandan", "Cash", "Wakpala", "Whitehorse", "Little Eagle")
+
 dams = ("Fort Peck", "Garrison", "Oahe", "Big Bend", "Fort Randall", "Gavins Point")
+
 mesonets = ("Carson", "Fort Yates", "Linton", "Mott")
+
+CoCoRaHs = ("Bison", "Faulkton", "Bismarck", "Langdon")
+
+NOAA = ("Williston/Basin", "Tioga", "Stanley", "Minot", "Sidney/Richland", "Watford City", "Garrison", "Glendive/Dawson", "Hazen/Mercer", \
+        "Beach", "Dickinson/Roosevelt", "Glen", "Bismarck", "Miles City/Wiley", "Baker", "Bowman", "Hettinger", "Linton", "Buffalo/Harding", \
+        "Mobridge", "Faith", "Spearfish/Clyde", "Pierre", "Custer", "Rapid City", "Philip")
+
+Shadehill = ("Shadehill")
 
 sql_conversion = {"Elevation" : "elevation", "Air Temperature": "air_temp", "Water Temperature" : "water_temp", \
                   "Flow Spill" : "flow_spill", "Flow Powerhouse" : "flow_power", "Flow Out" : "flow_out", \
@@ -96,7 +106,7 @@ def create_tables() -> None:
                 elevation REAL, flow_spill REAL, flow_power REAL, \
                 flow_out REAL, tail_ele REAL, energy REAL, water_temp REAL,\
                 air_temp REAL, PRIMARY KEY(location, datetime))")
-
+    # todo add new data tables (figure out which features we are storing)
 
     
 
@@ -188,10 +198,10 @@ def create_lists(db_name: str, location: str, variable:str, start_date: str, end
     return list_of_lists
 
 # TODO call this function elsewhere
-def updateDictionary(times: list, data: list, location: str, variable: str) -> None:
+# Just added table as a string
+def updateDictionary(times: list, data: list, location: str, variable: str, table: str) -> None:
     conn = sql.connect("./Measurements.db")
     cur = conn.cursor()
-    table = get_table_name(location)
     if(location in locationdict):
         location = locationdict[location] 
     for i in range(len(times)):
@@ -210,7 +220,7 @@ def updateDictionary(times: list, data: list, location: str, variable: str) -> N
             
     conn.commit()
 
-def dictpull(location: str, variable: str, start_date: str, end_date: str) -> tuple:
+def dictpull(location: str, variable: str, start_date: str, end_date: str, table_name: str) -> tuple:
     conn = sql.connect("Measurements.db")
     conn.row_factory = sql.Row
     cur = conn.cursor()
@@ -218,7 +228,6 @@ def dictpull(location: str, variable: str, start_date: str, end_date: str) -> tu
     variable_list = []
     index = 0
 
-    table_name = get_table_name(location)
     variable = sql_conversion[variable]
     rows = cur.execute(f"SELECT * FROM {table_name} WHERE location = '{location}' AND '{variable}' IS NOT NULL AND datetime BETWEEN '{start_date}' AND '{end_date}' ORDER by datetime")
     for row in rows:
@@ -293,6 +302,6 @@ class moving_average:
         output = self.__moving_avg(times,data, 30)
         return output
 
-ma_time, ma_data = dictpull("Bismarck", "Elevation", "2023-06-05 00:00:00", "2023-07-05 00:00:00")
+ma_time, ma_data = dictpull("Bismarck", "Elevation", "2023-06-05 00:00:00", "2023-07-05 00:00:00", "gauge")
 ma = moving_average()
 da_t, da_a = ma.one_day_ma(ma_time, ma_data)

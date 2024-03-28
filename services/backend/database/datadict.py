@@ -145,7 +145,7 @@ def updateDictionary(ttimes, data, location, dataset):
     with open('dictionary.json', 'w') as file:
         file.write(json.dumps(data_dict))
 
-def createMonthJson(location, datasets):
+def createMonthJson(location, datasets, table):
 
     # Gets the current date and month ago
     start_date = (date.today()-timedelta(days=30)).isoformat()
@@ -155,7 +155,7 @@ def createMonthJson(location, datasets):
         datalists = []
 
         for dataset in datasets:
-            times, data = dp(location, dataset, start_date, end_date)
+            times, data = dp(location, dataset, start_date, end_date, table)
             
             datalists.append(times)
             datalists.append(data)
@@ -166,7 +166,7 @@ def createMonthJson(location, datasets):
         index = 0
         for dataset in datasets:
 
-            times, data = dp(location, dataset, start_date, end_date)
+            times, data = dp(location, dataset, start_date, end_date, table)
             if index == 0: 
                 del times[-1]
                 datalists.append(times)

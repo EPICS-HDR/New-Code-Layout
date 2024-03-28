@@ -122,9 +122,9 @@ def customdam(request):
 def custommesonet(request):
     return render(request, 'graphing/custommesonet.html')
 
-def index(request):
+def interactiveMap(request):
     
-    return render(request, 'HTML/index.html')
+    return render(request, 'HTML/interactiveMap.html')
 
 def customgaugegraph(request):
     
@@ -147,7 +147,7 @@ def customgaugegraph(request):
         if locations[0] == "Little":
             locations[0] = "Little Eagle"
         sites.append(locations[0])
-        times, data = dictpull(locations[0], data2see, start_date, end_date)
+        times, data = dictpull(locations[0], data2see, start_date, end_date, "gauge")
         m = moving_average()
         m_t, m_d = m.one_day_ma(times,data)
         datalist.append(data)
@@ -178,7 +178,7 @@ def customdamgraph(request):
     index = 0
     while index < length:
         sites.append(locationlist[index])
-        times, data = dictpull(locationlist[index], data2see, start_date, end_date)
+        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "dam")
         datalist.append(data)
         index += 1
         
@@ -205,7 +205,7 @@ def custommesonetgraph(request):
     index = 0
     while index < length:
         sites.append(locationlist[index])
-        times, data = dictpull(locationlist[index], data2see, start_date, end_date)
+        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "mesonet")
         datalist.append(data)
         index += 1
         
