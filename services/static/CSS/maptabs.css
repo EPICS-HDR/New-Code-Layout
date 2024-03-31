@@ -239,3 +239,20 @@ select {
     .tab-container label {
       margin-right: 10px;
     }
+    
+    #sidebar {
+      width: 250px; /* or whatever width you prefer */
+      height: 100%;
+      position: fixed;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      background-color: #f1f1f1; /* choose color to match your image */
+      overflow-x: hidden;
+      padding-top: 20px;
+  }
+  
+  #map {
+      margin-left: 250px; /* Adjust the map left margin to sidebar width */
+  }
+  

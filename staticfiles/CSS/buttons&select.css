@@ -1,0 +1,57 @@
+
+  select {
+    color: rgb(45, 40, 59);
+    background-color: #fff;
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 24px;
+    text-align: center;
+  } 
+  
+  button {
+    position: relative;
+    outline: none;
+    text-decoration: none;
+    border-radius: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    text-transform: uppercase;
+    height: 60px;
+    width: 210px;
+    opacity: 1;
+    background-color: #12bbd4;
+    border: 1px solid rgba(22, 76, 167, 0.6);
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.7px;
+  }
+
+input[type="date"]{
+    display: inline-block;
+    background-color: #ffffff;
+    padding: 15px;
+    font-family: "Roboto Mono",monospace;
+    color:  rgba(22, 76, 167, 0.6);
+    font-size: 18px;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+}
+::-webkit-calendar-picker-indicator{
+    background-color: #ffffff;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+h6 {
+	font-family: "Roboto", "Helvetica Neue", sans-serif;
+    color: #405975;
+	font-size: 22px;
+    margin: 0;
+    padding: 0;
+}

@@ -1,0 +1,297 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #FFFDEF;
+}
+
+.banner {
+  width: 100%;
+  height: 485px;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.51), rgba(0, 0, 0, 0.51)), url(https://www.standingrock.org/wp-content/uploads/2021/06/Admin-building.jpg);
+  background-size: cover;
+  background-position: center;
+
+}
+
+.topnav a {
+  color: white;
+  padding-bottom: 35px;
+  padding-top: 35px;
+  padding-left: 20px;
+  padding-right: 20px;
+  text-decoration: none;
+  font-size: 22px;
+  text-align: left;
+  display: inline-block;
+  align-items: right;
+  margin-left: 100px;
+  margin-top: 14px;
+  justify-content: space-evenly;
+  position: relative;
+}
+
+.topnav a::after {
+  content: '';
+  height: 4px;
+  border-radius: 10px;
+  width: 0;
+  background: #fff;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  transition: 0.5s;
+}
+
+.topnav a:hover::after {
+  width: 100%;
+}
+
+.topnav {
+  background-color: rgba(0, 0, 0, 0.65);
+  width: 100%;
+  height: 110px;
+  
+  overflow: hidden;
+  backdrop-filter: blur(9px);
+  position: sticky;
+}
+
+.icon {
+  height: 100 px;
+  width: 100px;
+  object-fit: cover;
+  display: inline-block;
+  float: left;
+  margin-left: 100px;
+  margin-top: 14px;
+}
+
+h1 {
+  font-size: 128px;
+  font-family: 'Koulen', sans-serif;
+  line-height: 95.5%;
+  margin-left: 92px;
+  letter-spacing: 0.4px;
+}
+
+.text1 {
+  position: absolute;
+  margin-top: 10px;
+}
+
+.banner .yellow {
+  color: #FFB422;
+  position: absolute;
+  top: 372px;
+}
+
+.pic1 {
+  border-radius: 20px;
+  height: 392px;
+  width: 650px;
+  object-fit: cover;
+  position: absolute;
+  top: 654px;
+  margin-left: 590px;
+}
+
+
+.yellow2 {
+  color: #FFB422;
+}
+
+.text2 {
+  position: absolute;
+  top: 1087px;
+  margin-top: 20px;
+}
+
+p {
+  font-size: 20px;
+  font-family: 'Judson', serif;
+  width: 643px;
+  margin-bottom: 30px;
+  line-height: 117.3%;
+}
+
+.para1 {
+  margin-left: 100px;
+  position: absolute;
+  top: 1230px;
+}
+
+.para2 {
+  margin-left: 100px;
+  position: absolute;
+  top: 2390px;
+}
+
+.pic2 {
+  border-radius: 20px;
+  height: 514px;
+  width: 414px;
+  object-fit: cover;
+  position: absolute;
+  top: 2000px;
+  margin-left: 790px;
+}
+
+.sub {
+  font-size: 59px;
+  margin-left: 100px;
+}
+
+.text3 {
+  position: absolute;
+  top: 2200px;
+
+}
+
+.treaty {
+  margin-left: 100px;
+  height: 60px;
+  width: 225px;
+  color: white;
+  background-color: #073A4B;
+  font-family: 'Judson', serif;
+  font-size: 19px;
+  border-radius: 15px;
+  position: absolute;
+  top: 2950px;
+  border-color: #073A4B;
+  border-style: solid;
+  transition: background-color 0.5s;
+}
+
+.treaty:hover {
+  background-color: #04202a;
+}
+
+.footer {
+  position: absolute;
+  top: 3150px;
+  background-color: #073A4B;
+  height: 750px;
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.sign {
+  margin-left: 100px;
+  margin-top: 100px;
+  width: 100%;
+}
+
+.sign .icon2 {
+  width: 247px;
+  height: 247px;
+  object-fit: cover;
+  margin-left: -50px;
+}
+
+h4{
+  color:#51C3EA;
+  font-family: 'Inder', sans-serif;
+  font-size: 18px;
+  margin-top: 5px;
+  text-decoration:none;
+}
+
+.weblink{
+  color:#51C3EA;
+  font-family: 'Inder', sans-serif;
+  font-size:18px;
+}
+
+.maplink{
+  text-decoration:none;
+}
+
+h3{
+  color:#FFFFFF;
+  font-family: 'Koulen', sans-serif;
+  font-size: 34px;
+  margin-top: -30px;;
+  
+}
+
+h2{
+  color: #FFB422;
+  font-family: 'Koulen',sans-serif;
+  font-size: 45px;
+}
+
+h5{
+  color:#FFB422;
+  font-family:'Koulen', sans-serif;
+  font-size: 50px;
+  position:absolute;
+  top: 100px;
+  
+}
+
+/* Style inputs with type="text", select elements and textareas */
+input[type=text], select, textarea {
+  width: 100%; /* Full width */
+  font-size: 16px;
+  font-family:'Judson', serif;
+  background-color: #FFFDEF;
+  padding: 12px; /* Some padding */ 
+  border: none; /* Gray border */
+  border-radius: 4px; /* Rounded borders */
+  box-sizing: border-box; /* Make sure that padding and width stays in place */
+  margin-top: 6px; /* Add a top margin */
+  margin-bottom: 45px; /* Bottom margin */
+  resize: vertical /* Allow the user to vertically resize the textarea (not horizontally) */
+}
+
+/* Style the submit button with a specific background color etc */
+input[type=submit] {
+  background-color: #FFFDEF;
+  color: #E50A0A;
+  font-family: 'Koulen', sans-serif;
+  font-size: 22px;
+  padding: 5px 25px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  float: right;
+}
+
+/* When moving the mouse over the submit button, add a darker green color */
+input[type=submit]:hover {
+  text-decoration: underline;
+  background-color: #FFFDEF;
+}
+
+label{
+  color:#51C3EA;
+  font-family:'judson',sans-serif;
+  margin-bottom: 10px;
+}
+
+.container2{
+  margin-top: 200px;
+  margin-right: 160px;
+}
+
+.squilt{
+  height: 900px;
+  float: right;
+  position: absolute;
+  top: 1100px;
+  left: 900px;
+}
+
+.squilt2{
+  float:right;
+  position: absolute;
+  top:2800px;
+  left: 600px;
+  height: 400px;
+  object-fit: cover;
+}

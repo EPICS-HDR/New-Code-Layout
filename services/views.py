@@ -17,6 +17,9 @@ from django.core.mail import send_mail
 # Create your views here.
 def register(request):
     return render(request, "HTML/register.html")
+    
+def vansh(request):
+    return render(request, "HTML/vanshtest.html")
 
 def signup(request):
 
