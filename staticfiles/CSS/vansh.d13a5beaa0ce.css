@@ -1,0 +1,101 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Adjust the map to start after the sidebar */
+#map {
+    width: calc(100% - 300px); /* Subtract sidebar width */
+    height: 100vh; /* Full height */
+    position: absolute; /* Make it positioned absolutely */
+    left: 300px; /* Shift right to make space for sidebar */
+    top: 100px; /* Align to top */
+}
+
+/* Move search-container and buttons-container into sidebar for a cohesive look */
+.sidebar {
+    position: absolute; /* Use fixed to keep sidebar in place on scroll */
+    top: 100px;
+    left: 0;
+    width: 300px; /* Sidebar width */
+    height: 100%;
+    background-color: #fff;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+    z-index: 2;
+    padding: 20px;
+    display: flex;
+    flex-direction: column; /* Organize children vertically */
+}
+
+/* Adjust the search bar's position within the sidebar */
+/* Style for the search container */
+.search-container {
+    display: flex; /* Aligns children (input and button) in a row */
+    justify-content: flex-start; /* Aligns children to the start of the container */
+    align-items: center; /* Centers children vertically */
+    width: 100%; /* Ensures the search container takes up the full width of its parent */
+    margin-bottom: 20px; /* Space below the search bar */
+}
+
+/* Style for the search input */
+#search-input {
+    flex-grow: 1; /* Allows the input to grow and fill the available space */
+    padding: 10px; /* Padding inside the search input */
+    border: 2px solid #ccc;
+    border-radius: 4px 0 0 4px; /* Rounded corners on the left side */
+    height: 40px; /* Fixed height for the search input */
+}
+
+/* Style for the search button */
+.search-container button {
+    padding: 10px 20px; /* Padding inside the search button */
+    border: 2px solid #ccc;
+    border-left: none; /* Removes border between the button and the input */
+    border-radius: 0 4px 4px 0; /* Rounded corners on the right side */
+    background-color: #f5f5f5;
+    color: #333;
+    cursor: pointer;
+    font-size: 16px;
+    height: 46px; /* Fixed height for the search button, including border */
+    box-sizing: border-box; /* Makes sure the height includes padding and border */
+}
+
+/* Adjustments for hover and active states on the search button */
+.search-container button:hover {
+    background-color: #e2e2e2;
+}
+
+.search-container button:active {
+    background-color: #ccc;
+}
+
+
+
+/* Position buttons within the sidebar */
+
+.buttons-container button {
+    background-color: #f2f2f2; /* Light grey background */
+    color: black; /* Text color */
+    border: none; /* No border */
+    border-radius: 5px; /* Rounded corners */
+    padding: 15px 32px; /* Padding around the text */
+    margin-bottom: 10px; /* Space between buttons */
+    cursor: pointer; /* Pointer cursor on hover */
+    width: 250px; /* Fixed width for all buttons */
+    height: 50px; /* Fixed height for all buttons */
+    box-sizing: border-box; /* Include padding and border in width and height */
+    font-size: 16px;
+    text-align: center; /* Centered text */
+    display: block; /* Stack buttons vertically */
+    margin: 10px auto; /* Center buttons horizontally and add space between them */
+}
+
+.buttons-container button:hover {
+    background-color: #ddd; /* Lighter grey background on hover */
+}
+
+.buttons-container button:active {
+    background-color: #ccc; /* Even lighter grey background on click */
+    transform: translateY(2px); /* Moves the button down on click */
+}

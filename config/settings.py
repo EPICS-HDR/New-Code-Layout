@@ -29,7 +29,7 @@ EMAIL_PORT = EMAIL_PORT
 SECRET_KEY = 'django-insecure-+9wcfz&b8$a30aq(9-$s&a^*#6lsvy^jb@3as4$0%c@f=g!cvb'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 
 ALLOWED_HOSTS = ['standingrock.azurewebsites.net','127.0.0.1']
