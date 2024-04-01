@@ -22,6 +22,10 @@ EMAIL_HOST_USER = EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
 EMAIL_PORT = EMAIL_PORT
 
+ADMINS = (
+ ('Vansh Thakkar', 'thakkar9@purdue.edu'),
+ )
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
@@ -119,6 +123,9 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+import mimetypes
+mimetypes.add_type("text/css", ".css", True)
 
 
 # Static files (CSS, JavaScript, Images)
