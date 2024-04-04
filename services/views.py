@@ -19,6 +19,7 @@ from django.core.mail import send_mail
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
+
 def favorites(request):
     # Retrieve saved_links from the session or initialize it as an empty list
     saved_links = request.session.get('saved_links', [])

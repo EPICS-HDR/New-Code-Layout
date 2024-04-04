@@ -4,160 +4,218 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Favorites</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Koulen&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Judson&display=swap">
     <style>
-  /* Reset styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        /* Reset styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* Body styles */
-body {
-    background-color: #FFFDEF;
-    font-family: 'Judson', serif;
-    color: #073A4B;
-}
+        /* Body styles */
+        body {
+            background-color: #FFFDEF;
+            font-family: 'Judson', serif;
+            color: #073A4B;
+        }
 
-/* Top navigation styles */
-.topnav {
-    background-color: rgba(0, 0, 0, 0.65);
-    color: white;
-    padding: 20px;
-    text-align: right;
-}
+        /* Top navigation styles */
+        .topnav {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            text-align: right;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000; /* Ensure it's above other content */
+        }
 
-.topnav a {
-    color: white;
-    text-decoration: none;
-    font-size: 22px;
-    margin: 0 20px;
-}
+        .topnav a {
+            color: white;
+            text-decoration: none;
+            font-size: 22px;
+            margin: 0 20px;
+        }
 
-/* Banner styles */
-.banner {
-    width: 100%;
-    height: 485px;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.51), rgba(0, 0, 0, 0.51)), url(https://www.standingrock.org/wp-content/uploads/2021/06/Admin-building.jpg);
-    background-size: cover;
-    background-position: center;
-}
+        /* Banner styles */
+        .banner {
+            width: 100%;
+            height: 130px;
+            background-image: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,251,223,1) 100%), url(https://www.standingrock.org/wp-content/uploads/2021/06/Admin-building.jpg);
+            background-size: cover;
+            background-position: center;
+            animation: fadeIn 2s ease-in-out;
+        }
 
-/* Heading styles */
-h1 {
-    font-family: 'Koulen', sans-serif;
-    font-size: 72px;
-    color: #550505;
-    text-align: center;
-    margin-top: 30px;
-    letter-spacing: 0.4px;
-}
+        /* Heading styles */
+        h1 {
+            font-family: 'Koulen', sans-serif;
+            font-size: 72px;
+            color: #550505;
+            text-align: center;
+            margin-top: 50px; /* Adjust margin-top */
+            margin-bottom: 20px; /* Add margin-bottom */
+            letter-spacing: 0.4px;
+        }
 
-h2 {
-    font-family: 'Koulen', sans-serif;
-    font-size: 45px;
-    color: #FFB422;
-    text-align: center;
-    margin-top: 50px;
-}
+        h2 {
+            font-family: 'Koulen', sans-serif;
+            font-size: 45px;
+            color: #FFB422;
+            text-align: center;
+            margin-top: 1px;
+        }
 
-/* Center content */
-.center {
-    margin: 0 auto;
-    width: 80%;
-}
+        /* Center content */
+        .center {
+            margin: 0 auto;
+            width: 80%;
+        }
 
-/* Table styles */
-table {
-    width: 100%;
-    background-color: #FFFDEF;
-    border-collapse: collapse;
-}
+        /* Table styles */
+        table {
+            width: 100%;
+            background-color: #FFFDEF;
+            border-collapse: collapse;
+        }
 
-th, td {
-    border: 1px solid #FFB422;
-    padding: 10px;
-}
+        th, td {
+            border: 1px solid #FFB422;
+            padding: 10px;
+        }
 
-/* Form styles */
-form {
-    margin-top: 20px;
-    text-align: center;
-}
+        /* Form styles */
+        form {
+            margin-top: 20px;
+            text-align: center;
+        }
 
-label {
-    color: #51C3EA;
-    font-family: 'Judson', serif;
-    margin-bottom: 10px;
-    display: block;
-}
+        label {
+            color: #51C3EA;
+            font-family: 'Judson', serif;
+            margin-bottom: 10px;
+            display: block;
+        }
 
-input[type="text"] {
-    width: 300px;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    margin: 6px auto 45px;
-}
+        input[type="text"] {
+            width: 300px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin: 6px auto 45px;
+        }
 
-button {
-    background-color: #FFFDEF;
-    color: #E50A0A;
-    font-family: 'Koulen', sans-serif;
-    font-size: 22px;
-    padding: 10px 30px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-}
+        button {
+            background-color: #FFFDEF;
+            color: #E50A0A;
+            font-family: 'Koulen', sans-serif;
+            font-size: 22px;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-button:hover {
-    text-decoration: underline;
-    background-color: #FFFDEF;
-    color: #073A4B;
-}
+        button:hover {
+            text-decoration: underline;
+            background-color: #FFFDEF;
+            color: #073A4B;
+            transform: scale(1.1); /* Scale up on hover */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add shadow */
+        }
 
-/* Footer styles */
-.footer {
-    background-color: #073A4B;
-    color: white;
-    padding: 50px 0;
-    text-align: center;
-}
+        /* Footer styles */
+        .footer {
+            background-color: #073A4B;
+            color: white;
+            padding: 50px 0;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000; /* Ensure it's above other content */
+        }
 
+        /* Keyframe animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Favorites</h1>
+   
+
+    <div class="banner">
+        <h1>Favorites</h1>
+    </div>
 
     <div class="center">
         <h2>Saved Links:</h2>
         <table>
             <thead>
                 <tr>
-                    <th>#</th>
+            
                     <th>Link</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for link in saved_links %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td><a href="{{ link }}">{{ link }}</a></td> <!-- Convert link to a hyperlink -->
-                </tr>
-                {% endfor %}
+            <tbody id="linkTableBody">
+                <!-- Table rows will be dynamically added here -->
             </tbody>
         </table>
+
+        <h2>Add New Link:</h2>
+        <form id="linkForm">
+            <label for="link">Link:</label>
+            <input type="text" id="link" name="link" required>
+            <button type="submit">Add to Favorites</button>
+        </form>
+        
     </div>
 
-    <h2>Add New Link:</h2>
-    <form action="/favorites/" method="post">
-        {% csrf_token %}
-        <label for="link">Link:</label>
-        <input type="text" id="link" name="link" required>
-        <button type="submit">Add to Favorites</button>
-    </form>
+    <script>
+        document.getElementById('linkForm').addEventListener('submit', function(event) {
+            // Prevent default form submission
+            event.preventDefault();
+            
+            // Get the input value (link)
+            var link = document.getElementById('link').value;
+            
+            // Create a new table row
+            var newRow = document.createElement('tr');
+            
+            // Create a new table data (cell)
+            var newData = document.createElement('td');
+            
+            // Create a new anchor (link) element
+            var newLink = document.createElement('a');
+            
+            // Set the href attribute of the anchor
+            newLink.setAttribute('href', link);
+            
+            // Set the text content of the anchor to the link
+            newLink.textContent = link;
+            
+            // Append the anchor to the table data
+            newData.appendChild(newLink);
+            
+            // Append the table data to the table row
+            newRow.appendChild(newData);
+            
+            // Append the table row to the table body
+            document.getElementById('linkTableBody').appendChild(newRow);
+        });
+    </script>
+ 
 </body>
 </html>
