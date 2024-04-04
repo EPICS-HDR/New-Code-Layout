@@ -17,7 +17,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-image: url('/static/images/tepe.jpg');
+  background-image: url('images/tepe.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -91,7 +91,7 @@ a {
 }
 
 .second {
-  background-image:url('/static/images/buffalo.jpg');
+  background-image:url('images/buffalo.jpg');
   background-attachment: fixed;
   height: 1200px;
 }
@@ -141,7 +141,7 @@ h3 {
 }
 
 .img-fourth {
-  background-image: url('/static/images/newmapa.jpg');
+  background-image: url('images/newmapa.jpg');
   height: 300px
 }
 .second {
