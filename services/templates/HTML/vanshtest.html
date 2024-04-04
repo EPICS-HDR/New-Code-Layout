@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Standing Rock Environmental</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/vansh.css' %}">
+    <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
+</head>
+<body>
+
+    <header>
+        <div class="inner">
+          <div class="logo">
+              <div>
+                  <h1>Standing Rock</h1>
+              </div>
+          </div>
+          <nav>
+              <li><span><a href="/home">Home</a></span></li>
+              <li><span><a href="/map">Monthly Data</a></span></li>
+              <li><span><a href="">Forecast</a></span></li>
+              <li><span><a href="/maptabs">Graphing</a></span></li>
+              <li><span><a href="">Register</a></span></li>
+              <li><span><a href="">Bugs</a></span></li>
+              <li><span><a href="" class="button">Contact</a></span></li>
+          </nav>
+      </div>
+      <div class = "imgcontainer">
+        <img src="{% static 'images/logo.jpg' %}" alt="logo">
+      </div>
+    </header>
+
+    <!-- Sidebar for search and buttons -->
+    <div class="sidebar">
+        <div class="buttons-container">
+            <button id="btn-dams">Dams</button>
+            <button id="btn-gauges">Gauges</button>
+            <button id="btn-mesonets">Mesonets</button>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search">
+            <button onclick="search()">Search</button>
+        </div>
+        
+    </div>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <script src="{% static 'js/map.js' %}"></script>
+
+</body>
+</html>

@@ -4,3 +4,7 @@ pandas
 plotly
 xlsxwriter
 whitenoise
+<<<<<<< HEAD
+=======
+gunicorn
+>>>>>>> 38fe8a4af60d8323db8e2d818616b809df289b73

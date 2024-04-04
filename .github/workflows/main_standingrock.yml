@@ -2,12 +2,12 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - standingrock
+name: Deloy App
 
 on:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 jobs:
@@ -35,6 +35,25 @@ jobs:
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
 
+      # - name: Delete Old Artifacts
+      #   uses: actions/github-script@v6
+      #   id: artifact
+      #   with:
+      #     script: |
+      #       const res = await github.rest.actions.listArtifactsForRepo({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #       })
+
+      #       res.data.artifacts
+      #         .forEach(({ id }) => {
+      #           github.rest.actions.deleteArtifact({
+      #             owner: context.repo.owner,
+      #             repo: context.repo.repo,
+      #             artifact_id: id,
+      #           })
+      #         })
+
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v3
         with:
@@ -61,14 +80,14 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
-      - name: Collect static files
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
-          python manage.py collectstatic --noinput
-        env:
-          DJANGO_SETTINGS_MODULE: config.settings
+      # - name: Collect static files
+      #   run: |
+          # python -m venv venv
+          # source venv/bin/activate
+          # pip install -r requirements.txt
+      #     python manage.py collectstatic --noinput
+      #   env:
+      #     DJANGO_SETTINGS_MODULE: config.settings
 
       
       - name: Login to Azure

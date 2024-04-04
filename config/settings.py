@@ -22,6 +22,10 @@ EMAIL_HOST_USER = EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
 EMAIL_PORT = EMAIL_PORT
 
+ADMINS = (
+ ('Vansh Thakkar', 'thakkar9@purdue.edu'),
+ )
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
@@ -32,7 +36,7 @@ SECRET_KEY = 'django-insecure-+9wcfz&b8$a30aq(9-$s&a^*#6lsvy^jb@3as4$0%c@f=g!cvb
 DEBUG = False
 
 
-ALLOWED_HOSTS = ['standingrock.azurewebsites.net','127.0.0.1']
+ALLOWED_HOSTS = ['standingrock.azurewebsites.net','127.0.0.1','*']
 
 
 # Application definition
@@ -63,7 +67,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [ BASE_DIR / 'templatees' ],
+        'DIRS': [ BASE_DIR / 'templates' ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -120,16 +124,19 @@ USE_I18N = True
 
 USE_TZ = True
 
+import mimetypes
+mimetypes.add_type("text/css", ".css", True)
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+    BASE_DIR / 'services' /'static',
 ]
 STATIC_ROOT = os.path. join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

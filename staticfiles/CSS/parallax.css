@@ -17,7 +17,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background-image: url('images/tepe.jpg');
+      background-image: url('/static/images/tepe.jpg');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
@@ -91,7 +91,7 @@
     }
 
     .second {
-      background-image:url('images/buffalo.jpg');
+      background-image:url('/static/images/buffalo.jpg');
       background-attachment: fixed;
       height: 1200px;
     }
@@ -141,19 +141,19 @@
     }
     
     .img-first {
-      background-image: url('images/fortpeckdam.jpg');
+      background-image: url('/static/images/fortpeckdam.jpg');
     }
     
     .img-second {
-      background-image: url('images/stantongauge.jpg');
+      background-image: url('/static/images/stantongauge.jpg');
     }
     
     .img-third {
-      background-image: url('images/lintonstation.jpg');
+      background-image: url('/static/images/lintonstation.jpg');
     }
     
     .img-fourth {
-      background-image: url('images/newmapa.jpg');
+      background-image: url('/static/images/newmapa.jpg');
       height: 300px
     }
     .second {

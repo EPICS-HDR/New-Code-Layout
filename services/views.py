@@ -39,6 +39,9 @@ def favorites(request):
 
 def register(request):
     return render(request, "HTML/register.html")
+    
+def vansh(request):
+    return render(request, "HTML/vanshtest.html")
 
 def signup(request):
 
