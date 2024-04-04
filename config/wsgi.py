@@ -15,5 +15,6 @@ from django.conf import settings
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 application = get_wsgi_application()
-application = WhiteNoise(application, root=os.path.join(settings.BASE_DIR, 'staticfiles'))
+application = WhiteNoise(application, root= settings.BASE_DIR / 'staticfiles' )
 
+print(settings.BASE_DIR)

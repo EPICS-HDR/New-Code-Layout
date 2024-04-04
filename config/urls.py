@@ -17,12 +17,10 @@ from django.contrib import admin
 from django.urls import path
 from services.views import index, customgauge, customgaugegraph, customdam, customdamgraph, test, custommesonet, custommesonetgraph, tabs, tabstest, maptabs, homepage, forecast, about, register, signup, signin, signout, vansh
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-<<<<<<< HEAD
 from services import views  # Import the views module containing your view functions
-=======
 from django.conf import settings
 from django.conf.urls.static import static
->>>>>>> 38fe8a4af60d8323db8e2d818616b809df289b73
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -44,12 +42,8 @@ urlpatterns = [
     path('signup', signup, name='signup'),
     path('signin', signin, name='signin'),
     path('signout', signout, name='signout'),
-<<<<<<< HEAD
     path('favorites/', views.favorites, name='favorites'),
-]
-=======
     path('vansh/', vansh)
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
->>>>>>> 38fe8a4af60d8323db8e2d818616b809df289b73
 
 urlpatterns += staticfiles_urlpatterns()
