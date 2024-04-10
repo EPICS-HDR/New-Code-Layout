@@ -31,7 +31,7 @@ urlpatterns = [
 #    path('tabs/', tabs),
 #    path('tabstest/', tabstest),
     path('maptabs/', maptabs),
-    path('home/', homepage),
+    path('', homepage),
     path('forecast/', forecast),
     path('about/', about),
     path('register/', register),
