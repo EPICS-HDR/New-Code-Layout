@@ -5,3 +5,4 @@ plotly
 xlsxwriter
 whitenoise
 gunicorn
+awsebcli
