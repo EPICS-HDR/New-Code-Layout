@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Time Page</title>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+<body>
+{% include 'sources/header.html' %}
+<!-- {% include 'sources/fields.html' %} -->
+<div class="container">
+    <form action="/sources/data/" method="post" class="date-picker-container">
+        {% csrf_token %}
+        <div>
+            <button id="range" type="button">Date Range</button>
+            <button id="single" type="button">Single Date</button>
+        </div>
+        <input type="hidden" name="isSingle" id="isSingle" value="{{is_single|default:'false'}}">
+        <label for="displayFormat">Display as:</label>
+        <select required name="displayFormat" id="displayFormat">
+            <option value="yyyy-mm-dd">YYYY-MM-DD</option>
+            <option value="mm/dd/yyyy">MM/DD/YYYY</option>
+            <option value="dd/mm/yyyy">DD/MM/YYYY</option>
+        </select>
+
+        <div class="date-inputs">
+            <input required type="date" name="startDate" id="startDate" value="{{start_date|default:''}}">
+            <input required type="date" name="endDate" id="endDate" value="{{end_date|default:''}}" {% if is_single %}style="display: none;"{% endif %}>
+        </div>
+
+        <button type="submit" id="addDate">Add Date</button>
+        <div id="alert" class="alert-1">Please select a date or date range to search.</div>
+    </form>
+    <!-- {% include 'sources/missing.html' %} -->
+</div>
+<script>
+    document.getElementById('addDate').onclick = function() {
+        var startDate = document.getElementById('startDate').value;
+        var endDate = document.getElementById('endDate').value;
+        var displayFormat = document.getElementById('displayFormat').value;
+        var alertDiv = document.getElementById('alert');
+
+
+        if(startDate === '' || (endDate === '' &&  document.getElementById('endDate').style.display != 'none')) {
+            alertDiv.style.display = 'block';
+            alertDiv.textContent = 'Please select a date or date range to search.';
+        } else {
+            alertDiv.style.display = 'none';
+            console.log('Start Date:', startDate);
+            console.log('End Date:', endDate);
+            console.log('Display Format:', displayFormat);
+        }
+    };
+
+    document.getElementById('range').onclick = function() {
+        document.getElementById('isSingle').value = 'false';
+        document.getElementById('endDate').style.display = 'block';
+        document.getElementById('endDate').required = true;
+    };
+
+    document.getElementById('single').onclick = function() {
+        document.getElementById('isSingle').value = 'true';
+        document.getElementById('endDate').style.display = 'none';
+        document.getElementById('endDate').required = false;
+    };
+</script>
+</body>
+</html>
