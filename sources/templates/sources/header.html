@@ -1,0 +1,22 @@
+
+<div class="header-bar">
+    <a href="/home">Home</a>
+
+    {% if prev_nav %}
+        <a href="{% url prev_nav %}">
+            <img src="/static/left-arrow.png" width="30"/>
+        </a>
+    {% endif %}
+
+    <a href="{% url 'location' %}" class="{% if request.resolver_match.url_name == 'location' %}active{% endif %}">① LOCATION</a>
+    <a href="{% url 'time' %}" class="{% if request.resolver_match.url_name == 'time' %}active{% endif %}">② TIME</a>
+    <a href="{% url 'data' %}" class="{% if request.resolver_match.url_name == 'data' %}active{% endif %}">③ DATA</a>
+    <a href="{% url 'selected_review' %}" class="{% if request.resolver_match.url_name == 'selected_review' %}active{% endif %}">
+        ④SELECTED REVIEW</a>
+
+    {% if next_nav %}
+        <a href="{% url next_nav %}">
+            <img src="/static/right-arrow.png" width="30"/>
+        </a>
+    {% endif %}
+</div>

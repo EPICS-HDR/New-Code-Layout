@@ -243,6 +243,37 @@ def dictpull(location: str, variable: str, start_date: str, end_date: str, table
 
     return date_list, variable_list
 
+def find_data(location: str, start_date: str, end_date: str) -> list:
+    conn = sql.connect("Measurements.db")
+    conn.row_factory = sql.Row
+    cur = conn.cursor()
+    datalist = []
+
+    table_name = get_table_name(location)
+    if table_name == "error":
+        return datalist
+    
+    rows = cur.execute(f"SELECT * FROM {table_name} WHERE location = '{location}' AND datetime BETWEEN '{start_date}' AND '{end_date}' ORDER by datetime")
+    for row in rows:
+        datalist.append(row)
+
+    return datalist
+
+def find_data2(location: str, start_date: str, end_date: str,fields:list) -> list:
+    conn = sql.connect("Measurements.db")
+    conn.row_factory = sql.Row
+    cur = conn.cursor()
+    datalist = []
+
+    table_name = get_table_name(location)
+    if table_name == "error":
+        return datalist
+    
+    rows = cur.execute(f"SELECT {','.join(fields)} FROM {table_name} WHERE location = '{location}' AND datetime BETWEEN '{start_date}' AND '{end_date}' ORDER by datetime")
+    for row in rows:
+        datalist.append(row)
+
+    return datalist
 #create_tables()
 
 
