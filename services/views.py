@@ -213,3 +213,30 @@ def custommesonetgraph(request):
     table = makeTable(datalist, 0)
 
     return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+
+def customcocograph(request):
+
+    locationlist = request.POST.getlist('cocorahs')
+    length = len(locationlist)
+    data2see = request.POST['data2see']
+    if "_" in data2see:
+        data2see = data2see.split("_")
+        data2see = data2see[0] + " " + data2see[1]
+
+    start_date = request.POST['start-date']
+
+    end_date = request.POST['end-date']
+
+    datalist = []
+    sites = []
+    index = 0
+    while index < length:
+        sites.append(locationlist[index])
+        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "cocorahs")
+        datalist.append(data)
+        index += 1
+        
+    plot = customGraph(times, sites, datalist, data2see, 0)
+    table = makeTable(datalist, 0)
+
+    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})

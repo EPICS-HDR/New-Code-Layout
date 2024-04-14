@@ -6,36 +6,28 @@
 
         <title>Your Generated Graph</title>
         {% load static %}
-        <link rel="stylesheet" href="{% static 'css/graphdisplay.css' %}">
+        <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
+
     </head>
-    <header>
-        <form action="/home/" method="get">
-        <button type="submit">Back To Home</button><br />
-      </form>
-    </header>
+    <div class="banner">
+      <div class="topnav">
+        <img class="icon" src='/static/images/Standing Rock Crest Logo.png'>
+        <a href="/">Home</a>
+        <a href="/about">About Us</a>
+        <a href="">Report</a>
+        <a href="">Contact Us</a>
+        <a href="/register">Sign Up/In</a>
+      </div>
+  </div>
     <body>
         <center>
           {% autoescape off %}
           {{ plot }}  
 
           <br><br/>
-            <button style="text-align: left" type="submit">Download Graph</button> &nbsp &nbsp &nbsp
-            <button style="text-align: left" type="submit">Download Table</Table></button> &nbsp &nbsp &nbsp
-            <button style="text-align: left" type="submit">Download All</button>
-
-          <br><br/>
           {{ table }}
           {% endautoescape %}
           {% load static %}
-          <!-- <br><a href="{% static 'customdata/currentfile.csv' %}" download>
-            Download File
-          </a> -->
-
-          <br><br/><br><br/>
-          <form action="/maptabs" method="get">
-              <button style="text-align: left" type="submit">Create Another Graph</button><br />
-          </form>            
-
 
         </center>
     </body>

@@ -12,6 +12,16 @@
 </head>
 
 <body>
+  <div class="banner">
+    <div class="topnav">
+      <img class="icon" src='/static/images/Standing Rock Crest Logo.png'>
+      <a href="/">Home</a>
+      <a href="/about">About Us</a>
+      <a href="">Report</a>
+      <a href="">Contact Us</a>
+      <a href="/register">Sign Up/In</a>
+    </div>
+</div>
   <div id="map"></div>
   <script async defer
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBE2So6wgKdk3P4hLo8FXgZCvTYMYO0FS0&callback=initMap">
@@ -27,7 +37,9 @@
     
   <input id="tab3" type="radio" name="tabs">
   <label for="tab3">Mesonet</label>
-    
+
+  <input id="tab4" type="radio" name="tabs">
+  <label for="tab4">CoCoRaHS</label>
     
   <section id="content1">
     <br><br>
@@ -172,6 +184,36 @@
           <h6>Enter Start and End Dates</h6>
           <input type="date" id="start-date3" name="start-date" required="">
           <input type="date" id="end-date3" name="end-date" required="">
+          <br><br>
+        <button type="submit" value="Submit"> Submit 
+    
+  </button></div></form></section>
+
+  <section id="content4">
+    
+    <form action="/customcocograph/" method="POST">
+      {% csrf_token %}
+        <!-- <input type="hidden" name="csrfmiddlewaretoken" value="twoddcSIypaCg1xGN4djumHu7thJmhalDuUTWDNhnadUfcfZNiifPTUuHkvGleRd"> -->
+        <br><br>
+          <select required="" name="data2see" id="data2see">
+            <option value="" selected="" disabled="">Choose Data Point</option>
+            <option value="Precipitation">Precipitation</option>
+            <option value="Snowfall">Snowfall</option>
+            <option value="Snow Depth">Snow Depth</option>
+          </select>
+        <br><br>
+
+        <div class="container">
+          <ul class="ks-cboxtags">
+            <li><input type="checkbox" name="cocorahs" id="blok1" value="Bismarck"><label for="blok1">Bismarck</label></li>
+            <li><input type="checkbox" name="cocorahs" id="blok2" value="Langdon"><label for="blok2">Langdon</label></li>
+            <li><input type="checkbox" name="cocorahs" id="blok3" value="Faulkton"><label for="blok3">Faulkton</label></li>
+            <li><input type="checkbox" name="cocorahs" id="blok4" value="Bison"><label for="blok4">Bison</label></li>
+          </ul>
+          <br><br>
+          <h6>Enter Start and End Dates</h6>
+          <input type="date" id="start-date4" name="start-date" required="">
+          <input type="date" id="end-date4" name="end-date" required="">
           <br><br>
         <button type="submit" value="Submit"> Submit 
     

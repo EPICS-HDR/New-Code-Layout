@@ -93,11 +93,11 @@ for (var i = 0; i < lat.length; i++) {
         // Calculate dimensions based on iframe index
         if (iframeIndex % 2 === 0) {
           // For even-indexed iframes
-          iframe.style.width = '750px';
+          iframe.style.width = '700px';
           iframe.style.height = '500px';
         } else {
           // For odd-indexed iframes
-          iframe.style.width = '750px';
+          iframe.style.width = '700px';
           iframe.style.height = '100px';
         }
         modal.querySelector('.modal-content').appendChild(iframe);

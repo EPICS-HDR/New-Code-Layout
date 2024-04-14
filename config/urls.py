@@ -15,13 +15,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from services.views import interactiveMap, customgauge, customgaugegraph, customdam, customdamgraph, test, custommesonet, custommesonetgraph, tabs, tabstest, maptabs, homepage, forecast, about, register, signup, signin, signout
+from services.views import interactiveMap, customgauge, customcocograph, customgaugegraph, customdam, customdamgraph, test, custommesonet, custommesonetgraph, tabs, tabstest, maptabs, homepage, forecast, about, register, signup, signin, signout
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('customgaugegraph/', customgaugegraph),
     path('customdamgraph/', customdamgraph),
+    path('customcocograph/', customcocograph),
 #    path('customgauge/', customgauge),
     path('customdam/', customdam),
 #    path('custommesonet/', custommesonet),

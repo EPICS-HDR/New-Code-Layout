@@ -6,6 +6,7 @@ from backend.database.pullUSGS import pullGaugeData
 from backend.database.pullNDMES import pullMesonetData
 from backend.database.pullUSGS import pullGaugeData
 from backend.database.pullNOAA import forecastdatacall
+from backend.database.PullCoCoRaHSAPI import pullCoCoRaHSAPI
 from datetime import datetime, date, timedelta
 import os
 
@@ -203,13 +204,15 @@ def main():
     # Pulls all data available from ShadeHill dam
     pullShadeHill(start_day, start_month, start_year, end_day, end_month, end_year)
 
-    # Removes existing cached graphs
-    folder_path = "./services/static/graphs"
-    # Empty current contents of folder
-    for filename in os.listdir(folder_path):
-        file_path = os.path.join(folder_path, filename)
-        os.unlink(file_path)
+    # Pulls and stores all data available from CoCoRaHS
+    cocoList = ["Bison, SD", "Faulkton, SD", "Bismarck, ND", "Langdon, ND"]
+    cocoLocList = ["Bison", "Faulkton", "Bismarck", "Langdon"]
+    cocoStart = start_year + start_month + start_day
+    cocoEnd = end_year + end_month + end_day
+    for i in range(0,4):
+        pullCoCoRaHSAPI(cocoList[i], cocoLocList[i], cocoStart, cocoEnd)
 
+    # Removes existing cached graphs
     folder_path = "./static/graphs"
     # Empty current contents of folder
     for filename in os.listdir(folder_path):
@@ -219,4 +222,4 @@ def main():
     # Creates and Caches graphs
     updateGraphs(start_day, start_month, start_year, end_day, end_month, end_year)
 
-main()
+# main()

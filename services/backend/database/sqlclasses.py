@@ -26,7 +26,8 @@ sql_conversion = {"Elevation" : "elevation", "Air Temperature": "air_temp", "Wat
                   "Maximum Wind Speed" : "max_wind_speed", "Average Wind Direction" : "avg_wind_dir", \
                   "Total Solar Radiation" : "total_solar_rad", "Total Rainfall" : "total_rainfall", \
                   "Average Baromatric Pressure" : "avg_bar_pressure", "Average Dew Point" : "avg_dew_point", \
-                  "Average Dew Point" : "avg_dew_point", "Average Wind Chill" : "avg_wind_chill" \
+                  "Average Dew Point" : "avg_dew_point", "Average Wind Chill" : "avg_wind_chill", "Precipitation" : "precipitation", \
+                  "Snowfall" : "snowfall", "Snow Depth" : "snow_depth", \
 }
 
 locationdict = {'6340500':'Hazen',
@@ -106,9 +107,13 @@ def create_tables() -> None:
                 elevation REAL, flow_spill REAL, flow_power REAL, \
                 flow_out REAL, tail_ele REAL, energy REAL, water_temp REAL,\
                 air_temp REAL, PRIMARY KEY(location, datetime))")
-    # todo add new data tables (figure out which features we are storing)
+    # TODO add new data tables (figure out which features we are storing)
 
-    
+    cur.execute("CREATE TABLE cocorahs( location TEXT, datetime TEXT, \
+                precipitation REAL, snowfall REAL, \
+                snow_depth REAL, PRIMARY KEY(location, datetime) \
+    )")
+   
 
 def clear_db():
     #COMPLETELY RESETS DATABASE USE WITH CAUTION: MAKE SURE BACKUP DATA IS AVAILABLE

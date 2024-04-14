@@ -1,5 +1,7 @@
 import requests
 from json import loads
+from backend.database.sqlclasses import updateDictionary
+
 '''
 THIS RETURNS THE DATA IN THE FOLLOWING FORM
 [date, precipitation, snowfall, snow depth]
@@ -18,7 +20,7 @@ def change_time_string_ACIS(date_str):
     new_time = f'{year}-{month}-{day} 00:00:00' # creating new string to match database
     return new_time
 
-def pullCoCoRaHSAPI(location, end_date):
+def pullCoCoRaHSAPI(location, dictlocation, start_date, end_date):
     # This dictionary has the name of the location as the key and the station Ids and first possible starting dates as the 
     reversed_station_dict = {"Bison, SD" : ["SDFK0006", "20070624"], "Faulkton, SD": ["SDFK0009", "20230401"], "Bismarck, ND": ["NDBH0034", "20120416"], "Langdon, ND": ["NDCV0004", "20200311"]}
     
@@ -35,10 +37,27 @@ def pullCoCoRaHSAPI(location, end_date):
     for i in range(len(results_dict['data'])): # replaces old time string with the new time string
         results_dict['data'][i][0] = change_time_string_ACIS(results_dict['data'][i][0]) 
 
-    return results_dict#['data']
+    times = []
+    precip = []
+    snowfall = []
+    snowdepth = []
 
-#  DETERMINED BY USER ON WEBSITE
-location = 'Bismarck, ND'
-end_date = "20120601"
+    listi = results_dict['data']
+    for i in range(0, len(listi)):
+        times.append(listi[i][0])
+        try:
+            precip.append(float(listi[i][1]))
+        except:
+            precip.append(None)
+        try:
+            snowfall.append(float(listi[i][2]))
+        except:
+            snowfall.append(None)
+        try:
+            snowdepth.append(float(listi[i][3]))
+        except:
+            snowdepth.append(None)
 
-print(pullCoCoRaHSAPI(location, end_date))
+    updateDictionary(times, precip, dictlocation, "Precipitation", "cocorahs")
+    updateDictionary(times, snowfall, dictlocation, "Snowfall", "cocorahs")
+    updateDictionary(times, snowdepth, dictlocation, "Snow Depth", "cocorahs")

@@ -14,31 +14,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
-    <link rel="stylesheet" href="{% static 'css/modals.css' %}">
-</head>
 
-<header>
-  <div class="inner">
-    <div class="logo">
-        <div>
-            <h1>Standing Rock</h1>
-        </div>
+</head>
+<body>
+
+  <div class="banner">
+    <div class="topnav">
+      <img class="icon" src='/static/images/Standing Rock Crest Logo.png'>
+      <a href="/">Home</a>
+      <a href="/about">About Us</a>
+      <a href="">Report</a>
+      <a href="">Contact Us</a>
+      <a href="/register">Sign Up/In</a>
     </div>
-    <nav>
-        <li><span><a href="/home">Home</a></span></li>
-        <li><span><a href="/map">Monthly Data</a></span></li>
-        <li><span><a href="">Forecast</a></span></li>
-        <li><span><a href="/maptabs">Graphing</a></span></li>
-        <li><span><a href="">Register</a></span></li>
-        <li><span><a href="">Bugs</a></span></li>
-        <li><span><a href="" class="button">Contact</a></span></li>
-    </nav>
 </div>
-<div class = "imgcontainer">
-  <img src="{% static 'images/logo.jpg' %}" alt="lgo">
-</div>
-</header>
-  <body>
     <div id="map"></div>
 
     <!-- Legend -->
