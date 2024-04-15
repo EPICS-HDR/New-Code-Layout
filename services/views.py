@@ -13,11 +13,34 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
-
+from django.http import HttpResponse
+import csv
 # Create your views here.
+# def store_data(request):
+#     if request.method == 'POST':
+#         # Retrieve form data
+#         username = request.POST.get('username', '')
+#         email = request.POST.get('email', '')
+#         # Add more fields as needed
+
+#         # Save data to a CSV file
+#         with open('user_data.csv', 'a', newline='') as csvfile:
+#             fieldnames = ['username', 'password', 'confirm password', 'email']  # Add more fields here
+#             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+#             writer.writerow({'username': username, 'email': email})  # Add more fields here
+
+#         return HttpResponse('Data stored successfully')
+#     else:
+#         return HttpResponse('Invalid request method')
+def favorites(request):
+    return render(request, 'HTML/favorites.html')
+def contactus(request):
+    return render(request,'HTML/contactus.html')
 def register(request):
     return render(request, "HTML/register.html")
 
+def login(request):
+    return render(request, 'HTML/login.html')
 def signup(request):
 
     if request.method == "POST":

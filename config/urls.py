@@ -18,7 +18,7 @@ from django.urls import path, include
 from django.urls import path
 from services.views import interactiveMap, customgauge, customcocograph, customgaugegraph, customdam, customdamgraph, test, custommesonet, custommesonetgraph, tabs, tabstest, maptabs, homepage, forecast, about, register, signup, signin, signout
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-
+from services.views import favorites, login, contactus
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('customgaugegraph/', customgaugegraph),
@@ -30,6 +30,7 @@ urlpatterns = [
     path('custommesonetgraph/', custommesonetgraph),
     path('map/', interactiveMap),
     path('homep/', test),
+    path('home/', homepage),
 #    path('tabs/', tabs),
 #    path('tabstest/', tabstest),
     path('maptabs/', maptabs),
@@ -41,6 +42,10 @@ urlpatterns = [
     path('signin', signin, name='signin'),
     path('signout', signout, name='signout'),
     path('sources/', include('sources.urls')),
+    path('favorites/', favorites, name='favorites'),
+    path('login/', login, name='login'),
+    path('contactus/', contactus, name='contactus')
+
 ]
 
 urlpatterns += staticfiles_urlpatterns()
