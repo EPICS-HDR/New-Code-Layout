@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Standing Rock Environmental</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet" />
+    {% load static %}
+    <script src="{% static 'js/statistics.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'css/map.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
+    <link rel="stylesheet" href="{% static 'css/modals.css' %}">
+</head>
+
+<header>
+  <div class="inner">
+    <div class="logo">
+        <div>
+            <h1>Standing Rock</h1>
+        </div>
+    </div>
+    <nav>
+        <li><span><a href="/home">Home</a></span></li>
+        <li><span><a href="/map">Monthly Data</a></span></li>
+        <li><span><a href="">Forecast</a></span></li>
+        <li><span><a href="/maptabs">Graphing</a></span></li>
+        <li><span><a href="">Register</a></span></li>
+        <li><span><a href="">Bugs</a></span></li>
+        <li><span><a href="" class="button">Contact</a></span></li>
+    </nav>
+</div>
+<div class = "imgcontainer">
+  <img src="{% static 'images/logo.jpg' %}" alt="lgo">
+</div>
+</header>
+  <body>
+    <div id="map"></div>
+
+    <!-- Legend -->
+    <div id="map-legend">
+      <h4>Legend</h4>
+      <ul>
+        <li><span class="dot" style="background-color: #140ceb;"></span>Dam</li>
+        <li><span class="dot" style="background-color: #f91d1d;"></span>Gauge</li>
+        <li><span class="dot" style="background-color: #057c37;"></span>Mesonet</li>
+      </ul>
+    </div>
+
+    <!-- Hazen Modal -->
+    <div id="Hazen" class="modal">
+      <div class="modal-content"> 
+        <span class="close">&times;</span>
+        <div id="Hazen Elevation"></div>
+        <div id="Hazen Elevation Table"></div>
+
+        <div id="Hazen Gauge Height"></div>
+        <div id="Hazen Gauge Height Table"></div>
+
+        <div id="Hazen Discharge"></div>
+        <div id="Hazen Discharge Table"></div>
+      </div>
+    </div>
+
+    <!-- Stanton Modal -->
+    <div id="Stanton" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Stanton Elevation"></div>
+        <div id="Stanton Elevation Table"></div>
+
+        <div id="Stanton Gauge Height"></div>
+        <div id="Stanton Gauge Height Table"></div>
+      </div>
+    </div>
+
+    <!-- Washburn Modal -->
+    <div id="Washburn" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Washburn Elevation"></div>
+        <div id="Washburn Elevation Table"></div>
+
+        <div id="Washburn Gauge Height"></div>
+        <div id="Washburn Gauge Height Table"></div>
+      </div>
+    </div>
+
+    <!-- Price Modal -->
+    <div id="Price" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Price Elevation"></div>
+        <div id="Price Elevation Table"></div>
+
+        <div id="Price Gauge Height"></div>
+        <div id="Price Gauge Height Table"></div>
+      </div>
+    </div>
+
+    <!-- Bismarck Modal -->
+    <div id="Bismarck" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Bismarck Elevation"></div>
+        <div id="Bismarck Elevation Table"></div>
+
+        <div id="Bismarck Gauge Height"></div>
+        <div id="Bismarck Gauge Height Table"></div>
+
+        <div id="Bismarck Discharge"></div>
+        <div id="Bismarck Discharge Table"></div>
+
+        <div id="Bismarck Water Temperature"></div>
+        <div id="Bismarck Water Temperature Table"></div>
+      </div>
+    </div>
+
+    <!-- Schmidt Modal -->
+    <div id="Schmidt" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Schmidt Elevation"></div>
+        <div id="Schmidt Elevation Table"></div>
+
+        <div id="Schmidt Gauge Height"></div>
+        <div id="Schmidt Gauge Height Table"></div>
+      </div>
+    </div>
+
+    <!-- Judson Modal -->
+    <div id="Judson" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Judson Elevation"></div>
+        <div id="Judson Elevation Table"></div>
+
+        <div id="Judson Gauge Height"></div>
+        <div id="Judson Gauge Height Table"></div>
+
+        <div id="Judson Discharge"></div>
+        <div id="Judson Discharge Table"></div>
+      </div>
+    </div>
+
+    <!-- Mandan Modal -->
+    <div id="Mandan" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Mandan Elevation"></div>
+        <div id="Mandan Elevation Table"></div>
+
+        <div id="Mandan Gauge Height"></div>
+        <div id="Mandan Gauge Height Table"></div>
+
+        <div id="Mandan Discharge"></div>
+        <div id="Mandan Discharge Table"></div>
+      </div>
+    </div>
+
+    <!-- Breien Modal -->
+    <div id="Breien" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Breien Elevation"></div>
+        <div id="Breien Elevation Table"></div>
+
+        <div id="Breien Gauge Height"></div>
+        <div id="Breien Gauge Height Table"></div>
+
+        <div id="Breien Discharge"></div>
+        <div id="Breien Discharge Table"></div>
+      </div>
+    </div>
+
+    <!-- Oahe Dam Modal -->
+    <div id="Oahe" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <div id="Oahe Elevation"></div>
+        <div id="Oahe Elevation Table"></div>
+
+        <div id="Oahe Flow Spill"></div>
+        <div id="Oahe Flow Spill Table"></div>
+
+        <div id="Oahe Flow Powerhouse"></div>
+        <div id="Oahe Flow Powerhouse Table"></div>
+
+        <div id="Oahe Flow Out"></div>
+        <div id="Oahe Flow Out Table"></div>
+
+        <div id="Oahe Tailwater Elevation"></div>
+        <div id="Oahe Tailwater Elevation Table"></div>
+
+        <div id="Oahe Energy"></div>
+        <div id="Oahe Energy Table"></div>
+
+        <div id="Oahe Water Temperature"></div>
+        <div id="Oahe Water Temperature Table"></div>
+
+        <div id="Oahe Air Temperature"></div>
+        <div id="Oahe Air Temperature Table"></div>
+      </div>
+    </div>
+    
+    <!-- Big Bend Modal -->
+    <div id="Big Bend" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <div id="Big Bend Elevation"></div>
+        <div id="Big Bend Elevation Table"></div>
+        
+        <div id="Big Bend Flow Spill"></div>
+        <div id="Big Bend Flow Spill Table"></div>
+        
+        <div id="Big Bend Flow Powerhouse"></div>
+        <div id="Big Bend Flow Powerhouse Table"></div>
+
+        <div id="Big Bend Flow Out"></div>
+        <div id="Big Bend Flow Out Table"></div>
+
+        <div id="Big Bend Tailwater Elevation"></div>
+        <div id="Big Bend Tailwater Elevation Table"></div>
+
+        <div id="Big Bend Energy"></div>
+        <div id="Big Bend Energy Table"></div>
+
+        <div id="Big Bend Water Temperature"></div>
+        <div id="Big Bend Water Temperature Table"></div>
+        
+        <div id="Big Bend Air Temperature"></div>
+        <div id="Big Bend Air Temperature Table"></div>
+      </div>
+    </div>
+    
+    <!-- Fort Randall Modal -->
+    <div id="Fort Randall" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <div id="Fort Randall Elevation"></div>
+        <div id="Fort Randall Elevation Table"></div>
+
+        <div id="Fort Randall Flow Spill"></div>
+        <div id="Fort Randall Flow Spill Table"></div>
+
+        <div id="Fort Randall Flow Powerhouse"></div>
+        <div id="Fort Randall Flow Powerhouse Table"></div>
+
+        <div id="Fort Randall Flow Out"></div>
+        <div id="Fort Randall Flow Out Table"></div>
+
+        <div id="Fort Randall Tailwater Elevation"></div>
+        <div id="Fort Randall Tailwater Elevation Table"></div>
+
+        <div id="Fort Randall Energy"></div>
+        <div id="Fort Randall Energy Table"></div>
+
+        <div id="Fort Randall Water Temperature"></div>
+        <div id="Fort Randall Water Temperature Table"></div>
+
+        <div id="Fort Randall Air Temperature"></div>
+        <div id="Fort Randall Air Temperature Table"></div>
+      </div>
+    </div>
+    
+    <!-- Gavins Point Modal -->
+    <div id="Gavins Point" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <div id="Gavins Point Elevation"></div>
+        <div id="Gavins Point Elevation Table"></div>
+
+        <div id="Gavins Point Flow Spill"></div>
+        <div id="Gavins Point Flow Spill Table"></div>
+
+        <div id="Gavins Point Flow Powerhouse"></div>
+        <div id="Gavins Point Flow Powerhouse Table"></div>
+
+        <div id="Gavins Point Flow Out"></div>
+        <div id="Gavins Point Flow Out Table"></div>
+
+        <div id="Gavins Point Tailwater Elevation"></div>
+        <div id="Gavins Point Tailwater Elevation Table"></div>
+
+        <div id="Gavins Point Energy"></div>
+        <div id="Gavins Point Energy Table"></div>
+
+        <div id="Gavins Point Water Temperature"></div>
+        <div id="Gavins Point Water Temperature Table"></div>
+
+        <div id="Gavins Point Air Temperature"></div>
+        <div id="Gavins Point Air Temperature Table"></div>
+      </div>
+    </div>
+    
+    <!-- Garrison Modal -->
+    <div id="Garrison" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+       <img src="data:image/jpeg;base64,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" alt="Garrion dam_1" width="500" height="333">
+      <img src="https://res.cloudinary.com/miles-extranet-dev/image/upload/v1637685762/North_Dakota/account_photos/579/GarrisonPowerhouseandDam.jpg" alt="Garrion dam_2" width="500" height="333">
+      <h1> Garrison Dam</h1>
+      <div class = "subheadings">
+        <h2> Weather</h2>
+        <h2> Local Time </h2>
+      </div>
+      <div class = "subheadings">
+        <h2> Humidity </h2>
+        <h2> Elevation </h2>
+      </div>
+      <br></br>
+      
+      <h3>
+        Elevation
+      </h3>
+      <button id = "showgraph1">Show Graph</button>
+      <div id = "Garrison Plot1">
+        <div id="Garrison Elevation"></div>
+        <div id="Garrison Elevation Table"></div>
+      </div>
+      
+      <h3>
+        Flow Spill
+      </h3>
+      <button id = "showgraph2">Show Graph</button>
+      <div id="Garrison Plot2">
+        <div id="Garrison Flow Spill"></div>
+        <div id="Garrison Flow Spill Table"></div>
+      </div>
+
+      <h3>
+        Flow Powerhouse
+      </h3>
+      <button id = "showgraph3">Show Graph</button>
+      <div id="Garrison Plot3">
+        <div id="Garrison Flow Powerhouse"></div>
+        <div id="Garrison Flow Powerhouse Table"></div>
+      </div>
+  
+      <h3>
+        Flowout
+      </h3>
+      <button id = "showgraph4">Show Graph</button>
+      <div id="Garrison Plot4">
+        <div id="Garrison Flow Out"></div>
+        <div id="Garrison Flow Out Table"></div>
+      </div>
+  
+      <h3>
+        Tailwater Elevation
+      </h3>
+      <button id = "showgraph5">Show Graph</button>
+      <div id="Garrison Plot5">
+        <div id="Garrison Tailwater Elevation"></div>
+        <div id="Garrison Tailwater Elevation Table"></div>
+      </div>
+  
+      <h3>
+        Energy
+      </h3>
+      <button id = "showgraph6">Show Graph</button>
+      <div id="Garrison Plot6">
+        <div id="Garrison Energy"></div>
+        <div id="Garrison Energy Table"></div>
+      </div>
+  
+      <h3>
+        Water Temperature
+      </h3>
+      <button id = "showgraph7">Show Graph</button>
+      <div id="Garrison Plot7">
+        <div id="Garrison Water Temperature"></div>
+        <div id="Garrison Water Temperature Table"></div>
+      </div>
+  
+      <h3>
+        Air Tamperature
+      </h3>
+      <button id = "showgraph8">Show Graph</button>
+      <div id="Garrison Plot8">
+        <div id="Garrison Air Temperature"></div>
+        <div id="Garrison Air Temperature Table"></div>
+      </div>
+      </div>
+    </div>
+    
+    <!-- Fort Peck Modal -->
+    <div id="Fort Peck" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <div id="Fort Peck Elevation"></div>
+        <div id="Fort Peck Elevation Table"></div>
+
+        <div id="Fort Peck Flow Spill"></div>
+        <div id="Fort Peck Flow Spill Table"></div>
+
+        <div id="Fort Peck Flow Powerhouse"></div>
+        <div id="Fort Peck Flow Powerhouse Table"></div>
+
+        <div id="Fort Peck Flow Out"></div>
+        <div id="Fort Peck Flow Out Table"></div>
+                
+        <div id="Fort Peck Tailwater Elevation"></div>
+        <div id="Fort Peck Tailwater Elevation Table"></div>
+
+        <div id="Fort Peck Energy"></div>
+        <div id="Fort Peck Energy Table"></div>
+
+        <div id="Fort Peck Water Temperature"></div>
+        <div id="Fort Peck Water Temperature Table"></div>
+
+        <div id="Fort Peck Air Temperature"></div>
+        <div id="Fort Peck Air Temperature Table"></div>
+      </div>
+    </div>
+
+    <!-- Fort Yates Modal -->
+    <div id="Fort Yates" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br><br>
+        <div id="Fort Yates Average Air Temperature"></div>
+        <div id="Fort Yates Average Air Temperature Table"></div>
+
+        <div id="Fort Yates Average Relative Humidity"></div>
+        <div id="Fort Yates Average Relative Humidity Table"></div>
+        
+        <div id="Fort Yates Average Bare Soil Temperature"></div>
+        <div id="Fort Yates Average Bare Soil Temperature Table"></div>
+
+        <div id="Fort Yates Average Turf Soil Temperature"></div>
+        <div id="Fort Yates Average Turf Soil Temperature Table"></div>
+        
+        <div id="Fort Yates Max Wind Speed"></div>
+        <div id="Fort Yates Max Wind Speed Table"></div>
+
+        <div id="Fort Yates Average Wind Direction"></div>
+        <div id="Fort Yates Average Wind Direction Table"></div>
+        
+        <div id="Fort Yates Total Solar Radiation"></div>
+        <div id="Fort Yates Total Solar Radiation Table"></div>
+
+        <div id="Fort Yates Total Rainfall"></div>
+        <div id="Fort Yates Total Rainfall Table"></div>
+
+        <div id="Fort Yates Average Barometric Pressure"></div>
+        <div id="Fort Yates Average Barometric Pressure Table"></div>
+
+        <div id="Fort Yates Average Dew Point"></div>
+        <div id="Fort Yates Average Dew Point Table"></div>
+
+        <div id="Fort Yates Average Wind Chill"></div>
+        <div id="Fort Yates Average Wind Chill Table"></div>
+      </div>
+    </div>
+    
+    <!-- Mott Modal -->
+    <div id="Mott" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br><br>
+          <div id="Mott Average Air Temperature"></div>
+          <div id="Mott Average Air Temperature Table"></div>
+
+          <div id="Mott Average Relative Humidity"></div>
+          <div id="Mott Average Relative Humidity Table"></div>
+
+          <div id="Mott Average Bare Soil Temperature"></div>
+          <div id="Mott Average Bare Soil Temperature Table"></div>
+
+          <div id="Mott Average Turf Soil Temperature"></div>
+          <div id="Mott Average Turf Soil Temperature Table"></div>
+          
+          <div id="Mott Max Wind Speed"></div>
+          <div id="Mott Max Wind Speed Table"></div>
+
+          <div id="Mott Average Wind Direction"></div>
+          <div id="Mott Average Wind Direction Table"></div>
+
+          <div id="Mott Total Solar Radiation"></div>
+          <div id="Mott Total Solar Radiation Table"></div>
+
+          <div id="Mott Total Rainfall"></div>
+          <div id="Mott Total Rainfall Table"></div>
+
+          <div id="Mott Average Barometric Pressure"></div>
+          <div id="Mott Average Barometric Pressure Table"></div>
+
+          <div id="Mott Average Dew Point"></div>
+          <div id="Mott Average Dew Point Table"></div>
+
+          <div id="Mott Average Wind Chill"></div>
+          <div id="Mott Average Wind Chill Table"></div>
+      </div>
+    </div>
+    
+    <!-- Carson Modal -->
+    <div id="Carson" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br><br>
+        <div id="Carson Average Air Temperature"></div>
+        <div id="Carson Average Air Temperature Table"></div>
+
+        <div id="Carson Average Relative Humidity"></div>
+        <div id="Carson Average Relative Humidity Table"></div>
+
+        <div id="Carson Average Bare Soil Temperature"></div>
+        <div id="Carson Average Bare Soil Temperature Table"></div>
+
+        <div id="Carson Average Turf Soil Temperature"></div>
+        <div id="Carson Average Turf Soil Temperature Table"></div>
+
+        <div id="Carson Max Wind Speed"></div>
+        <div id="Carson Max Wind Speed Table"></div>
+
+        <div id="Carson Average Wind Direction"></div>
+        <div id="Carson Average Wind Direction Table"></div>
+
+        <div id="Carson Total Solar Radiation"></div>
+        <div id="Carson Total Solar Radiation Table"></div>
+
+        <div id="Carson Total Rainfall"></div>
+        <div id="Carson Total Rainfall Table"></div>
+
+        <div id="Carson Average Barometric Pressure"></div>
+        <div id="Carson Average Barometric Pressure Table"></div>
+
+        <div id="Carson Average Dew Point"></div>
+        <div id="Carson Average Dew Point Table"></div>
+
+        <div id="Carson Average Wind Chill"></div>
+        <div id="Carson Average Wind Chill Table"></div>
+      </div>
+    </div>
+    
+    <!-- Linton Modal -->
+    <div id="Linton" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br><br>
+        <div id="Linton Average Air Temperature"></div>
+        <div id="Linton Average Air Temperature Table"></div>
+
+        <div id="Linton Average Relative Humidity"></div>
+        <div id="Linton Average Relative Humidity Table"></div>
+
+        <div id="Linton Average Bare Soil Temperature"></div>
+        <div id="Linton Average Bare Soil Temperature Table"></div>
+        
+        <div id="Linton Average Turf Soil Temperature"></div>
+        <div id="Linton Average Turf Soil Temperature Table"></div>
+        
+        <div id="Linton Max Wind Speed"></div>
+        <div id="Linton Max Wind Speed Table"></div>
+        
+        <div id="Linton Average Wind Direction"></div>
+        <div id="Linton Average Wind Direction Table"></div>
+        
+        <div id="Linton Total Solar Radiation"></div>
+        <div id="Linton Total Solar Radiation Table"></div>
+        
+        <div id="Linton Total Rainfall"></div>
+        <div id="Linton Total Rainfall Table"></div>
+        
+        <div id="Linton Average Barometric Pressure"></div>
+        <div id="Linton Average Barometric Pressure Table"></div>
+        
+        <div id="Linton Average Dew Point"></div>
+        <div id="Linton Average Dew Point Table"></div>
+
+        <div id="Linton Average Wind Chill"></div>
+        <div id="Linton Average Wind Chill Table"></div>
+      </div>
+    </div>
+    
+    <!-- Cash Modal -->
+    <div id="Cash" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Cash Gauge Height"></div>
+        <div id="Cash Gauge Height Table"></div>
+
+        <div id="Cash Discharge"></div>
+        <div id="Cash Discharge Table"></div>
+      </div>
+    </div>
+    
+    <!-- Wakpala Modal -->
+    <div id="Wakpala" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Wakpala Gauge Height"></div>
+        <div id="Wakpala Gauge Height Table"></div>
+        
+        <div id="Wakpala Discharge"></div>
+        <div id="Wakpala Discharge Table"></div>
+      </div>
+    </div>
+    
+    <!-- Whitehorse Modal -->
+    <div id="Whitehorse" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Whitehorse Gauge Height"></div>
+        <div id="Whitehorse Gauge Height Table"></div>
+        
+        <div id="Whitehorse Discharge"></div>
+        <div id="Whitehorse Discharge Table"></div>
+      </div>
+    </div>
+    
+    <!-- Little Eagle Modal -->
+    <div id="Little Eagle" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="Little Eagle Gauge Height"></div>
+        <div id="Little Eagle Gauge Height Table"></div>
+
+        <div id="Little Eagle Discharge"></div>
+        <div id="Little Eagle Discharge Table"></div>
+      </div>
+    </div>
+
+    <!-- Lemmon Modal -->
+    <div id="Lemmon" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+      </div>
+    </div>
+    
+    <!-- McIntosh Modal -->
+    <div id="McIntosh" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+      </div>
+    </div>
+    
+    <!-- Mclaughlin Modal -->
+    <div id="Mclaughlin" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+      </div>
+    </div>
+    
+    <!-- Mound City Modal -->
+    <div id="Mound City" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+      </div>
+    </div>
+    
+    <!-- Timber Lake Modal -->
+    <div id="Timber Lake" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+      </div>
+    </div>
+    
+    <!-- Close Button -->
+    <span class="close">&times;</span>
+    
+    </div>
+    </div>
+    
+      {% load static %}
+      <script>
+        
+        const HAZENGRAPHS_URL = "{% static 'JSON/hazengraphs.json' %}";
+        const STANTONGRAPHS_URL = "{% static 'JSON/stantongraphs.json' %}";
+        const WASHBURN_URL = "{% static 'JSON/washburngraphs.json' %}";
+        const PRICE_URL = "{% static 'JSON/pricegraphs.json' %}";
+        const BISMARCK_URL = "{% static 'JSON/bismarckgraphs.json' %}";
+        const SCHMIDT_URL = "{% static 'JSON/schmidtgraphs.json' %}";
+        const JUDSON_URL = "{% static 'JSON/judsongraphs.json' %}";
+        const MANDAN_URL = "{% static 'JSON/mandangraphs.json' %}";
+        const BREIEN_URL = "{% static 'JSON/breiengraphs.json' %}";
+
+        const OAHE_URL = "{% static 'JSON/oahegraphs.json' %}";
+        const FORTPECK_URL = "{% static 'JSON/fort peckgraphs.json' %}";
+        const GAVINSPOINT_URL = "{% static 'JSON/gavins pointgraphs.json' %}";
+        const FORTRANDALL_URL = "{% static 'JSON/fort randallgraphs.json' %}";
+        const GARRISON_URL = "{% static 'JSON/garrisongraphs.json' %}";
+        const BIGBEND_URL = "{% static 'JSON/big bendgraphs.json' %}";
+
+        const CARSON_URL = "{% static 'JSON/carsongraphs.json' %}";
+        const FORTYATES_URL = "{% static 'JSON/fort yatesgraphs.json' %}";
+        const MOTT_URL = "{% static 'JSON/mottgraphs.json' %}";
+        const LINTON_URL = "{% static 'JSON/lintongraphs.json' %}";
+
+        const CASH_URL = "{% static 'JSON/cashgraphs.json' %}";
+        const WAKPALA_URL = "{% static 'JSON/wakpalagraphs.json' %}";
+        const WHITEHORSE_URL = "{% static 'JSON/whitehorsegraphs.json' %}";
+        const LITTLEEAGLE_URL = "{% static 'JSON/little eaglegraphs.json' %}";
+        
+        
+       </script>
+
+
+       <script src="{% static 'js/map.js' %}"></script>
+       <script src="{% static 'js/gauge_modals.js' %}"></script>
+       <script src="{% static 'js/dam_modals.js' %}"></script>
+       <script src="{% static 'js/mesonet_modals.js' %}"></script>
+
+       <script src="{% static 'js/mapgraphs/hazen.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/stanton.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/washburn.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/price.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/bismarck.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/schmidt.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/judson.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/mandan.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/breien.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/oahe.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/fortpeck.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/gavinspoint.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/fortrandall.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/garrison.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/bigbend.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/carson.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/fortyates.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/mott.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/linton.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/cash.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/wakpala.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/whitehorse.js' %}"></script>
+       <script src="{% static 'js/mapgraphs/littleeagle.js' %}"></script>
+
+  </body>
+</html>

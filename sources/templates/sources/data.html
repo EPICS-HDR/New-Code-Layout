@@ -92,7 +92,7 @@
                     <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
                     <li class="page-item"><a class="page-link" href="?page={{ table.previous_page_number }}">Previous</a></li>
                 {% endif %}
-
+    
                 {% for i in table.paginator.page_range %}
                     {% if table.number == i %}
                         <li class="page-item active"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
@@ -102,7 +102,7 @@
                         <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
                     {% endif %}
                 {% endfor %}
-
+    
                 {% if table.has_next %}
                     <li class="page-item"><a class="page-link" href="?page={{ table.next_page_number }}">Next</a></li>
                     <li class="page-item"><a class="page-link" href="?page={{ table.paginator.num_pages }}">Last</a></li>
@@ -121,7 +121,7 @@
     <!-- {% include 'sources/missing.html' %} -->
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        const downloadButton = document.querySelector("#download-btn"); // Assuming your download button has an ID or you can select it with some other selector
+        const downloadButton = document.querySelector("#download-btn"); // 假设你的下载按钮有一个ID或者你可以用其他选择器选中它
         downloadButton.addEventListener("click", function () {
           const selectedFiles = document.querySelector(
             'select[name="selected-files"]'
@@ -130,9 +130,9 @@
             'select[name="file-type"]'
           ).value;
 
-          // Build request URL
+          // 构建请求URL
           const url = `/download?fileType=${fileType}&files=${selectedFiles}`;
-          window.location.href = url; // Navigate to the URL to download the file
+          window.location.href = url; // 导航到URL以下载文件
         });
       });
     </script>

@@ -16,25 +16,23 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.urls import path
-from services.views import interactiveMap, customgauge, customcocograph, customgaugegraph, customdam, customdamgraph, test, custommesonet, custommesonetgraph, tabs, tabstest, maptabs, homepage, forecast, about, register, signup, signin, signout
+from services.views import index, customgauge, customgaugegraph, customdam, customdamgraph, test, custommesonet, custommesonetgraph, tabs, tabstest, maptabs, homepage, forecast, about, register, signup, signin, signout
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from services.views import favorites, login, contactus
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('customgaugegraph/', customgaugegraph),
     path('customdamgraph/', customdamgraph),
-    path('customcocograph/', customcocograph),
 #    path('customgauge/', customgauge),
     path('customdam/', customdam),
 #    path('custommesonet/', custommesonet),
     path('custommesonetgraph/', custommesonetgraph),
-    path('map/', interactiveMap),
+    path('map/', index),
     path('homep/', test),
-    path('home/', homepage),
 #    path('tabs/', tabs),
 #    path('tabstest/', tabstest),
     path('maptabs/', maptabs),
-    path('', homepage),
+    path('home/', homepage),
     path('forecast/', forecast),
     path('about/', about),
     path('register/', register),
@@ -42,10 +40,6 @@ urlpatterns = [
     path('signin', signin, name='signin'),
     path('signout', signout, name='signout'),
     path('sources/', include('sources.urls')),
-    path('favorites/', favorites, name='favorites'),
-    path('login/', login, name='login'),
-    path('contactus/', contactus, name='contactus')
-
 ]
 
 urlpatterns += staticfiles_urlpatterns()

@@ -1,0 +1,101 @@
+
+
+body {
+    background-color: whitesmoke;
+}
+
+
+.subheadings {
+    display: flex;
+    justify-content: space-around;
+}
+
+[id="Garrison Plot1"] {
+    display: none;
+}
+[id="Garrison Plot2"] {
+    display: none;
+}
+[id="Garrison Plot3"] {
+    display: none;
+}
+[id="Garrison Plot4"] {
+    display: none;
+}
+[id="Garrison Plot5"] {
+    display: none;
+}
+[id="Garrison Plot6"] {
+    display: none;
+}
+[id="Garrison Plot7"] {
+    display: none;
+}
+[id="Garrison Plot8"] {
+    display: none;
+}
+#showgraph1 {
+    background-color: #3498db; 
+    color: #ffffff; 
+    font-size: 16px; 
+    padding: 10px 20px; 
+    border: none; 
+    border-radius: 10px; 
+    cursor: pointer; 
+}#showgraph2 {
+    background-color: #3498db; 
+    color: #ffffff;
+    font-size: 16px; 
+    padding: 10px 20px; 
+    border: none; 
+    border-radius: 10px; 
+    cursor: pointer; 
+}#showgraph3 {
+    background-color: #3498db;
+    color: #ffffff; 
+    font-size: 16px;
+    padding: 10px 20px; 
+    border: none; 
+    border-radius: 10px; 
+    cursor: pointer;
+}#showgraph4 {
+    background-color: #3498db; 
+    color: #ffffff; 
+    font-size: 16px;
+    padding: 10px 20px; 
+    border: none;
+    border-radius: 10px;
+    cursor: pointer; 
+}#showgraph5 {
+    background-color: #3498db; 
+    color: #ffffff; 
+    font-size: 16px; 
+    padding: 10px 20px; 
+    border: none; 
+    border-radius: 10px; 
+    cursor: pointer; 
+}#showgraph6 {
+    background-color: #3498db;
+    color: #ffffff; 
+    font-size: 16px;
+    padding: 10px 20px;
+    border: none; 
+    border-radius: 10px;
+    cursor: pointer; 
+}#showgraph7 {
+    background-color: #3498db;
+    color: #ffffff; 
+    font-size: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}#showgraph8 {
+    background-color: #3498db;
+    color: #ffffff;
+    font-size: 16px; 
+    padding: 10px 20px; 
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}

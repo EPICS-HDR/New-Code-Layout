@@ -157,7 +157,7 @@ def makeGraph(traces, title, ylabels, index, colors, data2see, locations, cache)
         plot = plotly.offline.plot({"data": data, "layout": layout}, output_type = 'div')
         return plot
     else:
-        file_name = f'./static/graphs/{title}.html'
+        file_name = f'./services/static/graphs/{title}.html'
         plotly.offline.plot({"data": data, "layout": layout}, filename = file_name, auto_open=False)
 
 def makeTable(graphdata, title): #creates a chart to display statistical data under graph
@@ -208,5 +208,5 @@ def makeTable(graphdata, title): #creates a chart to display statistical data un
         plot = plotly.offline.plot({'data': data}, output_type = 'div')
         return plot
     else:
-        file_name = f'./static/graphs/{title}.html'
+        file_name = f'./services/static/graphs/{title}.html'
         plotly.offline.plot({"data": data}, filename = file_name, auto_open=False)

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Standing Rock Environmental</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet" />
+    {% load static %}
+    <script src="{% static 'js/statistics.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'css/map.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
+    <link rel="stylesheet" href="{% static 'css/modals.css' %}">
+</head>
+
+<header>
+  <div class="inner">
+    <div class="logo">
+        <div>
+            <h1>Standing Rock</h1>
+        </div>
+    </div>
+    <nav>
+        <li><span><a href="/home">Home</a></span></li>
+        <li><span><a href="/map">Monthly Data</a></span></li>
+        <li><span><a href="">Forecast</a></span></li>
+        <li><span><a href="/maptabs">Graphing</a></span></li>
+        <li><span><a href="">Register</a></span></li>
+        <li><span><a href="">Bugs</a></span></li>
+        <li><span><a href="" class="button">Contact</a></span></li>
+    </nav>
+</div>
+<div class = "imgcontainer">
+  <img src="{% static 'images/logo.jpg' %}" alt="lgo">
+</div>
+</header>
+  <body>
+    <div id="map"></div>
+    
+    <script src="{% static 'js/map.js' %}"></script>
+    <script src="{% static 'js/gauge_modals.js' %}"></script>
+    <script src="{% static 'js/dam_modals.js' %}"></script>
+    <script src="{% static 'js/mesonet_modals.js' %}"></script>
+
+    <!-- Legend -->
+    <div id="map-legend">
+      <h4>Legend</h4>
+      <ul>
+        <li><span class="dot" style="background-color: #140ceb;"></span>Dam</li>
+        <li><span class="dot" style="background-color: #f91d1d;"></span>Gauge</li>
+        <li><span class="dot" style="background-color: #057c37;"></span>Mesonet</li>
+      </ul>
+    </div>
+
+    <!-- Hazen Modal -->
+    <div id="Hazen" class="modal">
+      <div class="modal-content"> 
+        <span class="close">&times;</span>
+        <iframe src="{% static 'graphs/Elevation at Hazen.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Hazen Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Gauge Height at Hazen.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Hazen Gauge Height Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Discharge at Hazen.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Hazen Discharge Table.html' %}" width=750 height=100></iframe>
+
+      </div>
+    </div>
+
+    <!-- Stanton Modal -->
+    <div id="Stanton" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <iframe src="{% static 'graphs/Elevation at Stanton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Stanton Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Gauge Height at Stanton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Stanton Gauge Height Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+
+<!-- Washburn Modal -->
+<div id="Washburn" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <iframe src="{% static 'graphs/Elevation at Washburn.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Washburn Elevation Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Gauge Height at Washburn.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Washburn Gauge Height Table.html' %}" width=750 height=100></iframe>
+  </div>
+</div>
+
+<!-- Price Modal -->
+<div id="Price" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <iframe src="{% static 'graphs/Elevation at Price.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Price Elevation Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Gauge Height at Price.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Price Gauge Height Table.html' %}" width=750 height=100></iframe>
+  </div>
+</div>
+
+<!-- Bismarck Modal -->
+<div id="Bismarck" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <iframe src="{% static 'graphs/Elevation at Bismarck.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Bismarck Elevation Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Gauge Height at Bismarck.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Bismarck Gauge Height Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Discharge at Bismarck.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Bismarck Discharge Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Water Temperature at Bismarck.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Bismarck Water Temperature Table.html' %}" width=750 height=100></iframe>
+  </div>
+</div>
+
+<!-- Schmidt Modal -->
+<div id="Schmidt" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <iframe src="{% static 'graphs/Elevation at Schmidt.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Schmidt Elevation Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Gauge Height at Schmidt.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Schmidt Gauge Height Table.html' %}" width=750 height=100></iframe>
+  </div>
+</div>
+
+<!-- Judson Modal -->
+<div id="Judson" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <iframe src="{% static 'graphs/Elevation at Judson.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Judson Elevation Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Gauge Height at Judson.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Judson Gauge Height Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Discharge at Judson.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Judson Discharge Table.html' %}" width=750 height=100></iframe>
+
+  </div>
+</div>
+
+<!-- Mandan Modal -->
+<div id="Mandan" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <iframe src="{% static 'graphs/Elevation at Mandan.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Mandan Elevation Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Gauge Height at Mandan.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Mandan Gauge Height Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Discharge at Mandan.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Mandan Discharge Table.html' %}" width=750 height=100></iframe>
+
+  </div>
+</div>
+
+<!-- Breien Modal -->
+<div id="Breien" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <iframe src="{% static 'graphs/Elevation at Breien.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Breien Elevation Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Gauge Height at Breien.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Breien Gauge Height Table.html' %}" width=750 height=100></iframe>
+
+    <iframe src="{% static 'graphs/Discharge at Breien.html' %}" width=750 height=500></iframe>
+    <iframe src="{% static 'graphs/Breien Discharge Table.html' %}" width=750 height=100></iframe>
+
+  </div>
+</div>
+
+    <!-- Oahe Dam Modal -->
+    <div id="Oahe" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <iframe src="{% static 'graphs/Elevation at Oahe.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Oahe Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Spill at Oahe.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Oahe Flow Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Flow Powerhouse at Oahe.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Oahe Flow Powerhouse Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Out at Oahe.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Oahe Flow Out Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Tailwater Elevation at Oahe.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Oahe Tailwater Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Energy at Oahe.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Oahe Energy Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Water Temperature at Oahe.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Oahe Water Temperature Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Air Temperature at Oahe.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Oahe Air Temperature Table.html' %}" width=750 height=100></iframe>
+
+      </div>
+    </div>
+    
+    <!-- Big Bend Modal -->
+    <div id="Big Bend" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <iframe src="{% static 'graphs/Elevation at Big Bend.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Big Bend Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Spill at Big Bend.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Big Bend Flow Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Flow Powerhouse at Big Bend.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Big Bend Flow Powerhouse Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Out at Big Bend.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Big Bend Flow Out Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Tailwater Elevation at Big Bend.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Big Bend Tailwater Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Energy at Big Bend.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Big Bend Energy Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Water Temperature at Big Bend.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Big Bend Water Temperature Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Air Temperature at Big Bend.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Big Bend Air Temperature Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+    
+    <!-- Fort Randall Modal -->
+    <div id="Fort Randall" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <iframe src="{% static 'graphs/Elevation at Fort Randall.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Randall Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Spill at Fort Randall.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Randall Flow Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Flow Powerhouse at Fort Randall.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Randall Flow Powerhouse Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Out at Fort Randall.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Randall Flow Out Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Tailwater Elevation at Fort Randall.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Randall Tailwater Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Energy at Fort Randall.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Randall Energy Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Water Temperature at Fort Randall.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Randall Water Temperature Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Air Temperature at Fort Randall.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Randall Air Temperature Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+    
+    <!-- Gavins Point Modal -->
+    <div id="Gavins Point" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <iframe src="{% static 'graphs/Elevation at Gavins Point.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Gavins Point Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Spill at Gavins Point.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Gavins Point Flow Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Flow Powerhouse at Gavins Point.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Gavins Point Flow Powerhouse Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Out at Gavins Point.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Gavins Point Flow Out Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Tailwater Elevation at Gavins Point.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Gavins Point Tailwater Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Energy at Gavins Point.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Gavins Point Energy Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Water Temperature at Gavins Point.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Gavins Point Water Temperature Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Air Temperature at Gavins Point.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Gavins Point Air Temperature Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+    
+    <!-- Garrison Modal -->
+    <div id="Garrison" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <iframe src="{% static 'graphs/Elevation at Garrison.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Garrison Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Spill at Garrison.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Garrison Flow Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Flow Powerhouse at Garrison.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Garrison Flow Powerhouse Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Out at Garrison.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Garrison Flow Out Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Tailwater Elevation at Garrison.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Garrison Tailwater Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Energy at Garrison.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Garrison Energy Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Water Temperature at Garrison.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Garrison Water Temperature Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Air Temperature at Garrison.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Garrison Air Temperature Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+    
+    <!-- Fort Peck Modal -->
+    <div id="Fort Peck" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br>
+        <iframe src="{% static 'graphs/Elevation at Fort Peck.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Peck Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Spill at Fort Peck.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Peck Flow Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Flow Powerhouse at Fort Peck.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Peck Flow Powerhouse Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Flow Out at Fort Peck.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Peck Flow Out Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Tailwater Elevation at Fort Peck.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Peck Tailwater Elevation Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Energy at Fort Peck.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Peck Energy Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Water Temperature at Fort Peck.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Peck Water Temperature Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Air Temperature at Fort Peck.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Peck Air Temperature Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+
+    <!-- Fort Yates Modal -->
+    <div id="Fort Yates" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br><br>
+        <iframe src="{% static 'graphs/Average Air Temperature at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Average Air Temperature Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Relative Humidity at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Average Relative Humidity Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Bare Soil Temperature at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Average Bare Soil Temperature Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Average Turf Soil Temperature at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Average Turf Soil Temperature Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Max Wind Speed at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Max Wind Speed Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Wind Direction at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Average Wind Direction Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Total Solar Radiation at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Total Solar Radiation Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Total Rainfall at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Total Rainfall Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Barometric Pressure at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Average Barometric Pressure Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Dew Point at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Average Dew Point Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Wind Chill at Fort Yates.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Fort Yates Average Wind Chill Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+    
+    <!-- Mott Modal -->
+    <div id="Mott" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br><br>
+        <iframe src="{% static 'graphs/Average Air Temperature at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Average Air Temperature Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Relative Humidity at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Average Relative Humidity Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Bare Soil Temperature at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Average Bare Soil Temperature Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Average Turf Soil Temperature at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Average Turf Soil Temperature Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Max Wind Speed at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Max Wind Speed Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Wind Direction at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Average Wind Direction Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Total Solar Radiation at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Total Solar Radiation Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Total Rainfall at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Total Rainfall Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Barometric Pressure at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Average Barometric Pressure Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Dew Point at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Average Dew Point Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Wind Chill at Mott.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Mott Average Wind Chill Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+    
+    <!-- Carson Modal -->
+    <div id="Carson" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br><br>
+        <iframe src="{% static 'graphs/Average Air Temperature at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Average Air Temperature Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Relative Humidity at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Average Relative Humidity Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Bare Soil Temperature at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Average Bare Soil Temperature Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Average Turf Soil Temperature at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Average Turf Soil Temperature Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Max Wind Speed at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Max Wind Speed Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Wind Direction at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Average Wind Direction Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Total Solar Radiation at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Total Solar Radiation Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Total Rainfall at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Total Rainfall Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Barometric Pressure at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Average Barometric Pressure Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Dew Point at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Average Dew Point Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Wind Chill at Carson.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Carson Average Wind Chill Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+    
+    <!-- Linton Modal -->
+    <div id="Linton" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span><br><br>
+        <iframe src="{% static 'graphs/Average Air Temperature at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Average Air Temperature Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Relative Humidity at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Average Relative Humidity Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Bare Soil Temperature at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Average Bare Soil Temperature Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Average Turf Soil Temperature at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Average Turf Soil Temperature Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Max Wind Speed at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Max Wind Speed Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Wind Direction at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Average Wind Direction Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Total Solar Radiation at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Total Solar Radiation Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Total Rainfall at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Total Rainfall Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Barometric Pressure at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Average Barometric Pressure Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Dew Point at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Average Dew Point Table.html' %}" width=750 height=100></iframe>
+        
+        <iframe src="{% static 'graphs/Average Wind Chill at Linton.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Linton Average Wind Chill Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+
+    <!-- Cash Modal -->
+    <div id="Cash" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <iframe src="{% static 'graphs/Gauge Height at Cash.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Cash Gauge Height Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Discharge at Cash.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Cash Discharge Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+    
+    <!-- Wakpala Modal -->
+    <div id="Wakpala" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <iframe src="{% static 'graphs/Gauge Height at Wakpala.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Wakpala Gauge Height Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Discharge at Wakpala.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Wakpala Discharge Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+    
+    <!-- Whitehorse Modal -->
+    <div id="Whitehorse" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <iframe src="{% static 'graphs/Gauge Height at Whitehorse.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Whitehorse Gauge Height Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Discharge at Whitehorse.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Whitehorse Discharge Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+    
+    <!-- Little Eagle Modal -->
+    <div id="Little Eagle" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <iframe src="{% static 'graphs/Gauge Height at Little Eagle.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Little Eagle Gauge Height Table.html' %}" width=750 height=100></iframe>
+
+        <iframe src="{% static 'graphs/Discharge at Little Eagle.html' %}" width=750 height=500></iframe>
+        <iframe src="{% static 'graphs/Little Eagle Discharge Table.html' %}" width=750 height=100></iframe>
+      </div>
+    </div>
+
+    <!-- Lemmon Modal -->
+    <div id="Lemmon" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+      </div>
+    </div>
+    
+    <!-- McIntosh Modal -->
+    <div id="McIntosh" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+      </div>
+    </div>
+    
+    <!-- Mclaughlin Modal -->
+    <div id="Mclaughlin" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+      </div>
+    </div>
+    
+    <!-- Mound City Modal -->
+    <div id="Mound City" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+      </div>
+    </div>
+    
+    <!-- Timber Lake Modal -->
+    <div id="Timber Lake" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+      </div>
+    </div>
+    
+    <!-- Close Button -->
+    <span class="close">&times;</span>
+    
+    </div>
+    </div>
+  
+
+  </body>
+</html>
