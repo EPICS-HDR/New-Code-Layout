@@ -1,106 +1,146 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Data Page</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
-</head>
-<body>
-{% include 'sources/header.html' %}
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="{% static 'styles.css' %}" />
+  </head>
+  <body>
+    {% include 'sources/header.html' %}
+     <!-- {% include 'sources/fields.html' %} -->
 
-{% include 'sources/fields.html' %}
+    <div class="container">
 
-<div class="container">
-    <div class="my-3 w-100">
-        <div class="d-flex w-100 m-auto gap-2 align-items-center">
+      <form action="/sources/selected-review/" method="get" class="w-100">
+        <div class="my-3 w-100">
+          {{ form.as_p }}
+        </div>
+        <!-- <div class="my-3 w-100">
+          <div class="d-flex w-100 m-auto gap-2 align-items-center">
             *Download
-            <select name="selected-files" class="form-select form-select-sm" style="width: 200px">
-                <option>selected files</option>
+            <select
+              name="selected-files"
+              class="form-select form-select-sm"
+              style="width: 200px"
+            >
+              <option>selected files</option>
             </select>
             as
-            <select name="file-type" class="form-select form-select-sm" style="width: 200px">
-                <option>json</option>
-                <option>csv</option>
-                <option>pdf</option>
+            <select
+              name="file-type"
+              class="form-select form-select-sm"
+              style="width: 200px"
+            >
+              <option>json</option>
+              <option>csv</option>
+              <option>pdf</option>
             </select>
-
+          </div>
         </div>
-    </div>
 
-    <div class="my-3 w-100">
-        <div class="d-flex w-100 m-auto gap-2 align-items-center">
+        <div class="my-3 w-100">
+          <div class="d-flex w-100 m-auto gap-2 align-items-center">
             Search:
-            <input placeholder="Enter search keyword" class="form-control w-25 form-control-sm me-3"/>
+            <input
+              placeholder="Enter search keyword"
+              class="form-control w-25 form-control-sm me-3"
+            />
             <button class="btn btn-primary btn-sm">Select All</button>
             <button class="btn btn-primary btn-sm">Clear All</button>
+          </div>
+        </div> -->
+
+        <table class="table table-bordered table-hover table-light">
+          <thead class="thead-dark">
+            <tr>
+              {% for it in colunms %}
+              <th>{{ it }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            {% for row in table %}
+            <tr>
+              {% for cell in row %}
+              <td>{{ cell }}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+
+            {% if not table %}
+            <tr>
+               <td colspan="4" class="text-center">
+                   No data available in table
+               </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+        <div class="w-100 d-flex justify-content-end">
+          <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if table.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ table.previous_page_number }}">Previous</a></li>
+                {% endif %}
+    
+                {% for i in table.paginator.page_range %}
+                    {% if table.number == i %}
+                        <li class="page-item active"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                    {% elif i > table.number and i <= table.number|add:5 %}
+                        <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                    {% elif i < table.number and i >= table.number|add:-4 %}
+                        <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+    
+                {% if table.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ table.next_page_number }}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ table.paginator.num_pages }}">Last</a></li>
+                {% endif %}
+            </ul>
+          </nav>
         </div>
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary btn-sm my-3 m-auto">Preview to download</button>
+        </div>
+
+      </form>
     </div>
 
-    <table class="table table-bordered table-hover table-light">
-        <thead class="thead-dark">
-        <tr>
-            <th>Filename
-                <i class="bi bi-sort-up"></i>
-            </th>
-            <th>Product (Collection)
-                <i class="bi bi-sort-up"></i>
-            </th>
-            <th>Date / Time
-                <i class="bi bi-sort-up"></i>
-            </th>
-            <th>Download</th>
+    <!-- {% include 'sources/missing.html' %} -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const downloadButton = document.querySelector("#download-btn"); // 假设你的下载按钮有一个ID或者你可以用其他选择器选中它
+        downloadButton.addEventListener("click", function () {
+          const selectedFiles = document.querySelector(
+            'select[name="selected-files"]'
+          ).value;
+          const fileType = document.querySelector(
+            'select[name="file-type"]'
+          ).value;
 
-        </tr>
-        </thead>
-        <tbody id="tableBody">
-        <tr>
-            <td>AERDB D3 WIIRS NOAA20.A2024032.002.2024036000725.nc
-                <i class="bi bi-info-circle-fill"></i>
-            </td>
-            <td>
-                AERDB D3 VIRS NOAA20(5200)
-            </td>
-            <td>
-                2024-02-01 00:00:00
-            </td>
-            <td>
-                <a class="text-info text-decoration-none">
-                    <i class="bi bi-download me-2"></i>
-                    4MB
-                </a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    <div class="w-100 d-flex justify-content-end">
-        <nav aria-label="Page navigation example">
-          <ul class="pagination">
-            <li class="page-item"><a class="page-link" href="#">Previous</a></li>
-            <li class="page-item"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item"><a class="page-link" href="#">Next</a></li>
-          </ul>
-        </nav>
-    </div>
-</div>
-
-{% include 'sources/missing.html' %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const downloadButton = document.querySelector('#download-btn'); // 假设你的下载按钮有一个ID或者你可以用其他选择器选中它
-        downloadButton.addEventListener('click', function() {
-            const selectedFiles = document.querySelector('select[name="selected-files"]').value;
-            const fileType = document.querySelector('select[name="file-type"]').value;
-
-            // 构建请求URL
-            const url = `/download?fileType=${fileType}&files=${selectedFiles}`;
-            window.location.href = url; // 导航到URL以下载文件
+          // 构建请求URL
+          const url = `/download?fileType=${fileType}&files=${selectedFiles}`;
+          window.location.href = url; // 导航到URL以下载文件
         });
-    });
+      });
     </script>
-</body>
+
+    <style>
+      #id_my_field > div {
+        display: inline;
+      }
+    </style>
+  </body>
 </html>
