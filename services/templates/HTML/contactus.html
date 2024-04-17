@@ -5,108 +5,124 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #c35c5c;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #c35c5c;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+.banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 155px; /* Adjust the height as needed */
+    background-color: #000; /* Set background color to black */
+    z-index: 1000; /* Ensure it's above other content */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-        .banner {
-  width: 100%;
-  height: 485px;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.51), rgba(0, 0, 0, 0.51)), url(https://www.standingrock.org/wp-content/uploads/2021/06/Admin-building.jpg);
-  background-size: cover;
-  background-position: center;
+.topnav {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+}
 
+.icon {
+    height: 40px;
+    width: auto;
+    margin-right: 20px;
+}
+.topnav a {
+    color: white;
+    text-decoration: none;
+    font-size: 22px;
+    margin: 0 88px; /* Adjust horizontal spacing */
 }
 
 
-        .topnav {
-            max-width: 1200px; /* Limit the width of the navigation */
-            margin: 0 auto; /* Center the navigation */
-        }
 
-        .topnav a {
-            color: white;
-            text-decoration: none;
-            font-size: 22px;
-            margin: 0 20px;
-        }
+.topnav a:hover {
+    text-decoration: underline;
+}
 
-        form {
-            background-color: #de9898;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            width: 400px;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            margin-top: 100px; /* Adjust top margin to make space for the banner */
-        }
+form {
+    margin-top: 150px; 
+    background-color: #de9898;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
 
-        form:hover {
-            transform: translateY(-5px);
-        }
+form:hover {
+    transform: translateY(-5px);
+}
 
-        h1 {
-            text-align: center;
-            color: #f5ebeb;
-            margin-bottom: 30px;
-            font-size: 28px;
-        }
+h1 {
+    text-align: center;
+    color: #f5ebeb;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #666;
-        }
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #666;
+}
 
-        input, select {
-            width: calc(100% - 16px);
-            padding: 12px;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            transition: border-color 0.3s ease;
-            font-size: 16px;
-        }
+input, select, textarea {
+    width: calc(100% - 16px);
+    padding: 12px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    transition: border-color 0.3s ease;
+    font-size: 16px;
+}
 
-        input:focus, select:focus {
-            border-color: #4caf50;
-        }
+input:focus, select:focus, textarea:focus {
+    border-color: #4caf50;
+}
 
-        input[type="submit"] {
-            background-color: #4caf50;
-            color: #fff;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 6px;
-            padding: 12px 0;
-            transition: background-color 0.3s ease;
-        }
+input[type="submit"] {
+    background-color: #4caf50;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 0;
+    transition: background-color 0.3s ease;
+}
 
-        input[type="submit"]:hover {
-            background-color: #45a049;
-        }
+input[type="submit"]:hover {
+    background-color: #45a049;
+}
 
-        input[type="submit"]:disabled {
-            background-color: #ddd;
-            color: #666;
-            cursor: not-allowed;
-        }
+input[type="submit"]:disabled {
+    background-color: #ddd;
+    color: #666;
+    cursor: not-allowed;
+}
 
-        #test {
-            margin-top: 20px;
-            text-align: center;
-            color: #888;
-        }
+#test {
+    margin-top: 20px;
+    text-align: center;
+    color: #888;
+}
+
+
     </style>
 </head>
 <body>
