@@ -11,64 +11,27 @@
 </head>
 <body>
     {% include 'sources/header.html' %}
-<!-- {% include 'sources/fields.html' %} -->
+{% include 'sources/fields.html' %}
     <div class="container">
-        <table class="table table-bordered table-hover table-light mt-4">
-            <thead class="thead-dark">
-              <tr>
-                {% for it in colunms %}
-                <th>{{ it }}</th>
-                {% endfor %}
-              </tr>
+        <table class="table table-hover table-striped mt-5">
+            <thead>
+                <tr class="border-1">
+                    <th>Selected Filenames <i class="bi bi-sort-up"></i></th>
+                    <th>Product(collection) <i class="bi bi-sort-up"></i></th>
+                    <th>Date/Time <i class="bi bi-sort-up"></i></th>
+                    <th>Download <i class="bi bi-sort-up"></i></th>
+                </tr>
             </thead>
-            <tbody id="tableBody">
-              {% for row in table %}
-              <tr>
-                {% for cell in row %}
-                <td>{{ cell }}</td>
-                {% endfor %}
-              </tr>
-              {% endfor %}
-  
-              {% if not table %}
-              <tr>
-                 <td colspan="4" class="text-center">
-                     No data available in table
-                 </td>
-              </tr>
-              {% endif %}
+            <tbody>
+                <tr>
+                   <td colspan="4" class="text-center">
+                       No data available in table
+                   </td>
+                </tr>
             </tbody>
-          </table>
-        <div class="w-100 d-flex justify-content-end">
-            <nav aria-label="Page navigation example">
-                <ul class="pagination">
-                    {% if table.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
-                        <li class="page-item"><a class="page-link" href="?page={{ table.previous_page_number }}">Previous</a></li>
-                    {% endif %}
-        
-                    {% for i in table.paginator.page_range %}
-                        {% if table.number == i %}
-                            <li class="page-item active"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
-                        {% elif i > table.number and i <= table.number|add:5 %}
-                            <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
-                        {% elif i < table.number and i >= table.number|add:-4 %}
-                            <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
-                        {% endif %}
-                    {% endfor %}
-        
-                    {% if table.has_next %}
-                        <li class="page-item"><a class="page-link" href="?page={{ table.next_page_number }}">Next</a></li>
-                        <li class="page-item"><a class="page-link" href="?page={{ table.paginator.num_pages }}">Last</a></li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
-
-        <form method="post">
-            {% csrf_token %}
-            <button type="submit" id="download-btn" class="btn btn-primary btn-sm my-3">Download</button>
-        </form>
+        </table>
+        <button id="download-btn" class="btn btn-primary btn-sm">Download</button>
     </div>
+{% include 'sources/missing.html' %}
 </body>
 </html>
