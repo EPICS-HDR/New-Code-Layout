@@ -1,0 +1,23 @@
+{
+    "name": "Standing Rock Environmental Hub",
+    "short_name": "Standing Rock",
+    "icons": [
+      {
+        "src": "/static/images/buffalo.jpg",
+        "type": "image/png",
+        "sizes": "192x192",
+        "purpose": "maskable"
+      },
+      {
+        "src": "/static/images/tepe.jpg",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+    ],
+    "start_url": "/",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "scope": "/",
+    "theme_color": "#4A90E2"
+  }
+  
