@@ -22,31 +22,6 @@
             margin: 0;
         }
 
-        /* Top navigation styles */
-        .topnav {
-            background-color: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            text-align: right;
-            z-index: 1000; /* Ensure it's above other content */
-        }
-
-        .topnav a {
-            color: white;
-            text-decoration: none;
-            font-size: 22px;
-            margin: 0 20px;
-        }
-
-        /* Banner styles */
-        .banner {
-  width: 100%;
-  height: 485px;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.51), rgba(0, 0, 0, 0.51)), url(https://www.standingrock.org/wp-content/uploads/2021/06/Admin-building.jpg);
-  background-size: cover;
-  background-position: center;
-
-}
-
 
         /* Heading styles */
         h1 {
@@ -131,17 +106,19 @@
             }
         }
     </style>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
 </head>
 <body>
     <div class="banner">
         <div class="topnav">
-            <img class="icon" src='/static/images/Standing Rock Crest Logo.png'>
-            <a href="/home">Home</a>
+            <img class="icon1" src='/static/images/Standing Rock Crest Logo.png'>
+            <a href="/">Home</a>
             <a href="/about">About Us</a>
             <a href="/contactus">Contact Us</a>
             <a href="/favorites">Favorites</a>
             <a href="/login">Sign Up/In</a>
-        </div>
+          </div>
     </div>
 
     <div class="center">

@@ -20,36 +20,11 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 155px; /* Adjust the height as needed */
     background-color: #000; /* Set background color to black */
     z-index: 1000; /* Ensure it's above other content */
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.topnav {
-    padding: 20px;
-    display: flex;
-    align-items: center;
-}
-
-.icon {
-    height: 40px;
-    width: auto;
-    margin-right: 20px;
-}
-.topnav a {
-    color: white;
-    text-decoration: none;
-    font-size: 22px;
-    margin: 0 88px; /* Adjust horizontal spacing */
-}
-
-
-
-.topnav a:hover {
-    text-decoration: underline;
 }
 
 form {
@@ -115,26 +90,20 @@ input[type="submit"]:disabled {
     color: #666;
     cursor: not-allowed;
 }
-
-#test {
-    margin-top: 20px;
-    text-align: center;
-    color: #888;
-}
-
-
     </style>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
 </head>
 <body>
     <div class="banner">
         <div class="topnav">
-            <img class="icon" src='/static/images/Standing Rock Crest Logo.png'>
-            <a href="/home">Home</a>
+            <img class="icon1" src='/static/images/Standing Rock Crest Logo.png'>
+            <a href="/">Home</a>
             <a href="/about">About Us</a>
             <a href="/contactus">Contact Us</a>
             <a href="/favorites">Favorites</a>
             <a href="/login">Sign Up/In</a>
-        </div>
+          </div>
     </div>
 
     <form>
