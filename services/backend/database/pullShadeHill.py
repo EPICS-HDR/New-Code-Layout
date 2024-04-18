@@ -1,4 +1,5 @@
 import requests
+from backend.database.sqlclasses import updateDictionary
 
 def pullShadeHill(start_day, start_month, start_year, end_day, end_month, end_year):
 
@@ -70,3 +71,10 @@ def shadehillrequest(startyear, startmonth, startday, endyear, endmonth, endday,
     
     del times[-1]
     del datas[-1]
+    
+    for i in range(0, len(datas)):
+        datas[i] = float(datas[i])
+        if datas[i] > 900000:
+            datas[i] = None
+
+    updateDictionary(times, datas, "Shadehill", dataname, "shadehill")

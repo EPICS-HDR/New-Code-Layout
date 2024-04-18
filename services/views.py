@@ -240,3 +240,47 @@ def customcocograph(request):
     table = makeTable(datalist, 0)
 
     return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+
+def customshadehillgraph(request):
+    
+    data2see = request.POST['data2see']
+    if "_" in data2see:
+        data2see = data2see.split("_")
+        data2see = data2see[0] + " " + data2see[1]
+
+    start_date = request.POST['start-date']
+    end_date = request.POST['end-date']
+    
+    times, data = dictpull("Shadehill", data2see, start_date, end_date, "shadehill")
+
+    plot = customGraph(times, ["Shadehill"], [data], data2see, 0)
+    table = makeTable([data], 0)
+
+    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+
+def customnoaagraph(request):
+
+    locationlist = request.POST.getlist('noaa')
+    length = len(locationlist)
+    data2see = request.POST['data2see']
+    if "_" in data2see:
+        data2see = data2see.split("_")
+        data2see = data2see[0] + " " + data2see[1]
+
+    start_date = request.POST['start-date']
+
+    end_date = request.POST['end-date']
+
+    datalist = []
+    sites = []
+    index = 0
+    while index < length:
+        sites.append(locationlist[index])
+        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "noaa")
+        datalist.append(data)
+        index += 1
+        
+    plot = customGraph(times, sites, datalist, data2see, 0)
+    table = makeTable(datalist, 0)
+
+    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})

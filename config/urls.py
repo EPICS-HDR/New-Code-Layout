@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.urls import path
-from services.views import interactiveMap, customgauge, customcocograph, customgaugegraph, customdam, customdamgraph, test, custommesonet, custommesonetgraph, tabs, tabstest, maptabs, homepage, forecast, about, register, signup, signin, signout
+from services.views import interactiveMap, customnoaagraph, customshadehillgraph, customgauge, customcocograph, customgaugegraph, customdam, customdamgraph, test, custommesonet, custommesonetgraph, tabs, tabstest, maptabs, homepage, forecast, about, register, signup, signin, signout
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
@@ -26,8 +26,10 @@ urlpatterns = [
     path('customcocograph/', customcocograph),
 #    path('customgauge/', customgauge),
     path('customdam/', customdam),
+    path('customnoaagraph/', customnoaagraph),
 #    path('custommesonet/', custommesonet),
     path('custommesonetgraph/', custommesonetgraph),
+    path('customshadehillgraph/', customshadehillgraph),
     path('map/', interactiveMap),
     path('homep/', test),
 #    path('tabs/', tabs),

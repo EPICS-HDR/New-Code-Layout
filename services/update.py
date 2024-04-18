@@ -179,7 +179,7 @@ def main():
     # Establishes date ranges for use
     start_day, start_month, start_year, end_day, end_month, end_year = getDates()
 
-    # Pulls and stores all USACE data available
+     # Pulls and stores all USACE data available
     damList = ["Fort Peck", "Garrison", "Oahe", "Big Bend", "Fort Randall", "Gavins Point"]
     for dam in damList:
         pullDamData(dam)
@@ -222,4 +222,4 @@ def main():
     # Creates and Caches graphs
     updateGraphs(start_day, start_month, start_year, end_day, end_month, end_year)
 
-# main()
+main()

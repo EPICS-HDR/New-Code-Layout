@@ -13,8 +13,8 @@ def pullDamData(dam_location):
                 'Fort Randall': ['FTRA'],
                 'Gavins Point': ['GAPT']}
 
-    file_name = f'./services/static/JSON{dam_location}.txt'
-    file_name_csv = f'./services/static/JSON{dam_location}.csv'
+    file_name = f'./static/JSON{dam_location}.txt'
+    file_name_csv = f'./static/JSON{dam_location}.csv'
     location_data = DAM_dict[f'{dam_location}']
     location_code = location_data[0]
 
@@ -87,7 +87,7 @@ def pullDamData(dam_location):
     Temp_Air = ParseData(Temp_Air)
 
     # Removes pulled file from storage once used, and no longer needed
-    os.remove(f'./services/static/JSON{dam_location}.txt')
+    os.remove(f'./static/JSON{dam_location}.txt')
 
     index = 0
     times = []

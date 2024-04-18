@@ -15,7 +15,7 @@ def pullMesonetData(location, day1, month1, year1, day2, month2, year2):
     location_dict = NODAK_dict[f'{location}']
     station = location_dict[0]
 
-    file_name = f'./services/static/JSON{location}.csv'
+    file_name = f'./static/JSON{location}.csv'
 
     url_csv = f'https://ndawn.ndsu.nodak.edu/table.csv?ttype=hourly&station={station}&begin_date={year1}-{month1}-{day1}&end_date={year2}-{month2}-{day2}'
 

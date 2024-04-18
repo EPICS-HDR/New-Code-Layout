@@ -1,4 +1,3 @@
-
 import plotly.graph_objs as go
 import plotly.offline
 import numpy as np
@@ -18,11 +17,24 @@ measurement_dict = {"Flow Spill": "Cubic Feet Per Second",
                     "Flow Out": "Cubic Feet Per Second",
                     "Elevation Tailwater": "Feet",
                     "Energy": "MWH",
-                    "Water Temperature": "Fahrenheit",
-                    "Air Temperature": "Fahrenheit",
+                    "Water Temperature": "Degrees Fahrenheit",
+                    "Air Temperature": "Degrees Fahrenheit",
                     "Gauge Height": "Feet",
-                    "Elevation": "Stream Water Level Elevation Above NAVD",
-                    "Discharge": "Cubic Feet per Second"
+                    "Elevation": "Stream Water Level Elevation Above NAVD in Feet",
+                    "Discharge": "Cubic Feet per Second",
+                    "Relative Humidity": "Percentage (%)",
+                    "Average Relative Humidity": "Percentage (%)",
+                    "Average Air Temperature": "Degrees Farenheit",
+                    "Average Bare Soil Temperature": "Degrees Farenheit",
+                    "Average Turf Soil Temperature": "Degrees Farenheit",
+                    "Max Wind Speed": "Miles Per Hour",
+                    "Wind Direction": "Degrees",
+                    "Average Solar Radiation": "Langleys",
+                    "Total Rainfall": "Inches",
+                    "Average Barometric Pressure": "Millibars",
+                    "Average Dew Point": "Degrees Farenheit",
+                    "Average Wind Chill": "Degrees Farenheit",
+
                     }
 
 #list of colors
@@ -65,11 +77,24 @@ def customGraph(times, locations, datalist, data2see, cache): #returns the graph
     traces = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ylabels = []
 
+    datasetdict = {"relativeHumidity": "Relative Humidity",
+                    "temperature": "Temperature",
+                    "windChill": "Wind Chill",
+                    "dewpoint": "Dew Point",
+                    }
+
+    # Sees if name correction available
+    try:
+        data2see = datasetdict[data2see]
+    except:
+        pass
+
     for i in locations: #creates a trace for every location in the list locations
         trace, ylabel = makeTrace(times, locations[index], datalist[index], data2see, index, colors)
         traces[index] = trace
         ylabels.append(ylabel)
         index += 1
+
     #creates the title based on the data type and all locations selected
     title = data2see + " at " 
     for i in range(index):

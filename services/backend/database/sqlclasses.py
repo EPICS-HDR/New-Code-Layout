@@ -27,7 +27,14 @@ sql_conversion = {"Elevation" : "elevation", "Air Temperature": "air_temp", "Wat
                   "Total Solar Radiation" : "total_solar_rad", "Total Rainfall" : "total_rainfall", \
                   "Average Baromatric Pressure" : "avg_bar_pressure", "Average Dew Point" : "avg_dew_point", \
                   "Average Dew Point" : "avg_dew_point", "Average Wind Chill" : "avg_wind_chill", "Precipitation" : "precipitation", \
-                  "Snowfall" : "snowfall", "Snow Depth" : "snow_depth", \
+                  "Snowfall" : "snowfall", "Snow Depth" : "snow_depth", "Reservoir Storage Content" : "res_stor_content", \
+                  "Reservoir Forebay Elevation" : "res_forebay_elev", "Daily Mean Computed Inflow" : "daily_mean_comp_inflow", \
+                  "Daily Mean Air Temperature" : "daily_mean_air_temp", "Daily Minimum Air Temperature" : "daily_min_air_temp", \
+                  "Daily Maximum Air Temperature" : "daily_max_air_temp", "Total Precipitation (inches per day)" : "tot_precip_daily", \
+                  "Total Water Year Precipitation" : "tot_year_precip", "Daily Mean Total Discharge" : "daily_mean_tot_dis", \
+                  "Daily Mean River Discharge" : "daily_mean_river_dis", "Daily Mean Spillway Discharge" : "daily_mean_spill_dis", \
+                  "Daily Mean Gate One Opening" : "daily_mean_gate_opening", "temperature" : "temperature", \
+                  "dewpoint" : "dew_point", "relativeHumidity" : "rel_humidity" , "windChill" : "wind_chill", \
 }
 
 locationdict = {'6340500':'Hazen',
@@ -98,7 +105,7 @@ def create_tables() -> None:
                 avg_wind_chill REAL, PRIMARY KEY(location, datetime) \
     )")
 
-    cur.execute("CREATE TABLE gauge (location TEXT, datetime TEXT, \
+    cur.execute("CREATE TABLE gauge(location TEXT, datetime TEXT, \
                 elevation REAL, gauge_height REAL, discharge REAL, water_temp REAL, \
                 PRIMARY KEY(location, datetime))")
     
@@ -107,14 +114,27 @@ def create_tables() -> None:
                 elevation REAL, flow_spill REAL, flow_power REAL, \
                 flow_out REAL, tail_ele REAL, energy REAL, water_temp REAL,\
                 air_temp REAL, PRIMARY KEY(location, datetime))")
-    # TODO add new data tables (figure out which features we are storing)
 
     cur.execute("CREATE TABLE cocorahs( location TEXT, datetime TEXT, \
                 precipitation REAL, snowfall REAL, \
                 snow_depth REAL, PRIMARY KEY(location, datetime) \
     )")
-   
 
+    cur.execute("CREATE TABLE shadehill( location TEXT, datetime TEXT, \
+                res_stor_content REAL, res_forebay_elev REAL, \
+                daily_mean_comp_inflow REAL, daily_mean_air_temp REAL, \
+                daily_min_air_temp REAL, daily_max_air_temp REAL, \
+                tot_precip_daily REAL, tot_year_precip REAL, \
+                daily_mean_tot_dis REAL, daily_mean_river_dis REAL, \
+                daily_mean_spill_dis REAL, \
+                daily_mean_gate_opening REAL, PRIMARY KEY(location, datetime) \
+    )")
+
+    cur.execute("CREATE TABLE noaa( location TEXT, datetime TEXT, \
+                temperature REAL, dew_point REAL, \
+                rel_humidity REAL, wind_chill REAL, \
+                PRIMARY KEY(location, datetime))")
+                
 def clear_db():
     #COMPLETELY RESETS DATABASE USE WITH CAUTION: MAKE SURE BACKUP DATA IS AVAILABLE
     conn = sql.connect("./Measurements.db")

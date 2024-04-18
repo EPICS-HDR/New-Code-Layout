@@ -44,9 +44,9 @@ def pullGaugeData(city, start_day, start_month, start_year, end_day, end_month, 
         
     response = requests.get(url)
 
-    file_name = f"./services/static/JSON{city}"
+    file_name = f"./static/JSON{city}"
 
-    with open('./services/static/JSONdata.txt', "w") as f: # writes text from the website to text
+    with open('./static/JSONdata.txt', "w") as f: # writes text from the website to text
         writer = csv.writer(f)
         for line in response.text.split("\n"):
             writer.writerow(line.split("\t"))
@@ -55,7 +55,7 @@ def pullGaugeData(city, start_day, start_month, start_year, end_day, end_month, 
     count = 0
     alternate = 0
 
-    with open('./services/static/JSONdata.txt', "r") as file: 
+    with open('./static/JSONdata.txt', "r") as file: 
         for line in file:
             if count == linecount:
                 data.append(line)
@@ -74,7 +74,7 @@ def pullGaugeData(city, start_day, start_month, start_year, end_day, end_month, 
         for line in data:
             file.write(f"{line}")    
         
-    with open ('./services/static/JSONdata.txt', "w") as file:
+    with open ('./static/JSONdata.txt', "w") as file:
         for line in data:
             file.write(f"{line}")
         
@@ -172,5 +172,5 @@ def pullGaugeData(city, start_day, start_month, start_year, end_day, end_month, 
         updateDictionary(times, gauge_height, city, "Gauge Height", "gauge")
         updateDictionary(times, discharge, city, "Discharge", "gauge")
 
-    os.remove(f"./services/static/JSON{city}.csv")
-    os.remove(f'./services/static/JSONdata.txt')
+    os.remove(f"./static/JSON{city}.csv")
+    os.remove(f'./static/JSONdata.txt')

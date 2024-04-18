@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import calendar
 from datetime import datetime
+from backend.database.sqlclasses import updateDictionary
 
 def getForecasts(location, dataset):
     """
@@ -130,9 +131,6 @@ def forecastdatacall(dataset):
                         "Beach", "Dickinson/Roosevelt", "Glen", "Bismarck", "Miles City/Wiley", "Baker", "Bowman", "Hettinger", "Linton", "Buffalo/Harding",
                         "Mobridge", "Faith", "Spearfish/Clyde", "Pierre", "Custer", "Rapid City", "Philip"]
 
-    # List to contain all data for the chosen dataset
-    dataList = []
-
     for location in locationKeys:
 
         data = 0
@@ -158,9 +156,5 @@ def forecastdatacall(dataset):
                 # Compiles all data points, in a new list, with matching indexes to their times
                 valueList.append(item["value"])
 
-            # After compiling all data, adds to running data list
-            dataList.append(timeList)
-            dataList.append(valueList)
-
-            # Updates dictionary for each location
-            # updateDictionary(timeList, valueList, location, dataset)
+            # Updates database with gathered times and data
+            updateDictionary(timeList, valueList, location, dataset, "noaa")
