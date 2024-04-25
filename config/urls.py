@@ -43,7 +43,6 @@ urlpatterns = [
     path('signup', signup, name='signup'),
     path('signin', signin, name='signin'),
     path('signout', signout, name='signout'),
-    path('sources/', include('sources.urls')),
     path('favorites/', favorites, name='favorites'),
     path('login/', login, name='login'),
     path('contactus/', contactus, name='contactus')

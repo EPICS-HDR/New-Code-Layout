@@ -38,7 +38,6 @@ def contactus(request):
     return render(request,'HTML/contactus.html')
 def register(request):
     return render(request, "HTML/register.html")
-
 def login(request):
     return render(request, 'HTML/login.html')
 def signup(request):
