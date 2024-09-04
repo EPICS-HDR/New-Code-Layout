@@ -805,7 +805,7 @@ def test_rendered_links(type, text, exp, found):
         df = DataFrame([0], index=[text])
         styler = df.style.format_index(hyperlinks="html")
 
-    rendered = '<a href="{0}" target="_blank">{0}</a>'.format(found)
+    rendered = f'<a href="{found}" target="_blank">{found}</a>'
     result = styler.to_html()
     assert (rendered in result) is exp
     assert (text in result) is not exp  # test conversion done when expected and not
@@ -813,6 +813,7 @@ def test_rendered_links(type, text, exp, found):
 
 def test_multiple_rendered_links():
     links = ("www.a.b", "http://a.c", "https://a.d", "ftp://a.e")
+    # pylint: disable-next=consider-using-f-string
     df = DataFrame(["text {} {} text {} {}".format(*links)])
     result = df.style.format(hyperlinks="html").to_html()
     href = '<a href="{0}" target="_blank">{0}</a>'
@@ -975,3 +976,32 @@ def test_concat_combined():
         )
     )
     assert expected_css + expected_table == result
+
+
+def test_to_html_na_rep_non_scalar_data(datapath):
+    # GH47103
+    df = DataFrame([dict(a=1, b=[1, 2, 3], c=np.nan)])
+    result = df.style.format(na_rep="-").to_html(table_uuid="test")
+    expected = """\
+<style type="text/css">
+</style>
+<table id="T_test">
+  <thead>
+    <tr>
+      <th class="blank level0" >&nbsp;</th>
+      <th id="T_test_level0_col0" class="col_heading level0 col0" >a</th>
+      <th id="T_test_level0_col1" class="col_heading level0 col1" >b</th>
+      <th id="T_test_level0_col2" class="col_heading level0 col2" >c</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th id="T_test_level0_row0" class="row_heading level0 row0" >0</th>
+      <td id="T_test_row0_col0" class="data row0 col0" >1</td>
+      <td id="T_test_row0_col1" class="data row0 col1" >[1, 2, 3]</td>
+      <td id="T_test_row0_col2" class="data row0 col2" >-</td>
+    </tr>
+  </tbody>
+</table>
+"""
+    assert result == expected

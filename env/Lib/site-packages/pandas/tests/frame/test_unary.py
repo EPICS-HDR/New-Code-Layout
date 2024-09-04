@@ -3,7 +3,7 @@ from decimal import Decimal
 import numpy as np
 import pytest
 
-from pandas.compat import is_numpy_dev
+from pandas.compat.numpy import np_version_gte1p25
 
 import pandas as pd
 import pandas._testing as tm
@@ -84,6 +84,13 @@ class TestDataFrameUnaryOperators:
         )
         tm.assert_frame_equal(result, expected)
 
+    def test_invert_empy_not_input(self):
+        # GH#51032
+        df = pd.DataFrame()
+        result = ~df
+        tm.assert_frame_equal(df, result)
+        assert df is not result
+
     @pytest.mark.parametrize(
         "df",
         [
@@ -114,13 +121,16 @@ class TestDataFrameUnaryOperators:
         [
             pytest.param(
                 pd.DataFrame({"a": ["a", "b"]}),
-                marks=[pytest.mark.filterwarnings("ignore")],
+                # filterwarnings removable once min numpy version is 1.25
+                marks=[
+                    pytest.mark.filterwarnings("ignore:Applying:DeprecationWarning")
+                ],
             ),
         ],
     )
     def test_pos_object_raises(self, df):
         # GH#21380
-        if is_numpy_dev:
+        if np_version_gte1p25:
             with pytest.raises(
                 TypeError, match=r"^bad operand type for unary \+: \'str\'$"
             ):

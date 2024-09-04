@@ -10,6 +10,7 @@ from pandas import (
     NaT,
     Period,
     PeriodIndex,
+    RangeIndex,
     Series,
     Timedelta,
     Timestamp,
@@ -55,7 +56,7 @@ def test_reindex(datetime_series, string_series):
 
     # return a copy the same index here
     result = datetime_series.reindex()
-    assert not (result is datetime_series)
+    assert result is not datetime_series
 
 
 def test_reindex_nan():
@@ -97,7 +98,7 @@ def test_reindex_with_datetimes():
 
 def test_reindex_corner(datetime_series):
     # (don't forget to fix this) I think it's fixed
-    empty = Series(dtype=object)
+    empty = Series(index=[])
     empty.reindex(datetime_series.index, method="pad")  # it works
 
     # corner case: pad empty series
@@ -126,7 +127,7 @@ def test_reindex_pad():
     reindexed2 = s2.reindex(s.index, method="ffill")
     tm.assert_series_equal(reindexed, reindexed2)
 
-    expected = Series([0, 0, 2, 2, 4, 4, 6, 6, 8, 8], index=np.arange(10))
+    expected = Series([0, 0, 2, 2, 4, 4, 6, 6, 8, 8])
     tm.assert_series_equal(reindexed, expected)
 
     # GH4604
@@ -369,16 +370,15 @@ def test_reindex_periodindex_with_object(p_values, o_values, values, expected_va
 def test_reindex_too_many_args():
     # GH 40980
     ser = Series([1, 2])
-    with pytest.raises(
-        TypeError, match=r"Only one positional argument \('index'\) is allowed"
-    ):
+    msg = r"reindex\(\) takes from 1 to 2 positional arguments but 3 were given"
+    with pytest.raises(TypeError, match=msg):
         ser.reindex([2, 3], False)
 
 
 def test_reindex_double_index():
     # GH 40980
     ser = Series([1, 2])
-    msg = r"'index' passed as both positional and keyword argument"
+    msg = r"reindex\(\) got multiple values for argument 'index'"
     with pytest.raises(TypeError, match=msg):
         ser.reindex([2, 3], index=[3, 4])
 
@@ -423,3 +423,14 @@ def test_reindexing_with_float64_NA_log():
         result_log = np.log(s_reindex)
         expected_log = Series([0, np.NaN, np.NaN], dtype=Float64Dtype())
         tm.assert_series_equal(result_log, expected_log)
+
+
+@pytest.mark.parametrize("dtype", ["timedelta64", "datetime64"])
+def test_reindex_expand_nonnano_nat(dtype):
+    # GH 53497
+    ser = Series(np.array([1], dtype=f"{dtype}[s]"))
+    result = ser.reindex(RangeIndex(2))
+    expected = Series(
+        np.array([1, getattr(np, dtype)("nat", "s")], dtype=f"{dtype}[s]")
+    )
+    tm.assert_series_equal(result, expected)

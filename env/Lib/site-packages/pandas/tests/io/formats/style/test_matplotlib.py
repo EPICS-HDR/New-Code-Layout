@@ -260,7 +260,20 @@ def test_background_gradient_gmap_wrong_series(styler_blank):
         styler_blank.background_gradient(gmap=gmap, axis=None)._compute()
 
 
-@pytest.mark.parametrize("cmap", ["PuBu", mpl.cm.get_cmap("PuBu")])
+def test_background_gradient_nullable_dtypes():
+    # GH 50712
+    df1 = DataFrame([[1], [0], [np.nan]], dtype=float)
+    df2 = DataFrame([[1], [0], [None]], dtype="Int64")
+
+    ctx1 = df1.style.background_gradient()._compute().ctx
+    ctx2 = df2.style.background_gradient()._compute().ctx
+    assert ctx1 == ctx2
+
+
+@pytest.mark.parametrize(
+    "cmap",
+    ["PuBu", mpl.colormaps["PuBu"]],
+)
 def test_bar_colormap(cmap):
     data = DataFrame([[1, 2], [3, 4]])
     ctx = data.style.bar(cmap=cmap, axis=None)._compute().ctx
