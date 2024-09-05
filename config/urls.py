@@ -14,36 +14,39 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.urls import path, include
 from django.urls import path
-from services.views import index, customgauge, customgaugegraph, customdam, customdamgraph, test, custommesonet, custommesonetgraph, tabs, tabstest, maptabs, homepage, forecast, about, register, signup, signin, signout, vansh
+from services.views import interactiveMap, customnoaagraph, customshadehillgraph, customgauge, customcocograph, customgaugegraph, customdam, customdamgraph, test, custommesonet, custommesonetgraph, tabs, tabstest, maptabs, homepage, forecast, about, register, signup, signin, signout
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from services import views  # Import the views module containing your view functions
-from django.conf import settings
-from django.conf.urls.static import static
-
-
+from services.views import favorites, login, contactus
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('customgaugegraph/', customgaugegraph),
     path('customdamgraph/', customdamgraph),
+    path('customcocograph/', customcocograph),
 #    path('customgauge/', customgauge),
     path('customdam/', customdam),
+    path('customnoaagraph/', customnoaagraph),
 #    path('custommesonet/', custommesonet),
     path('custommesonetgraph/', custommesonetgraph),
-    path('map/', index),
+    path('customshadehillgraph/', customshadehillgraph),
+    path('map/', interactiveMap),
     path('homep/', test),
+    path('home/', homepage),
 #    path('tabs/', tabs),
 #    path('tabstest/', tabstest),
     path('maptabs/', maptabs),
-    path('home/', homepage),
+    path('', homepage),
     path('forecast/', forecast),
     path('about/', about),
     path('register/', register),
     path('signup', signup, name='signup'),
     path('signin', signin, name='signin'),
     path('signout', signout, name='signout'),
-    path('favorites/', views.favorites, name='favorites'),
-    path('vansh/', vansh)
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    path('favorites/', favorites, name='favorites'),
+    path('login/', login, name='login'),
+    path('contactus/', contactus, name='contactus')
+
+]
 
 urlpatterns += staticfiles_urlpatterns()

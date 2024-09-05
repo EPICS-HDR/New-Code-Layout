@@ -1,67 +1,58 @@
+body {
+  margin: 0;
+  padding: 0;
+}
 
-  body {
-    margin: 0;
-    padding: 0;
-  }
-  #map {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-  }  
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
 
 .modal {
-    /* Position the modal */
-    position: fixed;
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 9999; /* Ensure the modal is on top of other elements */
-    display: none; /* Hide the modal by default */
-    /* Set the width to 1/3 of the screen */
-    width: calc(100% / 3);
-    /* Set the height to 100% of the screen */
-    height: 88%;
-    /* Add padding to the modal content */
-    padding: 20px;
+  position: fixed;
+  top: 15vh; /* Position modal 15% from the top */
+  left: 0; /* Align modal with the left side of the screen */
+  z-index: 9999;
+  display: none;
+  width: 40%; /* Set modal width to 40% of the page */
+  max-width: 800px; /* Optional: You can set a maximum width for the modal */
+  max-height: calc(100vh - 15vh); /* Calculate maximum height based on screen height and position from top */
+  overflow-y: auto; /* Enable vertical scrolling if content exceeds modal height */
+  padding: 20px;
+  background-color: #fefefe;
+  border: 1px solid #888;
 }
-/* Center the modal content horizontally */
+
 .modal-content {
-    position: relative;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #fefefe;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 100%;
-    max-width: 1000px;
-    height: 100%;
-    overflow-y: auto;
+  width: 100%;
+  max-width: 95%; /* Set maximum width for content within modal */
+  margin: 0 auto; /* Center content horizontally */
 }
-/* Style for the close button */
+
 .close {
-    position: absolute;
-    top: 20px;
-    right: 10px;
-    font-size: 20px;
-    font-weight: bold;
-    color: #aaa;
-    cursor: pointer;
+  position: absolute;
+  top: 20px;
+  right: 10px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #aaa;
+  cursor: pointer;
 }
+
 .close:hover,
 .close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-} 
-/* Adjust the size of the graphs */
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
 .plotly-graph-div {
-    padding: 30px;
-    width: 50% !important;
-    height: 300px !important;
+  width: 90%; /* Set width of graphs to 100% of their container */
+  height: 300px !important;
+  /* Additional styles for graphs if needed */
 }
 
 #map-legend {
@@ -100,4 +91,3 @@
   border-radius: 50%;
   margin-right: 5px;
 }
-
