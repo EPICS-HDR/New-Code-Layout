@@ -59,13 +59,8 @@
     content: '\00AB';
 }
 
-.main > #nav-sidebar {
-    visibility: hidden;
-}
-
 .main.shifted > #nav-sidebar {
     margin-left: 0;
-    visibility: visible;
 }
 
 [dir="rtl"] .main.shifted > #nav-sidebar {
@@ -100,12 +95,6 @@
 
 #nav-sidebar .current-model {
     background: var(--selected-row);
-}
-
-@media (forced-colors: active) {
-    #nav-sidebar .current-model {
-        background-color: SelectedItem;
-    }
 }
 
 .main > #nav-sidebar + .content {

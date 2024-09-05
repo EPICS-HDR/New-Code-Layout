@@ -4,8 +4,18 @@ import datetime
 
 # TODO Add new global lists, add sql conversions
 gauges = ("Hazen", "Stanton", "Washburn", "Price", "Bismarck", "Schmidt", "Judson", "Breien", "Mandan", "Cash", "Wakpala", "Whitehorse", "Little Eagle")
+
 dams = ("Fort Peck", "Garrison", "Oahe", "Big Bend", "Fort Randall", "Gavins Point")
+
 mesonets = ("Carson", "Fort Yates", "Linton", "Mott")
+
+CoCoRaHs = ("Bison", "Faulkton", "Bismarck", "Langdon")
+
+NOAA = ("Williston/Basin", "Tioga", "Stanley", "Minot", "Sidney/Richland", "Watford City", "Garrison", "Glendive/Dawson", "Hazen/Mercer", \
+        "Beach", "Dickinson/Roosevelt", "Glen", "Bismarck", "Miles City/Wiley", "Baker", "Bowman", "Hettinger", "Linton", "Buffalo/Harding", \
+        "Mobridge", "Faith", "Spearfish/Clyde", "Pierre", "Custer", "Rapid City", "Philip")
+
+Shadehill = ("Shadehill")
 
 sql_conversion = {"Elevation" : "elevation", "Air Temperature": "air_temp", "Water Temperature" : "water_temp", \
                   "Flow Spill" : "flow_spill", "Flow Powerhouse" : "flow_power", "Flow Out" : "flow_out", \
@@ -16,7 +26,15 @@ sql_conversion = {"Elevation" : "elevation", "Air Temperature": "air_temp", "Wat
                   "Maximum Wind Speed" : "max_wind_speed", "Average Wind Direction" : "avg_wind_dir", \
                   "Total Solar Radiation" : "total_solar_rad", "Total Rainfall" : "total_rainfall", \
                   "Average Baromatric Pressure" : "avg_bar_pressure", "Average Dew Point" : "avg_dew_point", \
-                  "Average Dew Point" : "avg_dew_point", "Average Wind Chill" : "avg_wind_chill" \
+                  "Average Dew Point" : "avg_dew_point", "Average Wind Chill" : "avg_wind_chill", "Precipitation" : "precipitation", \
+                  "Snowfall" : "snowfall", "Snow Depth" : "snow_depth", "Reservoir Storage Content" : "res_stor_content", \
+                  "Reservoir Forebay Elevation" : "res_forebay_elev", "Daily Mean Computed Inflow" : "daily_mean_comp_inflow", \
+                  "Daily Mean Air Temperature" : "daily_mean_air_temp", "Daily Minimum Air Temperature" : "daily_min_air_temp", \
+                  "Daily Maximum Air Temperature" : "daily_max_air_temp", "Total Precipitation (inches per day)" : "tot_precip_daily", \
+                  "Total Water Year Precipitation" : "tot_year_precip", "Daily Mean Total Discharge" : "daily_mean_tot_dis", \
+                  "Daily Mean River Discharge" : "daily_mean_river_dis", "Daily Mean Spillway Discharge" : "daily_mean_spill_dis", \
+                  "Daily Mean Gate One Opening" : "daily_mean_gate_opening", "temperature" : "temperature", \
+                  "dewpoint" : "dew_point", "relativeHumidity" : "rel_humidity" , "windChill" : "wind_chill", \
 }
 
 locationdict = {'6340500':'Hazen',
@@ -87,7 +105,7 @@ def create_tables() -> None:
                 avg_wind_chill REAL, PRIMARY KEY(location, datetime) \
     )")
 
-    cur.execute("CREATE TABLE gauge (location TEXT, datetime TEXT, \
+    cur.execute("CREATE TABLE gauge(location TEXT, datetime TEXT, \
                 elevation REAL, gauge_height REAL, discharge REAL, water_temp REAL, \
                 PRIMARY KEY(location, datetime))")
     
@@ -97,9 +115,26 @@ def create_tables() -> None:
                 flow_out REAL, tail_ele REAL, energy REAL, water_temp REAL,\
                 air_temp REAL, PRIMARY KEY(location, datetime))")
 
+    cur.execute("CREATE TABLE cocorahs( location TEXT, datetime TEXT, \
+                precipitation REAL, snowfall REAL, \
+                snow_depth REAL, PRIMARY KEY(location, datetime) \
+    )")
 
-    
+    cur.execute("CREATE TABLE shadehill( location TEXT, datetime TEXT, \
+                res_stor_content REAL, res_forebay_elev REAL, \
+                daily_mean_comp_inflow REAL, daily_mean_air_temp REAL, \
+                daily_min_air_temp REAL, daily_max_air_temp REAL, \
+                tot_precip_daily REAL, tot_year_precip REAL, \
+                daily_mean_tot_dis REAL, daily_mean_river_dis REAL, \
+                daily_mean_spill_dis REAL, \
+                daily_mean_gate_opening REAL, PRIMARY KEY(location, datetime) \
+    )")
 
+    cur.execute("CREATE TABLE noaa( location TEXT, datetime TEXT, \
+                temperature REAL, dew_point REAL, \
+                rel_humidity REAL, wind_chill REAL, \
+                PRIMARY KEY(location, datetime))")
+                
 def clear_db():
     #COMPLETELY RESETS DATABASE USE WITH CAUTION: MAKE SURE BACKUP DATA IS AVAILABLE
     conn = sql.connect("./Measurements.db")
@@ -188,10 +223,10 @@ def create_lists(db_name: str, location: str, variable:str, start_date: str, end
     return list_of_lists
 
 # TODO call this function elsewhere
-def updateDictionary(times: list, data: list, location: str, variable: str) -> None:
+# Just added table as a string
+def updateDictionary(times: list, data: list, location: str, variable: str, table: str) -> None:
     conn = sql.connect("./Measurements.db")
     cur = conn.cursor()
-    table = get_table_name(location)
     if(location in locationdict):
         location = locationdict[location] 
     for i in range(len(times)):
@@ -210,7 +245,7 @@ def updateDictionary(times: list, data: list, location: str, variable: str) -> N
             
     conn.commit()
 
-def dictpull(location: str, variable: str, start_date: str, end_date: str) -> tuple:
+def dictpull(location: str, variable: str, start_date: str, end_date: str, table_name: str) -> tuple:
     conn = sql.connect("Measurements.db")
     conn.row_factory = sql.Row
     cur = conn.cursor()
@@ -218,7 +253,6 @@ def dictpull(location: str, variable: str, start_date: str, end_date: str) -> tu
     variable_list = []
     index = 0
 
-    table_name = get_table_name(location)
     variable = sql_conversion[variable]
     rows = cur.execute(f"SELECT * FROM {table_name} WHERE location = '{location}' AND '{variable}' IS NOT NULL AND datetime BETWEEN '{start_date}' AND '{end_date}' ORDER by datetime")
     for row in rows:
@@ -229,6 +263,37 @@ def dictpull(location: str, variable: str, start_date: str, end_date: str) -> tu
 
     return date_list, variable_list
 
+def find_data(location: str, start_date: str, end_date: str) -> list:
+    conn = sql.connect("Measurements.db")
+    conn.row_factory = sql.Row
+    cur = conn.cursor()
+    datalist = []
+
+    table_name = get_table_name(location)
+    if table_name == "error":
+        return datalist
+    
+    rows = cur.execute(f"SELECT * FROM {table_name} WHERE location = '{location}' AND datetime BETWEEN '{start_date}' AND '{end_date}' ORDER by datetime")
+    for row in rows:
+        datalist.append(row)
+
+    return datalist
+
+def find_data2(location: str, start_date: str, end_date: str,fields:list) -> list:
+    conn = sql.connect("Measurements.db")
+    conn.row_factory = sql.Row
+    cur = conn.cursor()
+    datalist = []
+
+    table_name = get_table_name(location)
+    if table_name == "error":
+        return datalist
+    
+    rows = cur.execute(f"SELECT {','.join(fields)} FROM {table_name} WHERE location = '{location}' AND datetime BETWEEN '{start_date}' AND '{end_date}' ORDER by datetime")
+    for row in rows:
+        datalist.append(row)
+
+    return datalist
 #create_tables()
 
 
@@ -293,6 +358,6 @@ class moving_average:
         output = self.__moving_avg(times,data, 30)
         return output
 
-ma_time, ma_data = dictpull("Bismarck", "Elevation", "2023-06-05 00:00:00", "2023-07-05 00:00:00")
+ma_time, ma_data = dictpull("Bismarck", "Elevation", "2023-06-05 00:00:00", "2023-07-05 00:00:00", "gauge")
 ma = moving_average()
 da_t, da_a = ma.one_day_ma(ma_time, ma_data)
