@@ -1,4 +1,5 @@
 django
+gunicorn
 numpy
 pandas
 plotly
