@@ -1,0 +1,57 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:400,600,700");
+@import url("https://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css");
+
+* {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-decoration: none;
+}
+
+/* Styles for the navigation bar */
+.topnav {
+  background-color: rgba(203, 63, 221, 0.8); /* Darken the background color */
+  height: 10vh; /* Increase the height */
+  width: 100%;
+  overflow: hidden;
+  backdrop-filter: blur(9px);
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+/* Styles for the links inside the navigation bar */
+.topnav a {
+  color: white;
+  font-size: 2.8vh; /* Increase font size */
+  padding: 0 2vw;
+  text-align: center;
+  flex: 1;
+  font-family: 'Open Sans', sans-serif; /* Match the font-family */
+}
+
+/* Styles for the logo image */
+.icon1 {
+  height: 15vh;
+  width: auto;
+  object-fit: contain;
+  display: inline-block;
+  margin-right: 0.5vw;
+  margin-left: 2vw;
+}
+
+.imgcontainer {
+  position: fixed;
+  top: 1vh;
+  left: 1vw;
+  z-index: 999;
+}
+
+.imgcontainer img {
+  width: 6vw;
+  height: auto;
+}

@@ -1,0 +1,152 @@
+/* BASE STYLES */
+:root {
+  --clr-dark: #09f2e6;
+  --clr-light: #0a0a0a;
+  --clr-accent: #091d91;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.body {
+  height: 100vh;
+  width: 100%;
+}
+
+.container {
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  border: 10px solid var(--clr-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Move elements down more */
+}
+
+.footer {
+  width: 1000px;
+  height: 350px;
+  margin: 20px auto; /* Adjust margin as needed */
+  border: 10px solid var(--clr-dark);
+}
+
+.item {
+  width: 1000px;
+  font-weight: 700;
+  color: var(--clr-light);
+  padding: 1em;
+  text-align: center;
+  border: 10px solid var(--clr-accent);
+  border-radius: 10px;
+}
+
+.item.welcome {
+  background-color: #1cd7e8;
+  height: 30%;
+}
+
+.item.mission {
+  background-color: #1cd7e8;
+  width: 50%;
+  height: 300px;
+}
+
+.item.about {
+  background-color: #1cd7e8;
+  width: 50%;
+  height: 300px;
+}
+
+.item.Contact {
+  background-color: #1cd7e8;
+  height: 200px;
+}
+
+.banner {
+  width: 100%;
+  height: 100vh;
+  background-image: linear-gradient(rgba(52, 41, 216, 0.73), rgba(24, 109, 62, 0.73)), url(https://www.historynet.com/wp-content/uploads/2022/10/WIWP-AUTUMN-ART-01-copy.jpg);
+  background-size: cover;
+  background-position: center;
+}
+
+.welcome {
+  color: white;
+  font-size: 135px; /* Make paragraph font size bigger */
+  font-family: 'Inria Serif', serif;
+  text-align: center;
+  margin-bottom: 50px; /* Add more space between welcome message and buttons */
+}
+
+.login {
+  height: 30px;
+  width: 30px;
+}
+
+.welcome_mssg {
+  color: white;
+  font-size: 24px; /* Make paragraph font size bigger */
+  font-family: 'Judson', serif;
+  text-align: center; /* Center the paragraph */
+  max-width: 66%; /* Limit paragraph to middle 2/3 of the screen */
+  margin: 0 auto; /* Center the paragraph horizontally */
+  margin-bottom: 50px; /* Add more space between paragraph and buttons */
+}
+
+button {
+  width: 300px !important; /* Increase specificity */
+  height: 65px;
+  padding: 15px 0;
+  text-align: center;
+  margin: 10px auto !important; /* Center the buttons horizontally */
+  border-radius: 30px;
+  border: 2px solid #fff;
+  font-family: 'Judson', serif;
+  font-size: 30px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.50);
+  backdrop-filter: blur(4px);
+}
+
+button:hover {
+  background-color: #000;
+}
+
+.menu {
+  margin-top: 20px;
+}
+
+@media screen and (max-width: 1024px) {
+  .container,
+  .footer {
+    width: 90%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .container,
+  .footer {
+    width: 80%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .container,
+  .footer {
+    width: 90%;
+  }
+
+  .welcome {
+    font-size: 80px;
+  }
+
+  .welcome_mssg {
+    font-size: 18px;
+  }
+}
