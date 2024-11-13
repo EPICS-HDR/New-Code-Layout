@@ -10,8 +10,8 @@
 
 /* Styles for the navigation bar */
 .topnav {
-  background-color: rgba(0, 0, 0, 0.8); /* Darken the background color */
-  height: 15vh; /* Increase the height */
+  background-color: rgba(203, 63, 221, 0.8); /* Darken the background color */
+  height: 10vh; /* Increase the height */
   width: 100%;
   overflow: hidden;
   backdrop-filter: blur(9px);
