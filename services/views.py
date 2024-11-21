@@ -13,36 +13,33 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
-
+from django.http import HttpResponse
+import csv
 # Create your views here.
+# def store_data(request):
+#     if request.method == 'POST':
+#         # Retrieve form data
+#         username = request.POST.get('username', '')
+#         email = request.POST.get('email', '')
+#         # Add more fields as needed
 
-from django.shortcuts import render, redirect
-from django.urls import reverse
+#         # Save data to a CSV file
+#         with open('user_data.csv', 'a', newline='') as csvfile:
+#             fieldnames = ['username', 'password', 'confirm password', 'email']  # Add more fields here
+#             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+#             writer.writerow({'username': username, 'email': email})  # Add more fields here
 
-
+#         return HttpResponse('Data stored successfully')
+#     else:
+#         return HttpResponse('Invalid request method')
 def favorites(request):
-    # Retrieve saved_links from the session or initialize it as an empty list
-    saved_links = request.session.get('saved_links', [])
-
-    if request.method == 'POST':
-        link = request.POST.get('link')
-        saved_links.append(link)
-        # Save updated saved_links to the session
-        request.session['saved_links'] = saved_links
-        return redirect('favorites')
-
-    return render(request, 'HTML/favorites.html', {'saved_links': saved_links})
-
-    # Retrieve all saved links from the database
-    saved_links = Link.objects.all()
-    return render(request, 'favorites.html', {'saved_links': saved_links})
-
+    return render(request, 'HTML/favorites.html')
+def contactus(request):
+    return render(request,'HTML/contactus.html')
 def register(request):
     return render(request, "HTML/register.html")
-    
-def vansh(request):
-    return render(request, "HTML/vanshtest.html")
-
+def login(request):
+    return render(request, 'HTML/login.html')
 def signup(request):
 
     if request.method == "POST":
@@ -147,9 +144,9 @@ def customdam(request):
 def custommesonet(request):
     return render(request, 'graphing/custommesonet.html')
 
-def index(request):
+def interactiveMap(request):
     
-    return render(request, 'HTML/index.html')
+    return render(request, 'HTML/interactiveMap.html')
 
 def customgaugegraph(request):
     
@@ -172,7 +169,7 @@ def customgaugegraph(request):
         if locations[0] == "Little":
             locations[0] = "Little Eagle"
         sites.append(locations[0])
-        times, data = dictpull(locations[0], data2see, start_date, end_date)
+        times, data = dictpull(locations[0], data2see, start_date, end_date, "gauge")
         m = moving_average()
         m_t, m_d = m.one_day_ma(times,data)
         datalist.append(data)
@@ -203,7 +200,7 @@ def customdamgraph(request):
     index = 0
     while index < length:
         sites.append(locationlist[index])
-        times, data = dictpull(locationlist[index], data2see, start_date, end_date)
+        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "dam")
         datalist.append(data)
         index += 1
         
@@ -230,7 +227,78 @@ def custommesonetgraph(request):
     index = 0
     while index < length:
         sites.append(locationlist[index])
-        times, data = dictpull(locationlist[index], data2see, start_date, end_date)
+        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "mesonet")
+        datalist.append(data)
+        index += 1
+        
+    plot = customGraph(times, sites, datalist, data2see, 0)
+    table = makeTable(datalist, 0)
+
+    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+
+def customcocograph(request):
+
+    locationlist = request.POST.getlist('cocorahs')
+    length = len(locationlist)
+    data2see = request.POST['data2see']
+    if "_" in data2see:
+        data2see = data2see.split("_")
+        data2see = data2see[0] + " " + data2see[1]
+
+    start_date = request.POST['start-date']
+
+    end_date = request.POST['end-date']
+
+    datalist = []
+    sites = []
+    index = 0
+    while index < length:
+        sites.append(locationlist[index])
+        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "cocorahs")
+        datalist.append(data)
+        index += 1
+        
+    plot = customGraph(times, sites, datalist, data2see, 0)
+    table = makeTable(datalist, 0)
+
+    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+
+def customshadehillgraph(request):
+    
+    data2see = request.POST['data2see']
+    if "_" in data2see:
+        data2see = data2see.split("_")
+        data2see = data2see[0] + " " + data2see[1]
+
+    start_date = request.POST['start-date']
+    end_date = request.POST['end-date']
+    
+    times, data = dictpull("Shadehill", data2see, start_date, end_date, "shadehill")
+
+    plot = customGraph(times, ["Shadehill"], [data], data2see, 0)
+    table = makeTable([data], 0)
+
+    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+
+def customnoaagraph(request):
+
+    locationlist = request.POST.getlist('noaa')
+    length = len(locationlist)
+    data2see = request.POST['data2see']
+    if "_" in data2see:
+        data2see = data2see.split("_")
+        data2see = data2see[0] + " " + data2see[1]
+
+    start_date = request.POST['start-date']
+
+    end_date = request.POST['end-date']
+
+    datalist = []
+    sites = []
+    index = 0
+    while index < length:
+        sites.append(locationlist[index])
+        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "noaa")
         datalist.append(data)
         index += 1
         

@@ -19,36 +19,9 @@
             background-color: #FFFDEF;
             font-family: 'Judson', serif;
             color: #073A4B;
+            margin: 0;
         }
 
-        /* Top navigation styles */
-        .topnav {
-            background-color: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            text-align: right;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000; /* Ensure it's above other content */
-        }
-
-        .topnav a {
-            color: white;
-            text-decoration: none;
-            font-size: 22px;
-            margin: 0 20px;
-        }
-
-        /* Banner styles */
-        .banner {
-            width: 100%;
-            height: 130px;
-            background-image: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,251,223,1) 100%), url(https://www.standingrock.org/wp-content/uploads/2021/06/Admin-building.jpg);
-            background-size: cover;
-            background-position: center;
-            animation: fadeIn 2s ease-in-out;
-        }
 
         /* Heading styles */
         h1 {
@@ -56,23 +29,16 @@
             font-size: 72px;
             color: #550505;
             text-align: center;
-            margin-top: 50px; /* Adjust margin-top */
+            margin-top: 0;
             margin-bottom: 20px; /* Add margin-bottom */
             letter-spacing: 0.4px;
-        }
-
-        h2 {
-            font-family: 'Koulen', sans-serif;
-            font-size: 45px;
-            color: #FFB422;
-            text-align: center;
-            margin-top: 1px;
         }
 
         /* Center content */
         .center {
             margin: 0 auto;
             width: 80%;
+            padding-top: 150px; /* Adjust for the height of the banner */
         }
 
         /* Table styles */
@@ -80,6 +46,7 @@
             width: 100%;
             background-color: #FFFDEF;
             border-collapse: collapse;
+            margin-bottom: 20px; /* Add margin-bottom */
         }
 
         th, td {
@@ -129,19 +96,6 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add shadow */
         }
 
-        /* Footer styles */
-        .footer {
-            background-color: #073A4B;
-            color: white;
-            padding: 50px 0;
-            text-align: center;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000; /* Ensure it's above other content */
-        }
-
         /* Keyframe animation */
         @keyframes fadeIn {
             from {
@@ -152,20 +106,28 @@
             }
         }
     </style>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
 </head>
 <body>
-   
-
     <div class="banner">
-        <h1>Favorites</h1>
+        <div class="topnav">
+            <img class="icon1" src='/static/images/Standing Rock Crest Logo.png'>
+            <a href="/">Home</a>
+            <a href="/about">About Us</a>
+            <a href="/contactus">Contact Us</a>
+            <a href="/favorites">Favorites</a>
+            <a href="/login">Sign Up/In</a>
+          </div>
     </div>
 
     <div class="center">
+        <h1>Favorites</h1>
+
         <h2>Saved Links:</h2>
         <table>
             <thead>
                 <tr>
-            
                     <th>Link</th>
                 </tr>
             </thead>
@@ -180,7 +142,6 @@
             <input type="text" id="link" name="link" required>
             <button type="submit">Add to Favorites</button>
         </form>
-        
     </div>
 
     <script>
@@ -216,6 +177,5 @@
             document.getElementById('linkTableBody').appendChild(newRow);
         });
     </script>
- 
 </body>
 </html>
