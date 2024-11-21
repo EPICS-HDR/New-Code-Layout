@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus Jakarta Sans:wght@500;600;700&display=swap" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM Sans:wght@400&display=swap" />
+<title>HDR Data Dashboard - Home</title>
     
     
     
@@ -21,41 +22,47 @@
       <header class="nav-bar-top">
         <img class="image-6-icon" alt="" src="./static/images/public/image-6@2x.png">
         <div class="nav-bar-top-child">
-        </div>
+        
         <button class="rectangle-parent">
           <div class="frame-child">
           </div>
           <div class="sign-in">Sign In</div>
         </button>
-        <div class="home">Home</div>
-        <div class="about-us">About Us</div>
+        <a class="home" href="/">Home</a>
+        <a class="about-us" href="/about">About Us</a>
         <div class="frame">
           <div class="iconsarrow-drop-down-24px-parent">
             <img class="iconsarrow-drop-down-24px" alt="" src="./static/images/public/iconsarrow-drop-down-24px.svg">
             
             <div class="frame1">
               <div class="services">Services</div>
+                <div class="dropdown-content">
+                  <a href="/map"><button>Interactive Map</button></a>
+                  <a href="/maptabs"><button>Custom Graphs</button></a>
+                  <a href="/favorites"><button>Favorites</button></a>
+                </div>
             </div>
           </div>
         </div>
-        <div class="logo">Logo</div>
+        <!-- <div class="logo">Logo</div> -->
         <div class="sign-up">Sign Up</div>
         <div class="nav-bar-top-item">
         </div>
+      </div>
       </header>
       <div class = flex-cont>
-      <img class="hdr-landingpage-v1-child" alt="" src="./static/images/public/rectangle-23830.svg">
+      <div class="hdr-landingpage-v1-child"></div>
       
       <div class="image-card-1 card">
-        <img class="placeholder-image-icon" alt="" src="./static/images/public/placeholder-image@2x.png">
+        <img class="placeholder-image-icon" alt="" src="./static/images/public/dam1.png">
         
       </div>
       <div class="contact-us-for ">Contact Us For More Questions at (email)</div>
       
-      <b class="standing-rock-community">Standing Rock Community</b>
+      <b class="standing-rock-community">HDR Water Data Dashboard</b>
       <b class="services1">Services</b>
       <div class="image-card-2 card">
-        <img class="placeholder-image-icon1" alt="" src="./static/images/public/placeholder-image1@2x.png">
+        <img class="placeholder-image-icon1" alt="" src="./static/images/public/gauge.png">
         
       </div>
       <div class="cards-row">
@@ -74,13 +81,13 @@
               </div>
               <div class="text1">24</div>
             </div>
-            <p class="paragraph">Lorem ipsum dolor sit amet consectoli tur adipiscing elit semper dalar.</p>
+            <p class="paragraph">Click the learn more button to access the Interactive Maps page.</p>
             <div class="spacer1">
               <div class="px">
               </div>
               <div class="text1">24</div>
             </div>
-            <a class="link">
+            <a class="link" href="/map">
               <img class="line-roundedhome-icon" alt="" src="./static/images/public/line-roundedhome.svg">
               
               <div class="link-item">Learn more</div>
@@ -109,13 +116,13 @@
               </div>
               <div class="text1">24</div>
             </div>
-            <p class="paragraph">Lorem ipsum dolor sit amet consectoli tur adipiscing elit semper dalar.</p>
+            <p class="paragraph">Click the learn more button to access the Custom Graphs page.</p>
             <div class="spacer1">
               <div class="px">
               </div>
               <div class="text1">24</div>
             </div>
-            <a class="link">
+            <a class="link" href="/maptabs">
               <img class="line-roundedhome-icon" alt="" src="./static/images/public/line-roundedhome.svg">
               
               <div class="link-item">Learn more</div>
@@ -144,13 +151,13 @@
               </div>
               <div class="text1">24</div>
             </div>
-            <p class="paragraph">Lorem ipsum dolor sit amet consectoli tur adipiscing elit semper dalar.</p>
+            <p class="paragraph">Click the learn more button to access the Favorites page.</p>
             <div class="spacer1">
               <div class="px">
               </div>
               <div class="text1">24</div>
             </div>
-            <a class="link">
+            <a class="link" href="/favorites">
               <img class="line-roundedhome-icon" alt="" src="./static/images/public/line-roundedhome.svg">
               
               <div class="link-item">Learn more</div>
@@ -172,7 +179,7 @@
             <div class="making-water-safer">Making Water Safer</div>
           </div>
           <p class="frame4">
-            <div class="lorem-ipsum-dolor">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea  commodo consequat. Duis aute irure dolor in reprehenderit in voluptate  velit esse cillum dolore eu fugiat nulla pariatur.</div>
+            <div class="lorem-ipsum-dolor">Welcome to our hub of environmental insight, made especially for Standing Rock Nation. Our site harnesses and displays information from various monitoring sites across North and South Dakota. View our interactive map, where you can effortlessly navigate through various data types and delve into detailed monthly graphs. Want to view more data?  </div>
           </p>
         </div>
         <div class="auto-layout-horizontal">
@@ -180,7 +187,7 @@
             <div class="do-something">Services</div>
           </button>
           <button class="styleoutlined">
-            <div class="do-something">About Us</div>
+            <div class="do-something" href="/about">About Us</div>
           </button>
         </div>
       </div>
@@ -190,16 +197,16 @@
             <div class="what-we-do">What We Do</div>
           </div>
           <div class="frame7">
-            <div class="making-water-safer">Making Water Safer</div>
+            <div class="making-water-safer">Visualizing Data</div>
           </div>
-          <p class="lorem-ipsum-dolor1">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea  commodo consequat. Duis aute irure dolor in reprehenderit in voluptate  velit esse cillum dolore eu fugiat nulla pariatur.</p>
+          <p class="lorem-ipsum-dolor1">Home to both the Lakota and Dakota people, the Standing Rock Reservation contains land in both North and South Dakota bordering the Missouri River. They dedicate their community to the protection and development of their community, economy, technology and culture.</p>
         </div>
         <div class="auto-layout-horizontal1">
           <button class="stylefilled1">
-            <div class="do-something2">Services</div>
+            <div class="do-something2">Map</div>
           </button>
           <button class="styleoutlined1">
-            <div class="do-something">About Us</div>
+            <div class="do-something">Graphs</div>
           </button>
         </div>
       </div>
