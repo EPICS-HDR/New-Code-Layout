@@ -215,6 +215,9 @@ def customdamgraph(request):
     except IndexError as e:
         error_message = "An error occurred while processing your request. Please try again."
         return render(request, "HTML/custom_error.html", context={'error_message': error_message})
+    except ValueError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
 
 def custommesonetgraph(request):
     try:
@@ -243,6 +246,9 @@ def custommesonetgraph(request):
 
         return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
     except IndexError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
+    except ValueError as e:
         error_message = "An error occurred while processing your request. Please try again."
         return render(request, "HTML/custom_error.html", context={'error_message': error_message})
 
@@ -275,6 +281,9 @@ def customcocograph(request):
     except IndexError as e:
         error_message = "An error occurred while processing your request. Please try again."
         return render(request, "HTML/custom_error.html", context={'error_message': error_message})
+    except ValueError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
 
 def customshadehillgraph(request):
     try:
@@ -293,6 +302,9 @@ def customshadehillgraph(request):
 
         return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
     except IndexError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
+    except ValueError as e:
         error_message = "An error occurred while processing your request. Please try again."
         return render(request, "HTML/custom_error.html", context={'error_message': error_message})
 
@@ -324,5 +336,8 @@ def customnoaagraph(request):
 
         return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
     except IndexError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
+    except ValueError as e:
         error_message = "An error occurred while processing your request. Please try again."
         return render(request, "HTML/custom_error.html", context={'error_message': error_message})
