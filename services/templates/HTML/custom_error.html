@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% load static %}   
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+    <link rel="stylesheet" href="{% static 'css/error.css' %}">
+</head>
+<body>
+    <h1>An error occurred</h1>
+    <p>{{ error_message }}</p>
+    <a href="/maptabs">Go back to the previous screen</a>
+</body>
+</html>

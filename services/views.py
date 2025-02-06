@@ -149,160 +149,180 @@ def interactiveMap(request):
     return render(request, 'HTML/interactiveMap.html')
 
 def customgaugegraph(request):
+    try:
     
-    #Pulls most recently submitted data
-    locationlist = request.POST.getlist('location')
-    length = len(locationlist)
+        #Pulls most recently submitted data
+        locationlist = request.POST.getlist('location')
+        length = len(locationlist)
 
-    data2see = request.POST['data2see']
+        data2see = request.POST['data2see']
 
-    start_date = request.POST['start-date']
+        start_date = request.POST['start-date']
 
-    end_date = request.POST['end-date']
+        end_date = request.POST['end-date']
 
-    datalist = []
-    sites = []
-    index = 0
-    while index < length:
-        locations = locationlist[index]
-        locations = locations.split()
-        if locations[0] == "Little":
-            locations[0] = "Little Eagle"
-        sites.append(locations[0])
-        times, data = dictpull(locations[0], data2see, start_date, end_date, "gauge")
-        m = moving_average()
-        m_t, m_d = m.one_day_ma(times,data)
-        datalist.append(data)
-        index += 1
-        
-    plot = customGraph(times, sites, datalist, data2see, 0)
-    table = makeTable(datalist, 0)
+        datalist = []
+        sites = []
+        index = 0
+        while index < length:
+            locations = locationlist[index]
+            locations = locations.split()
+            if locations[0] == "Little":
+                locations[0] = "Little Eagle"
+            sites.append(locations[0])
+            times, data = dictpull(locations[0], data2see, start_date, end_date, "gauge")
+            m = moving_average()
+            m_t, m_d = m.one_day_ma(times,data)
+            datalist.append(data)
+            index += 1
+            
+        plot = customGraph(times, sites, datalist, data2see, 0)
+        table = makeTable(datalist, 0)
 
-    return render(request, "HTML/graphdisplay.html", context={'plot': plot, 'table': table})
+        return render(request, "HTML/graphdisplay.html", context={'plot': plot, 'table': table})
+    except IndexError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
 
 def customdamgraph(request):
+    try:
+        locationlist = request.POST.getlist('dam')
+        length = len(locationlist)
+        data2see = request.POST['data2see']
+        if "_" in data2see:
+            data2see = data2see.split("_")
+            data2see = data2see[0] + " " + data2see[1]
 
-    locationlist = request.POST.getlist('dam')
-    length = len(locationlist)
-    data2see = request.POST['data2see']
-    if "_" in data2see:
-        data2see = data2see.split("_")
-        data2see = data2see[0] + " " + data2see[1]
+        start_date = request.POST['start-date']
 
-    start_date = request.POST['start-date']
+        end_date = request.POST['end-date']
 
-    end_date = request.POST['end-date']
+        folder_path = "./map/static/customdata/"
 
-    folder_path = "./map/static/customdata/"
+        datalist = []
+        sites = []
+        index = 0
+        while index < length:
+            sites.append(locationlist[index])
+            times, data = dictpull(locationlist[index], data2see, start_date, end_date, "dam")
+            datalist.append(data)
+            index += 1
+            
+        plot = customGraph(times, sites, datalist, data2see, 0)
+        table = makeTable(datalist, 0)
 
-    datalist = []
-    sites = []
-    index = 0
-    while index < length:
-        sites.append(locationlist[index])
-        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "dam")
-        datalist.append(data)
-        index += 1
-        
-    plot = customGraph(times, sites, datalist, data2see, 0)
-    table = makeTable(datalist, 0)
-
-    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+        return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+    except IndexError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
 
 def custommesonetgraph(request):
+    try:
+        locationlist = request.POST.getlist('mesonet')
+        length = len(locationlist)
+        data2see = request.POST['data2see']
+        if "_" in data2see:
+            data2see = data2see.split("_")
+            data2see = data2see[0] + " " + data2see[1]
 
-    locationlist = request.POST.getlist('mesonet')
-    length = len(locationlist)
-    data2see = request.POST['data2see']
-    if "_" in data2see:
-        data2see = data2see.split("_")
-        data2see = data2see[0] + " " + data2see[1]
+        start_date = request.POST['start-date']
 
-    start_date = request.POST['start-date']
+        end_date = request.POST['end-date']
 
-    end_date = request.POST['end-date']
+        datalist = []
+        sites = []
+        index = 0
+        while index < length:
+            sites.append(locationlist[index])
+            times, data = dictpull(locationlist[index], data2see, start_date, end_date, "mesonet")
+            datalist.append(data)
+            index += 1
+            
+        plot = customGraph(times, sites, datalist, data2see, 0)
+        table = makeTable(datalist, 0)
 
-    datalist = []
-    sites = []
-    index = 0
-    while index < length:
-        sites.append(locationlist[index])
-        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "mesonet")
-        datalist.append(data)
-        index += 1
-        
-    plot = customGraph(times, sites, datalist, data2see, 0)
-    table = makeTable(datalist, 0)
-
-    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+        return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+    except IndexError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
 
 def customcocograph(request):
+    try:
+        locationlist = request.POST.getlist('cocorahs')
+        length = len(locationlist)
+        data2see = request.POST['data2see']
+        if "_" in data2see:
+            data2see = data2see.split("_")
+            data2see = data2see[0] + " " + data2see[1]
 
-    locationlist = request.POST.getlist('cocorahs')
-    length = len(locationlist)
-    data2see = request.POST['data2see']
-    if "_" in data2see:
-        data2see = data2see.split("_")
-        data2see = data2see[0] + " " + data2see[1]
+        start_date = request.POST['start-date']
 
-    start_date = request.POST['start-date']
+        end_date = request.POST['end-date']
 
-    end_date = request.POST['end-date']
+        datalist = []
+        sites = []
+        index = 0
+        while index < length:
+            sites.append(locationlist[index])
+            times, data = dictpull(locationlist[index], data2see, start_date, end_date, "cocorahs")
+            datalist.append(data)
+            index += 1
+            
+        plot = customGraph(times, sites, datalist, data2see, 0)
+        table = makeTable(datalist, 0)
 
-    datalist = []
-    sites = []
-    index = 0
-    while index < length:
-        sites.append(locationlist[index])
-        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "cocorahs")
-        datalist.append(data)
-        index += 1
-        
-    plot = customGraph(times, sites, datalist, data2see, 0)
-    table = makeTable(datalist, 0)
-
-    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+        return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+    except IndexError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
 
 def customshadehillgraph(request):
-    
-    data2see = request.POST['data2see']
-    if "_" in data2see:
-        data2see = data2see.split("_")
-        data2see = data2see[0] + " " + data2see[1]
+    try:
+        data2see = request.POST['data2see']
+        if "_" in data2see:
+            data2see = data2see.split("_")
+            data2see = data2see[0] + " " + data2see[1]
 
-    start_date = request.POST['start-date']
-    end_date = request.POST['end-date']
-    
-    times, data = dictpull("Shadehill", data2see, start_date, end_date, "shadehill")
+        start_date = request.POST['start-date']
+        end_date = request.POST['end-date']
+        
+        times, data = dictpull("Shadehill", data2see, start_date, end_date, "shadehill")
 
-    plot = customGraph(times, ["Shadehill"], [data], data2see, 0)
-    table = makeTable([data], 0)
+        plot = customGraph(times, ["Shadehill"], [data], data2see, 0)
+        table = makeTable([data], 0)
 
-    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+        return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+    except IndexError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
 
 def customnoaagraph(request):
+    try:
 
-    locationlist = request.POST.getlist('noaa')
-    length = len(locationlist)
-    data2see = request.POST['data2see']
-    if "_" in data2see:
-        data2see = data2see.split("_")
-        data2see = data2see[0] + " " + data2see[1]
+        locationlist = request.POST.getlist('noaa')
+        length = len(locationlist)
+        data2see = request.POST['data2see']
+        if "_" in data2see:
+            data2see = data2see.split("_")
+            data2see = data2see[0] + " " + data2see[1]
 
-    start_date = request.POST['start-date']
+        start_date = request.POST['start-date']
 
-    end_date = request.POST['end-date']
+        end_date = request.POST['end-date']
 
-    datalist = []
-    sites = []
-    index = 0
-    while index < length:
-        sites.append(locationlist[index])
-        times, data = dictpull(locationlist[index], data2see, start_date, end_date, "noaa")
-        datalist.append(data)
-        index += 1
-        
-    plot = customGraph(times, sites, datalist, data2see, 0)
-    table = makeTable(datalist, 0)
+        datalist = []
+        sites = []
+        index = 0
+        while index < length:
+            sites.append(locationlist[index])
+            times, data = dictpull(locationlist[index], data2see, start_date, end_date, "noaa")
+            datalist.append(data)
+            index += 1
+            
+        plot = customGraph(times, sites, datalist, data2see, 0)
+        table = makeTable(datalist, 0)
 
-    return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+        return render(request, 'HTML/graphdisplay.html', context={'plot': plot, 'table': table})
+    except IndexError as e:
+        error_message = "An error occurred while processing your request. Please try again."
+        return render(request, "HTML/custom_error.html", context={'error_message': error_message})
