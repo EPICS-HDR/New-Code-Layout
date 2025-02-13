@@ -32,8 +32,8 @@ SECRET_KEY = 'django-insecure-+9wcfz&b8$a30aq(9-$s&a^*#6lsvy^jb@3as4$0%c@f=g!cvb
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['srt-hdr.azurewebsites.net','127.0.0.1','10.186.174.116','localhost']
-CSRF_TRUSTED_ORIGINS = ["https://srt-hdr.azurewebsites.net"]
+ALLOWED_HOSTS = ['standingrock-demo.azurewebsites.net','127.0.0.1','10.186.174.116','localhost']
+CSRF_TRUSTED_ORIGINS = ["https://standingrock-demo.azurewebsites.net"]
 
 # Application definition
 
