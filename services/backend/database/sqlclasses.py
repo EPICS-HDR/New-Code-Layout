@@ -3,6 +3,8 @@ import json
 import datetime
 
 # TODO Add new global lists, add sql conversions
+
+# North Dakota Locations
 gauges = ("Hazen", "Stanton", "Washburn", "Price", "Bismarck", "Schmidt", "Judson", "Breien", "Mandan", "Cash", "Wakpala", "Whitehorse", "Little Eagle")
 
 dams = ("Fort Peck", "Garrison", "Oahe", "Big Bend", "Fort Randall", "Gavins Point")
@@ -15,8 +17,15 @@ NOAA = ("Williston/Basin", "Tioga", "Stanley", "Minot", "Sidney/Richland", "Watf
         "Beach", "Dickinson/Roosevelt", "Glen", "Bismarck", "Miles City/Wiley", "Baker", "Bowman", "Hettinger", "Linton", "Buffalo/Harding", \
         "Mobridge", "Faith", "Spearfish/Clyde", "Pierre", "Custer", "Rapid City", "Philip")
 
+#South Dakota Data Sources
+
+
+
+# UNUSED
 Shadehill = ("Shadehill")
 
+
+# SQL Keys
 sql_conversion = {"Elevation" : "elevation", "Air Temperature": "air_temp", "Water Temperature" : "water_temp", \
                   "Flow Spill" : "flow_spill", "Flow Powerhouse" : "flow_power", "Flow Out" : "flow_out", \
                   "Tailwater Elevation" : "tail_ele", "Energy" : "energy", \
@@ -134,6 +143,8 @@ def create_tables() -> None:
                 temperature REAL, dew_point REAL, \
                 rel_humidity REAL, wind_chill REAL, \
                 PRIMARY KEY(location, datetime))")
+
+# TODO @AP - The easiest solution for SD is to add a new table here in the same format they did it.
                 
 def clear_db():
     #COMPLETELY RESETS DATABASE USE WITH CAUTION: MAKE SURE BACKUP DATA IS AVAILABLE
@@ -149,7 +160,6 @@ def fill_sql_tables(full_dict: dict) -> None:
     conn = sql.connect("./Measurements.db")
     cur = conn.cursor()
 
-    
     for location in full_dict:
         for variable in full_dict[location]:
             for day in full_dict[location][variable]:
@@ -197,6 +207,7 @@ def fill_dict(db_name: str) ->dict:
     partical_dict = dict()
     rows = cur.execute("SELECT * FROM ? WHERE location = ? ORDER by datetime")
     for row in rows:
+        # TODO @AP - Theres no reference to a variable called 'variables'
         for variable in variables:
             datetime = row['datetime']
             partical_dict[variable][datetime] = row[variable]
