@@ -75,6 +75,7 @@ def updateGraphs(start_day, start_month, start_year, end_day, end_month, end_yea
     start_date = start_year + "-" + start_month + "-" + start_day
     end_date = end_year + "-" + end_month + "-" + end_day
 
+    # TODO @AP - These variables are in a weird place lets move them to a config file or a constants file
     gaugelocations = ["Hazen", "Stanton", "Washburn", "Price", "Bismarck", 
                 "Schmidt", "Judson", "Mandan", "Breien", "Wakpala", "Little Eagle",
                 "Cash", "Whitehorse"]
@@ -90,7 +91,7 @@ def updateGraphs(start_day, start_month, start_year, end_day, end_month, end_yea
 
     previousError = None
     # Iterates through each possible location and dataset
-    
+
     for location in gaugelocations:
         for dataset in datasets:
             title = f"{location} {dataset} Table"
@@ -163,9 +164,11 @@ def updateGraphs(start_day, start_month, start_year, end_day, end_month, end_yea
                     print(e)
                 previousError = str(e)  # Store the current error message for comparison
 
+    # TODO @AP - We should add another one of these codeblocks for the south dakota pipeline
+
 # TODO Figure out if we need to be storing graphs in both static folders, increases runtime significantly
 def main():
-
+    #TODO @AP - The documentation is not complete
     """
     Function documentation:
     Coordinates all function calls associated with:
@@ -183,6 +186,9 @@ def main():
     damList = ["Fort Peck", "Garrison", "Oahe", "Big Bend", "Fort Randall", "Gavins Point"]
     for dam in damList:
         pullDamData(dam)
+
+    # TODO @AP gaugeList is redudant it is the same list as gaugelocations (some more lists are redundant in different functions)
+    # TODO @AP - I think we should move them to a constants file
 
     # Pulls and stores all USGS data available
     gaugeList = ["Hazen", "Stanton", "Washburn", "Price", "Bismarck", 
