@@ -5,34 +5,48 @@ import datetime
 import random
 import numpy as np
 import tbats as tb
-from backend.database.sqlclasses import dictpull
+import matplotlib as mpl
+from sqlclasses import dictpull
+import time as t
+import email.utils as eu
+import re
 
 #Function to get all data for a variable, returned as two lists, a time and a value.
 def getData(location: str, variable: str, table: str) -> tuple:
-    start = datetime.date.fromisoformat(1900-01-01).isoformat()
+    start = datetime.date.fromtisoformat('1900-01-01').isoformat()
     return dictpull(location,variable,table,start,datetime.today())
+
+
     
 
 #Fills in gaps by repeating last known value.
 def fill_in_the_blanks(times:list, values:list) -> list:
-    
+    new_times = list()
     #TODO: Make the time gap more robust
-    time_gap = times[1] - times[0]
+    for time in range(len(times)):
+        if re.search('24:00',times[time]) is not None:
+            temp_date = datetime.datetime.fromisoformat(re.sub('24:00','00:00', times[time])) + datetime.timedelta(days=1)
+            new_times.append(datetime.datetime.isoformat(temp_date))
+        else:
+            new_times.append(times[time])
+        
+
+    time_gap = datetime.datetime.fromisoformat(new_times[1]) - datetime.datetime.fromisoformat(new_times[0])
 
     #Give some gap, so that minor variations in time gap don't create unnecisary fill
     time_test = time_gap * 1.05
     new_values = list()
 
 
-    for time_point in range(times):
-        current_time = times[time_point]
+    for time_point in range(len(new_times) - 1):
+        current_time = datetime.datetime.fromisoformat(new_times[time_point])
         new_values.append(values[time_point])
-
         #If there is a gap, fill it.
-        while current_time + time_test < times[time_point + 1]:
+        while time_point < len(new_times) and ((current_time + time_test) < datetime.datetime.fromisoformat(new_times[time_point + 1])):
             new_values.append(values[time_point])
             current_time = current_time + time_gap
-    
+            
+    new_values.append(values[len(new_times)-1])
 
     return new_values
         
@@ -94,28 +108,37 @@ def ARIMA(times: list, values:list, multipleSeasonality:bool) -> None:
 #TBATS Model
 def tbats_model(values:list) -> list:
     #Create variable estimator
-    estimator = tbats.TBATS(seasonal_periods=(24, 24 * 365.25))
+    estimator = tb.TBATS(seasonal_periods=(24, 24 * 365.25),n_jobs=2)
     #Fit model to data
-    model = estimator.fit(y_train)
-
+    model = estimator.fit(values)
+    
     #Model Forecast
     m_forecast = model.forecast(steps=24*365)
+    return m_forecast
 
 
 
-dates1, values1 = dictpull('Carson', 'avg_air_temp', '2000-01-01', '2024-01-01', 'mesonet')
+dates1, values1 = dictpull('Carson', 'Average Air Temperature', '2000-01-01', '2024-01-01', 'mesonet')
 n_values = fill_in_the_blanks(dates1,values1)
 
-tbats_model(n_values)
-ARIMA(dates1,values1,True)
+print('Got here.')
+
+year_output = tbats_model(n_values)
+mpl.pyplot.plot(year_output)
+mpl.pyplot.show()
+
+#ARIMA(dates1,values1,True)
 
 
 
 
 
 
-#NMM Model
+#RNN Model
 
 
 
 
+
+
+#
