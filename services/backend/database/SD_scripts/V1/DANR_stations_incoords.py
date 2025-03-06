@@ -1,7 +1,6 @@
 import json
 
-# Load station locations from file
-with open("new-versions/V1/station_location.json", "r") as file:
+with open("station_location.json", "r") as file:
     stations = json.load(file)
 
 # Bounding box coordinates

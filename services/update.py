@@ -218,6 +218,8 @@ def main():
     for i in range(0,4):
         pullCoCoRaHSAPI(cocoList[i], cocoLocList[i], cocoStart, cocoEnd)
 
+
+
     # Removes existing cached graphs
     folder_path = "./static/graphs"
     # Empty current contents of folder

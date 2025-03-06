@@ -1,6 +1,5 @@
 import json
 import glob
-
 unique_stations = {}
 
 # Loading all json files in the directory
@@ -11,12 +10,10 @@ BOTTOM_LEFT = (44.997291, -104.031247)
 TOP_RIGHT = (45.942412, -100.286123)
 BOTTOM_RIGHT = (44.995300, -100.303070)
 
-
 def is_within_bounds(lat, lon):
     return (BOTTOM_LEFT[0] <= lat <= TOP_RIGHT[0]) and (
         BOTTOM_RIGHT[1] <= lon <= TOP_LEFT[1]
     )
-
 
 for file in json_files:
     with open(file, "r") as f:
