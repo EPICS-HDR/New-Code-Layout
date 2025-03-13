@@ -1,7 +1,7 @@
 import requests
 from json import loads
 #FIXME: why is this import invalid?
-from backend.database.sqlclasses import updateDictionary
+from services.backend.database.sqlclasses import updateDictionary
 
 '''
 THIS RETURNS THE DATA IN THE FOLLOWING FORM

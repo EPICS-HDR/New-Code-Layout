@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import json
 
-station_ids = {
+standing_rock_station_ids = {
     "SWLAZZZ2411A": {"Latitude": 45.3486, "Longitude": -101.0942},
     "SWLAZZZ2411B": {"Latitude": 45.3477, "Longitude": -101.0921},
     "SWLAZZZ2411C": {"Latitude": 45.3468, "Longitude": -101.0904},
@@ -169,10 +169,10 @@ for i in stations.keys():
         color="black",
     )
 
-for i in station_ids.keys():
+for i in standing_rock_station_ids.keys():
     plt.plot(
-        [station_ids[i]["Longitude"]],
-        [station_ids[i]["Latitude"]],
+        [standing_rock_station_ids[i]["Longitude"]],
+        [standing_rock_station_ids[i]["Latitude"]],
         marker="o",
         markersize=5,
         color="orange",

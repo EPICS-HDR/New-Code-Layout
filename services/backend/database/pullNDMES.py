@@ -1,9 +1,8 @@
 import requests
 import csv
 import pandas as pd
-#FIXME: why is this import invalid?
-from backend.database.parseData import ParseData
-from backend.database.sqlclasses import updateDictionary
+from services.backend.database.parseData import ParseData
+from services.backend.database.sqlclasses import updateDictionary
 import os
 
 

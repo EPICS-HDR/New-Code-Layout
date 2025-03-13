@@ -92,6 +92,7 @@ def filter_water_chemicals_to_sql(station_id, water_chemicals, data, conn):
 def main():
     station_ids = [380990]
     csv_file_template = 'Water_Chemistry_Summary_{station_id}.csv'
+
     water_chemicals = ['Phosphorus (Total) (P)', 'Phosphorus (Total Kjeldahl) (P)', 'Nitrate + Nitrite (N)',
                        'Nitrate Forms Check', 'Nitrate + Nitrite (N) Dis', 'Nitrogen (Total Kjeldahl)',
                        'Nitrogen (TKN-Dissolved)',
