@@ -2,6 +2,8 @@ import json
 import sqlite3
 import requests
 from datetime import datetime
+import pandas as pd
+
 station_ids = {
     "SWLAZZZ2411A": {"Latitude": 45.3486, "Longitude": -101.0942},
     "SWLAZZZ2411B": {"Latitude": 45.3477, "Longitude": -101.0921},
@@ -203,6 +205,8 @@ print("StationIDs within the specified range:", station_ids_in_range)
 for stationid in station_ids_in_range:
     indv_url = base + stationid
     indv_stations = requests.get(indv_url).json()
+    # indv_stations = pd.read_json(indv_stations)
+    # indv_stations.fillna(None, inplace = True)
     lat = station_ids[stationid]['Latitude']
     lon = station_ids[stationid]['Longitude']
 
