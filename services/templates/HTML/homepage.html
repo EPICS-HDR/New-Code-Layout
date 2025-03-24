@@ -1,5 +1,6 @@
 <!DOCTYPE html>
     <html>
+      {% load static %}
     <head>
     <meta charset="utf-8">
     <meta name="viewport" content="initial-scale=1, width=device-width">
@@ -11,6 +12,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus Jakarta Sans:wght@500;600;700&display=swap" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM Sans:wght@400&display=swap" />
+<link rel="stylesheet" href="{% static 'css/Heading.css' %}">
 <title>HDR Data Dashboard - Home</title>
     
     
@@ -19,37 +21,7 @@
     <body>
     
     <div class="hdr-landingpage-v1">
-      <header class="nav-bar-top">
-        <img class="image-6-icon" alt="" src="./static/images/public/image-6@2x.png">
-        <div class="nav-bar-top-child">
-        
-        <button class="rectangle-parent">
-          <div class="frame-child">
-          </div>
-          <div class="sign-in">Sign In</div>
-        </button>
-        <a class="home" href="/">Home</a>
-        <a class="about-us" href="/about">About Us</a>
-        <div class="frame">
-          <div class="iconsarrow-drop-down-24px-parent">
-            <img class="iconsarrow-drop-down-24px" alt="" src="./static/images/public/iconsarrow-drop-down-24px.svg">
-            
-            <div class="frame1">
-              <div class="services">Services</div>
-                <div class="dropdown-content">
-                  <a href="/map"><button>Interactive Map</button></a>
-                  <a href="/maptabs"><button>Custom Graphs</button></a>
-                  <a href="/favorites"><button>Favorites</button></a>
-                </div>
-            </div>
-          </div>
-        </div>
-        <!-- <div class="logo">Logo</div> -->
-        <div class="sign-up">Sign Up</div>
-        <div class="nav-bar-top-item">
-        </div>
-      </div>
-      </header>
+      {% include "HTML/navbar.html" %}
       <div class = flex-cont>
       <div class="hdr-landingpage-v1-child"></div>
       
@@ -186,6 +158,7 @@
           <button class="styleoutlined">
             <div><a href="/about">About Us</a></div>
           </button>
+          </a>
         </div>
       </div>
       <div class="text-card-2 card">
