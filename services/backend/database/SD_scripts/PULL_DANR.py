@@ -221,7 +221,7 @@ for stationid in station_ids_in_range:
         tp = station.get('tp')
         eColi = station.get('eColi')
         
-        cursor.execute('''INSERT INTO stations (station_ID, latitude, longitude, 
+        cursor.execute('''INSERT INTO danr (station_ID, latitude, longitude, 
         sampleDate, pH, tkn, ammonia, nitrateNitrite, tp, eColi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
             
             (stationid, 
