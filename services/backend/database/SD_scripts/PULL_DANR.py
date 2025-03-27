@@ -174,7 +174,7 @@ conn = sqlite3.connect('./Measurements.db')
 cursor = conn.cursor()
 
 cursor.execute('''
-CREATE TABLE IF NOT EXISTS stations (
+CREATE TABLE IF NOT EXISTS danr (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     station_ID TEXT NOT NULL,
     latitude FLOAT, 
