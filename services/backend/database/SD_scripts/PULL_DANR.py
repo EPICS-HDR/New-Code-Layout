@@ -220,7 +220,22 @@ for stationid in station_ids_in_range:
         nitrate_nitrite = station.get('nitrateNitrite')
         tp = station.get('tp')
         eColi = station.get('eColi')
+<<<<<<< Updated upstream
         
+=======
+
+        data = {'location': location, 'station_ID': stationid, 'latitude': lat, 'longitude': lon, 'sampleDate': date,
+                'pH': ph, 'tkn': tkn, 'ammonia': ammonia, 'nitrateNitrite': nitrate_nitrite, 'tp': tp, 'eColi': eColi}
+        data_df = pd.DataFrame(data)
+
+
+        for column in data_df.columns:
+            if data_df[column].dtype == object:
+                data_df[column] = data_df[column].replace("non-detect", None)
+                data_df[column] = data_df[column].apply(
+                    lambda x: "insignificant" if isinstance(x, str) and "<" in x else x)
+
+>>>>>>> Stashed changes
         cursor.execute('''INSERT INTO danr (station_ID, latitude, longitude, 
         sampleDate, pH, tkn, ammonia, nitrateNitrite, tp, eColi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
             

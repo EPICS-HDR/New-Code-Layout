@@ -2,7 +2,6 @@ from backend.graphgeneration.createCustom import customGraph, makeTable
 from backend.database.sqlclasses import dictpull
 from backend.database.pullUSACE import pullDamData
 from backend.database.pullShadeHill import pullShadeHill
-from backend.database.pullUSGS import pullGaugeData
 from backend.database.pullNDMES import pullMesonetData
 from backend.database.pullUSGS import pullGaugeData
 from backend.database.pullNOAA import forecastdatacall
