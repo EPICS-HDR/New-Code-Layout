@@ -88,4 +88,72 @@ body {
   }
 }
 
+/*THIS IS ALL NEW STUFF FOR DROP DOWN MENU*/
+body, .dropdown-content, .dropdown-link {
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
 
+
+/* Update dropdown styles */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  min-width: 200px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  z-index: 1000;
+  padding: 10px 0;
+  margin-top: 10px;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-link {
+  display: block;
+  padding: 10px 20px;
+  color: #18564c;
+  text-decoration: none;
+  font-size: 16px; /* Match nav-link font size */
+  font-weight: 500; /* Match nav-link font weight */
+  transition: all 0.3s ease;
+  opacity: 0.9; /* Match nav-link opacity */
+  letter-spacing: -0.48px; /* Match nav-link letter spacing */
+}
+
+.dropdown-link:hover {
+  background-color: rgba(24, 86, 76, 0.1);
+  color: #18564c;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .dropdown-content {
+    position: static;
+    transform: none;
+    box-shadow: none;
+    display: none;
+    width: 100%;
+    background-color: rgba(209, 32, 45, 0.1);
+    border-radius: 0;
+    margin-top: 0;
+  }
+  
+  .dropdown.active .dropdown-content {
+    display: block;
+  }
+  
+  .dropdown-link {
+    padding: 12px 20px;
+  }
+}

@@ -1,5 +1,5 @@
+
 <!doctype html>
-<!--changed href after from css_header.css to Heading.css-->
 <link rel="stylesheet" href="Heading.css">
 <html lang="en">
   <head>
@@ -22,22 +22,20 @@
         />
       </div>
       <nav class="nav-menu">
-        <!-- The "class" attribute should contain styling classes, not file paths -->
-        <a href="/homepage" class="nav-link">Home</a>
+        <a href="/home" class="nav-link">Home</a>
         <a href="/about" class="nav-link">About Us</a>
-        <!--created a drop down menu for services-->
         <div class="dropdown">
-            <a href="#" class="nav-link">Services ▼</a>
-            <div class="dropdown-content">
-              <a href="/interactiveMap">interactive map</a>
-              <a href="/maptabs">custom graphs</a>
-              <a href="/favorites">favorites</a>
-            </div>
+          <a href="#" class="nav-link">Services ▼</a>
+          <div class="dropdown-content">
+            <a href="/interactiveMap" class="dropdown-link">Interactive Map</a>
+            <a href="/maptabs" class="dropdown-link">Custom Graphs</a>
+            <a href="/favorites" class="dropdown-link">Favorites</a>
+          </div>
+        </div>
         <span class="divider"></span>
         <a href="/register" class="nav-link">Sign Up</a>
-        <a href="/login" class="nav-link">Sign In</a>
+        <a href="/login" class="sign-in-button">Sign In</a>
       </nav>
     </header>
   </body>
 </html>
-
