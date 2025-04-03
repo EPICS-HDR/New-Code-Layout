@@ -3,6 +3,7 @@ Manager class for coordinating all data sources.
 Provides a single point of access for pulling data from multiple sources.
 """
 
+from services.backend.datasources import *
 from services.backend.datasources.utils import DateHelper
 from services.backend.constants import (
     GAUGES, DAMS, MESONETS, COCORAHS, NOAA, SHADEHILL
@@ -18,14 +19,12 @@ class DataSourceManager:
         Imports are done here to avoid circular imports.
         """
 
-        #TODO: Implement the DataSourceManager class
-
-        # from services.backend.datasources. import NOAADataSource
-        # from services.backend.datasources. import USGSDataSource
-        # from services.backend.datasources.usace import USACEDataSource
-        # from services.backend.datasources. import NDMESDataSource
-        # from services.backend.datasources.cocorahs import CoCoRaHSDataSource
-        # from services.backend.datasources.shadehill import ShadehillDataSource
+        from services.backend.datasources.noaa-source import NOAADataSource
+        from services.backend.datasources.usgs_source import USGSDataSource
+        from services.backend.datasources.usace_source import USACEDataSource
+        from services.backend.datasources.ndmes_source import NDMESDataSource
+        from services.backend.datasources.cocorahs_source import CoCoRaHSDataSource
+        from services.backend.datasources.shadehill_source import ShadehillDataSource
 
         # self.sources = {
         #     "noaa": NOAADataSource(),

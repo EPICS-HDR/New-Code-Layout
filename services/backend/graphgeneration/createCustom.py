@@ -189,21 +189,28 @@ def makeTable(graphdata, title):
                 listy[i].append(graphdata[i][j])
 
     for i in range(len(listy)):
+
+        # Mean
         cur_mean = np.around(np.mean(listy[i]), 3)
         statistics_list[0].append(cur_mean)
 
+        # Standard Deviation
         cur_sd = np.around(np.std(listy[i]), 3)
         statistics_list[1].append(cur_sd)
 
+        # Median
         cur_median = np.around(np.median(listy[i]), 3)
         statistics_list[2].append(cur_median)
 
+        # Minimum
         cur_minimum = np.around(np.min(listy[i]), 3)
         statistics_list[3].append(cur_minimum)
 
+        # Maximum
         cur_maximum = np.around(np.max(listy[i]), 3)
         statistics_list[4].append(cur_maximum)
 
+        # Range
         cur_range = np.around(cur_maximum - cur_minimum, 3)
         statistics_list[5].append(cur_range)
 

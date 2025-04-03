@@ -1,10 +1,7 @@
 """
 Utility classes and functions for data sources.
 """
-
 from datetime import datetime, date, timedelta
-from typing import Dict, List, Tuple, Any, Optional, Union
-
 
 class DateHelper:
     """
@@ -83,7 +80,6 @@ class DateHelper:
             return f"{date_str} {time_str}"
         else:
             return f"{date_str} 00:00:00"
-
 
 class DataParser:
     """
