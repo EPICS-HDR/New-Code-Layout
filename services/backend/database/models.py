@@ -114,7 +114,6 @@ def ARIMA(times: list, values:list) -> pmd.ARIMA:
 
 
     params = arima_exog_model.get_params()
-
     #print(params)
 
     final_arima = tsa.ARIMA(endog=values,exog=exog,seasonal_order=params['seasonal_order'])
@@ -178,10 +177,10 @@ def tbats_model(values:list) -> tb.TBATS:
     print(end_time-start_time)
     
     #Model Forecast
-    m_forecast = model.forecast(steps=24*365)
+    #m_forecast = model.forecast(steps=24*365)
     return model
 
-def mae(model, test_data: list, time_data:list, time_delta: datetime, arima:bool, update_size:int) -> list:
+def mae(model, train_data:list, test_data: list, time_data:list, time_delta: datetime, arima:bool, update_size:int) -> list:
     print("MAE :)")
     #TODO: Fill in
     #Find out how far in each loop we have data for. 
@@ -201,13 +200,27 @@ def mae(model, test_data: list, time_data:list, time_delta: datetime, arima:bool
     predict_size = 365 * day
     test_array = np.array(test_data)
     update_time = list()
+    tbats_data = train_data
 
     day3_mae, day3_mse, day3_points_total, day7_mae, day7_mse, day7_points_total, day21_mae, day21_mse, day21_points_total, year_mae, year_mse, year_points_total = 0,0,0,0,0,0,0,0,0,0,0,0
     
-    for point in range(0,len(test_data),step=update_size):
+    for point in range(0,len(test_data),update_size):
         if point % 10 == 0:
             print(point)
-        predicts = model.predict(int(predict_size))
+        if arima:
+            exog = pd.DataFrame({'date': time_data[point:point+int(predict_size)]})
+            exog = exog.set_index(pd.PeriodIndex(exog['date'], freq='H'))
+            exog['sin365'] = np.sin(2 * np.pi * exog.index.dayofyear / 365.25)
+            exog['cos365'] = np.cos(2 * np.pi * exog.index.dayofyear / 365.25)
+            exog['sin365_2'] = np.sin(4 * np.pi * exog.index.dayofyear / 365.25)
+            exog['cos365_2'] = np.cos(4 * np.pi * exog.index.dayofyear / 365.25)
+            exog = exog.drop(columns=['date'])
+            if predict_size != len(exog):
+                predict_size = len(exog)
+            predicts = model.forecast(int(predict_size), exog=exog)
+        else: 
+            predicts = model.forecast(int(predict_size))
+
         predicts = np.array(predicts)
         if point < day3_len:
             day3_array = test_array[point:point+day3] - predicts[:day3]
@@ -236,17 +249,24 @@ def mae(model, test_data: list, time_data:list, time_delta: datetime, arima:bool
             
         st = datetime.datetime.now()
         if arima:
-            exog = pd.DataFrame({'date': time_data[point:point+1+update_size]})
-            exog = exog.set_index(pd.PeriodIndex(exog['date'], freq='D'))
+            #Exog for adding data
+            exog = pd.DataFrame({'date': time_data[point:point+update_size]})
+            exog = exog.set_index(pd.PeriodIndex(exog['date'], freq='H'))
             exog['sin365'] = np.sin(2 * np.pi * exog.index.dayofyear / 365.25)
             exog['cos365'] = np.cos(2 * np.pi * exog.index.dayofyear / 365.25)
             exog['sin365_2'] = np.sin(4 * np.pi * exog.index.dayofyear / 365.25)
             exog['cos365_2'] = np.cos(4 * np.pi * exog.index.dayofyear / 365.25)
             exog = exog.drop(columns=['date'])
-            model.append(test_data[point],exog,0)
-            model.predict(predict_size)
+            model = model.append(test_data[point:point+update_size],exog,refit=False)
+
+            #Exog for predicting
+            
+
+            #model.forecast(predict_size,exog)
         else:
-            model.update_predict(test_data[point:point+1+update_size], fh=predict_size, update_params=True)
+            tbats_data.extend(test_data[point:point+1+update_size])
+            model.fit(tbats_data)
+            #model.forecast(predict_size)
         end = datetime.datetime.now()
         update_time.append(end-st)
         
@@ -259,7 +279,10 @@ def mae(model, test_data: list, time_data:list, time_delta: datetime, arima:bool
     out.append(day21_mae/day21_points_total)
     out.append(day21_mse/day21_points_total)
     #out.append(year_mae/year_points_total)
+    out.append(0.0)
     #out.append(year_mse/year_points_total)
+    out.append(0.0)
+    print(update_time)
     out.append(np.average(np.array(update_time)))
     return out
       
@@ -325,7 +348,7 @@ def wrapper(location:str, variable:str, table:str) -> bool:
     train_times, train_values = dictpull(location, variable, '2000-01-01', '2024-01-01', table)
     filled_train_values, filled_train_times, train_time_gap = fill_in_the_blanks(train_times, train_values)
     test_times, test_values = dictpull(location, variable, '2024-01-01', '2024-07-01', table)
-    filled_test_values, filled_train_times, test_time_gap = fill_in_the_blanks(test_times, test_values)
+    filled_test_values, filled_test_times, test_time_gap = fill_in_the_blanks(test_times, test_values)
 
     #Create and Save TBATS Model
     tbats_filename = 'services/backend/database/models/' + location.replace(" ","") + '_' + variable.replace(" ", "") + '_tbats_initial.pkl'
@@ -352,15 +375,15 @@ def wrapper(location:str, variable:str, table:str) -> bool:
 
         with open(arima_filename, 'wb') as pkl:
             pickle.dump(arima_model,pkl)
-        models.append(ARIMA(filled_train_times,filled_train_values))
+        models.append(arima_model)
 
     n = 0
     n_model = list()
     for model in models:
         if n == 1:
-            mae_out[n] = mae(model,filled_test_values, train_time_gap, True,7)
+            mae_out.append(mae(model,filled_train_values,filled_test_values, filled_test_times, train_time_gap, True,24*7))
         else:
-            mae_out[n] = mae(model, filled_test_values, train_time_gap, False,7)
+            mae_out.append(mae(model,filled_train_values,filled_test_values, filled_test_times, train_time_gap, False,24*7))
         n += 1
     mae_out.append([0,0,0,0,0,0,0,0,0])
     #mae_out = [[43.4,643,5234,9467,124,4.2856,90.23,73,5],[55.3,783,1023,8,126,5.67901,90.23,409,4],[0,0,0,0,0,0,0,0,0]]
@@ -390,7 +413,7 @@ def wrapper(location:str, variable:str, table:str) -> bool:
         print("|------------------------------------------------------------|\n",file=f)
         print(f"|   YEAR MSE    |    {mae_out[0][7]:7}     |   {mae_out[1][7]:7}   |   {mae_out[2][7]:7}   |\n",file=f)
         print("|------------------------------------------------------------|\n",file=f)
-        print(f"|   CPU TIME    |    {mae_out[0][8]:7}     |   {mae_out[1][8]:7}   |   {mae_out[2][8]:7}   |\n",file=f)
+        print(f"|   CPU TIME    |    {mae_out[0][8]}     |   {mae_out[1][8]}   |   {mae_out[2][8]}   |\n",file=f)
         print("|------------------------------------------------------------|\n",file=f)
         
 
@@ -413,18 +436,18 @@ def rnn_shape(time_gap: datetime.timedelta, how_far: int) -> list:
 
     shapes = list()
     input_days = 21
-    if time_gap == hour:
+    if time_gap == datetime.timedelta(hours=1):
         input_size = input_days*24 + 1
-        shapes[0] = (input_size, 1)
+        shapes.append((input_size, 1))
         output_size = how_far*24
-        shapes[1] = (output_size, 1)
+        shapes.append((output_size, 1))
 
 
-    elif time_gap == day:
+    elif time_gap == datetime.timedelta(days=1):
         input_size = input_days + 1
-        shapes[0] = (input_size, 1)
+        shapes.append((input_size, 1))
         output_size = how_far
-        shapes[1] = (output_size, 1)
+        shapes.append((output_size, 1))
     
 
     return shapes
@@ -436,10 +459,10 @@ def rnn_training_data(times:list, values:list, shapes:list) -> list:
     window_size = (shapes[0][0] - 1) + shapes[1][0]
     training_data = list()
 
-    for time in range(times.len - window_size):
+    for time in range(len(times) - window_size):
         input = values[time:time+input_size]
-        input.append(times[time+input_size+1])
-        output = values[time+input_size+1:time+window_size]
+        input.append(times[time+input_size])
+        output = values[time+input_size:time+window_size]
         training_data.append((input,output))
     return training_data
 
@@ -449,10 +472,10 @@ def RNN_Cr(times:list, values:list,time_gap:datetime.timedelta,how_far:int):
     training_data = rnn_training_data(times,values,shapes)
 
     model = keras.models.Sequential()
-    model.add(keras.layers.SimpleRNN(2,input_shape=shapes[0],activation=['linear','linear']))
+    model.add(keras.layers.SimpleRNN(2,input_shape=shapes[0],activation='linear'))
     model.compile(loss='mean_squared_error', optimizer='adam')
 
-    with open('RNN.pkl','Wb') as pkl:
+    with open('RNN.pkl','wb') as pkl:
         pickle.dump(model, pkl)
     
     return model
@@ -463,30 +486,34 @@ def RNN_Cr(times:list, values:list,time_gap:datetime.timedelta,how_far:int):
 
     #TEST MAE/UPDATE FREQ
 
-def memory_limit():
-    memory_limit_bytes = 4* 1024 * 1024 * 1024  # 100 MB
-    soft, hard = memory_limit_bytes, memory_limit_bytes
-    p = psutil.Process(os.getpid())
-    p.rlimit(psutil.RLIMIT_AS, (soft, hard))
+# def memory_limit():
+#     memory_limit_bytes = 4* 1024 * 1024 * 1024  # 100 MB
+#     soft, hard = memory_limit_bytes, memory_limit_bytes
+#     p = psutil.Process(os.getpid())
+#     p.rlimit(psutil.RLIMIT_AS, (soft, hard))
 
-memory_limit()
-wrapper('Carson', 'Average Air Temperature','Mesonet')
+# memory_limit()
+#wrapper('Carson', 'Average Air Temperature','Mesonet')
 
 
 
     #TEST RNN SHAPE
-#dates1, values1 = dictpull('Carson', 'Average Air Temperature', '2000-01-01', '2024-01-01', 'mesonet')
-#dates2, values2 = dictpull('Carson', 'Average Air Temperature', '2024-01-01', '2024-07-01', 'mesonet')
-#n_values, n_times, time_gap = fill_in_the_blanks(dates1,values1)
-#n_values2, n_times2, time_gap2 = fill_in_the_blanks(dates2, values2)
+dates1, values1 = dictpull('Carson', 'Average Air Temperature', '2000-01-01', '2024-01-01', 'mesonet')
+dates2, values2 = dictpull('Carson', 'Average Air Temperature', '2024-01-01', '2024-07-01', 'mesonet')
+n_values, n_times, time_gap = fill_in_the_blanks(dates1,values1)
+n_values2, n_times2, time_gap2 = fill_in_the_blanks(dates2, values2)
 
-#shapes = rnn_shape(time_gap,21)
+shapes = rnn_shape(time_gap,21)
+
+
 
     #TEST RNN TRAINING VALUES
-#training_data = rnn_training_data(n_times,n_values,shapes=shapes)
+training_data = rnn_training_data(n_times,n_values,shapes=shapes)
+print(len(training_data[0][0]))
+print(len(training_data[0][1]))
 
     #TEST RNN
-#RNN_Cr()
+RNN_Cr(n_times,n_values,time_gap,21)
     
     
 
