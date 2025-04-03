@@ -1,6 +1,9 @@
 import pmdarima as pmd
 import pandas as pd
 import statsmodels.api as sm
+import statsmodels.tsa.arima.model as tsa
+import sktime.forecasting.arima as skta
+import sktime.datatypes as sktu
 import datetime
 import random
 import numpy as np
@@ -11,6 +14,8 @@ import time as t
 import email.utils as eu
 import copy
 import re
+import pickle
+import keras 
 
 #Function to get all data for a variable, returned as two lists, a time and a value.
 def getData(location: str, variable: str, table: str) -> tuple:
@@ -84,7 +89,7 @@ def ARIMA(times: list, values:list) -> pmd.ARIMA:
     #Fourier modeling of 2nd sesonality
     #Ripped straight from an article, update for better readability, and personal use case
     exog = pd.DataFrame({'date': times})
-    exog = exog.set_index(pd.PeriodIndex(exog['date'], freq='D'))
+    exog = exog.set_index(pd.PeriodIndex(exog['date'], freq='H'))
     exog['sin365'] = np.sin(2 * np.pi * exog.index.dayofyear / 365.25)
     exog['cos365'] = np.cos(2 * np.pi * exog.index.dayofyear / 365.25)
     exog['sin365_2'] = np.sin(4 * np.pi * exog.index.dayofyear / 365.25)
@@ -93,17 +98,59 @@ def ARIMA(times: list, values:list) -> pmd.ARIMA:
     #exog_to_train = exog.iloc[:(len(values)-365)]
     #exog_to_test = exog.iloc[(len(y)-365):]
 
-    print("We are here!")
+    print("Start of Arima Models")
     start_time = datetime.datetime.now()
     
-    arima_exog_model = pmd.auto_arima(y=values, exogenous=exog, seasonal=True, m=24)
+    #arima_exog_model = pmd.auto_arima(y=values, exogenous=exog, seasonal=True, m=24)
 
-    end_time = datetime.datetime.now()
+    with open('pmdarima.pkl','rb') as pkl:
+        arima_exog_model = pickle.load(pkl)
+        
 
-    print("Arima Model End")
-    print(end_time-start_time)
+    split_1 = datetime.datetime.now()
 
-    return arima_exog_model
+    print("PMD Arima Model End")
+    print(split_1-start_time)
+
+
+
+    #params = arima_exog_model.get_params()
+
+    #print(params)
+
+    #final_arima = tsa.ARIMA(endog=values,exog=exog,seasonal_order=params['seasonal_order'])
+    #results_arima = final_arima.fit()
+    with open('tsaarima.pkl', 'rb') as pkl:
+        results_arima = pickle.load(pkl)
+
+
+
+    split_2 = datetime.datetime.now()
+
+    print("Statsmodel Arima Model End")
+    print(split_2-split_1)
+
+    #Convert series to sktime format 
+
+
+    skt_auto_model = skta.AutoARIMA()
+    SeriesY = pd.DataFrame(values)
+    #print(sktu.MTYPE_REGISTER)
+    exog.set_index(SeriesY.index)
+    sktu.check_raise(SeriesY,mtype='pd.DataFrame')
+    sktu.check_raise(exog,mtype='pd.DataFrame')
+    #fitted_skt_auto_model = skt_auto_model.fit(y=SeriesY,X=exog)
+    
+
+    #with open('sktarima.pkl', 'wb') as pkl:
+    #    pickle.dump(fitted_skt_auto_model, pkl)
+
+    split_3 = datetime.datetime.now()
+    print("SKTime Arima Model End")
+
+    print(split_3 - split_2)
+
+    return arima_exog_model, results_arima
 
     #y_arima_exog_forecast = arima_exog_model.predict(n_periods=365, exogenous=exog_to_test)
 
@@ -136,7 +183,7 @@ def tbats_model(values:list) -> tb.TBATS:
     m_forecast = model.forecast(steps=24*365)
     return model
 
-def mae(model, test_data: list, time_data:list, time_delta: datetime, arima:bool) -> list:
+def mae(model, test_data: list, time_data:list, time_delta: datetime, arima:bool, update_size:int) -> list:
     print("MAE :)")
     #TODO: Fill in
     #Find out how far in each loop we have data for. 
@@ -191,16 +238,17 @@ def mae(model, test_data: list, time_data:list, time_delta: datetime, arima:bool
             
         st = datetime.datetime.now()
         if arima:
-            exog = pd.DataFrame({'date': time_data[point:point]})
+            exog = pd.DataFrame({'date': time_data[point:point+1+update_size]})
             exog = exog.set_index(pd.PeriodIndex(exog['date'], freq='D'))
             exog['sin365'] = np.sin(2 * np.pi * exog.index.dayofyear / 365.25)
             exog['cos365'] = np.cos(2 * np.pi * exog.index.dayofyear / 365.25)
             exog['sin365_2'] = np.sin(4 * np.pi * exog.index.dayofyear / 365.25)
             exog['cos365_2'] = np.cos(4 * np.pi * exog.index.dayofyear / 365.25)
             exog = exog.drop(columns=['date'])
-            model.update(test_data[point],exog,0)
+            model.append(test_data[point],exog,0)
+            model.predict(predict_size)
         else:
-            model.update(test_data[point])
+            model.update_predict(test_data[point:point+1+update_size], fh=predict_size, update_params=True)
         end = datetime.datetime.now()
         update_time.append(end-st)
         
@@ -228,68 +276,113 @@ def mae(model, test_data: list, time_data:list, time_delta: datetime, arima:bool
 
 
 
-dates1, values1 = dictpull('Carson', 'Average Air Temperature', '2000-01-01', '2024-01-01', 'mesonet')
-dates2, values2 = dictpull('Carson', 'Average Air Temperature', '2024-01-01', '2024-07-01', 'mesonet')
-n_values, n_times, time_gap = fill_in_the_blanks(dates1,values1)
-n_values2, n_times2, time_gap2 = fill_in_the_blanks(dates2, values2)
+# dates1, values1 = dictpull('Carson', 'Average Air Temperature', '2000-01-01', '2024-01-01', 'mesonet')
+# dates2, values2 = dictpull('Carson', 'Average Air Temperature', '2024-01-01', '2024-07-01', 'mesonet')
+# n_values, n_times, time_gap = fill_in_the_blanks(dates1,values1)
+# n_values2, n_times2, time_gap2 = fill_in_the_blanks(dates2, values2)
 
-model_list = list()
-print('Got here.')
+# model_list = list()
+# print('Got here.')
 
 #year_output = tbats_model(n_values)
 #mpl.pyplot.plot(year_output)
 #mpl.pyplot.show()
-model_list.append(ARIMA(n_times,n_values))
+# exog = pd.DataFrame({'date': n_times2[0:1]})
+# exog = exog.set_index(pd.PeriodIndex(exog['date'], freq='H'))
+# exog['sin365'] = np.sin(2 * np.pi * exog.index.dayofyear / 365.25)
+# exog['cos365'] = np.cos(2 * np.pi * exog.index.dayofyear / 365.25)
+# exog['sin365_2'] = np.sin(4 * np.pi * exog.index.dayofyear / 365.25)
+# exog['cos365_2'] = np.cos(4 * np.pi * exog.index.dayofyear / 365.25)
+# exog = exog.drop(columns=['date'])
 
-out = mae(model_list[0],n_values2,n_times2,time_gap,True)
+#print("Near here.")
 
-def wrapper(variable:str, location:str, table:str) -> bool:
+
+#model_list.append(ARIMA(n_times,n_values))
+# pmda, sttsa =ARIMA(n_times,n_values)
+
+# start_time = datetime.datetime.now()
+
+# pmda.update(n_values[0],exog)
+
+# pmda.predict(10)
+
+
+
+# end_time = datetime.datetime.now()
+
+# sttsa = sttsa.append(n_values2[0:1],exog=exog,refit=True)
+
+# exog = pd.DataFrame({'date': n_times2[1:11]})
+# exog = exog.set_index(pd.PeriodIndex(exog['date'], freq='H'))
+# exog['sin365'] = np.sin(2 * np.pi * exog.index.dayofyear / 365.25)
+# exog['cos365'] = np.cos(2 * np.pi * exog.index.dayofyear / 365.25)
+# exog['sin365_2'] = np.sin(4 * np.pi * exog.index.dayofyear / 365.25)
+# exog['cos365_2'] = np.cos(4 * np.pi * exog.index.dayofyear / 365.25)
+# exog = exog.drop(columns=['date'])
+# sttsa.forecast(steps=10,exog=exog)
+
+# end_time2= datetime.datetime.now()
+
+# print('Update Check')
+
+# print(end_time-start_time)
+# print(end_time2 - end_time)
+
+#out = mae(model_list[0],n_values2,n_times2,time_gap,True)
+
+def wrapper(location:str, variable:str, table:str) -> bool:
     models = list()
     mae_out = list()
     train_times, train_values = dictpull(location, variable, '2000-01-01', '2024-01-01', table)
-    filled_train_values = fill_in_the_blanks(train_times, train_values)
+    filled_train_values, filled_train_times, train_time_gap = fill_in_the_blanks(train_times, train_values)
     test_times, test_values = dictpull(location, variable, '2024-01-01', '2024-07-01', table)
-    filled_test_values = fill_in_the_blanks(test_times, test_values)
+    filled_test_values, filled_train_times, test_time_gap = fill_in_the_blanks(test_times, test_values)
     models.append(tbats_model(filled_train_values))
     models.append(ARIMA(filled_train_values))
-    # n = 0
-    # n_model = list
-    # for model in models:
-    #     if n == 1:
-    #         mae_out[n] = mae(model,filled_test_values, time_gap, True)
-    #     else:
-    #         mae_out[n] = mae(model, filled_test_values, time_gap, False)
-    #     n += 1
-    mae_out = [[43.4,643,5234,9467,124,4.2856,90.23,73,5],[]]
+    n = 0
+    n_model = list()
+    for model in models:
+        if n == 1:
+            mae_out[n] = mae(model,filled_test_values, train_time_gap, True,7)
+        else:
+            mae_out[n] = mae(model, filled_test_values, train_time_gap, False,7)
+        n += 1
+    mae_out.append([0,0,0,0,0,0,0,0,0])
+    #mae_out = [[43.4,643,5234,9467,124,4.2856,90.23,73,5],[55.3,783,1023,8,126,5.67901,90.23,409,4],[0,0,0,0,0,0,0,0,0]]
 
-    file_name = location.replace(" ", "") + variable.replace(" ", "") + ".txt"
-    with open(file_name) as f:
-        print("----------------------------------------------\n",file=f)
-        print("|         Predictive Model Analysis          |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("|         %s, %s          |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("|           |   SARIMA   |  TBATS  |   RNN   |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("| 3-DAY MAE |    %3d     |   %3d   |   %3d   |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("| 3-DAY MSE |    %3d     |   %3d   |   %3d   |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("| 7-DAY MAE |    %3d     |   %3d   |   %3d   |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("| 7-DAY MSE  |    %3d     |   %3d   |   %3d   |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("| 21-DAY MAE |    %3d     |   %3d   |   %3d   |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("| 21-DAY MSE |    %3d     |   %3d   |   %3d   |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("| YEAR MAE  |    %3d     |   %3d   |   %3d   |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("| YEAR MSE  |    %3d     |   %3d   |   %3d   |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
-        print("| CPU TIME  |    %3d     |   %3d   |   %3d   |\n",file=f)
-        print("|--------------------------------------------|\n",file=f)
+    file_name = location.replace(" ", "") + variable.replace(" ", "") + ".txt" 
+    with open(file_name, 'w') as f:
+        print("-------------------------------------------------------------\n",file=f)
+        print("|                  Predictive Model Analysis                 |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print(f"|         {location:15} {variable:25}          |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print("|               |     SARIMA     |    TBATS    |     RNN     |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print(f"|   3-DAY MAE   |    {mae_out[0][0]:7}     |   {mae_out[1][0]:7}  |   {mae_out[2][0]:7}  |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print(f"|   3-DAY MSE   |    {mae_out[0][1]:7}     |   {mae_out[1][1]:7}   |   {mae_out[2][1]:7}   |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print(f"|   7-DAY MAE   |    {mae_out[0][2]:7}     |   {mae_out[1][2]:7}   |   {mae_out[2][2]:7}   |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print(f"|   7-DAY MSE    |    {mae_out[0][3]:7}     |   {mae_out[1][3]:7}   |   {mae_out[2][3]:7}   |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print(f"|   21-DAY MAE   |    {mae_out[0][4]:7}     |   {mae_out[1][4]:7}   |   {mae_out[2][4]:7}   |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print(f"|   21-DAY MSE   |    {mae_out[0][5]:7}     |   {mae_out[1][5]:7}   |   {mae_out[2][5]:7}   |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print(f"|   YEAR MAE    |    {mae_out[0][6]:7}     |   {mae_out[1][6]:7}  |   {mae_out[2][6]:7}   |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print(f"|   YEAR MSE    |    {mae_out[0][7]:7}     |   {mae_out[1][7]:7}   |   {mae_out[2][7]:7}   |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
+        print(f"|   CPU TIME    |    {mae_out[0][8]:7}     |   {mae_out[1][8]:7}   |   {mae_out[2][8]:7}   |\n",file=f)
+        print("|------------------------------------------------------------|\n",file=f)
         
+
+
+#wrapper('Carson', 'Average Air Temperature', 'mesonet')
+#wrapper('Carson', 'Average Baromatric Pressure', 'mesonet')
 
 
 
@@ -305,7 +398,81 @@ def wrapper(variable:str, location:str, table:str) -> bool:
 
 
 
+def rnn_shape(time_gap: datetime.timedelta, how_far: int) -> list:
+    """Creates the input and output shapes for a Keras RNN."""
+
+    shapes = list()
+    input_days = 21
+    if time_gap == hour:
+        input_size = input_days*24 + 1
+        shapes[0] = (input_size, 1)
+        output_size = how_far*24
+        shapes[1] = (output_size, 1)
+
+
+    elif time_gap == day:
+        input_size = input_days + 1
+        shapes[0] = (input_size, 1)
+        output_size = how_far
+        shapes[1] = (output_size, 1)
+    
+
+    return shapes
+
+def rnn_training_data(times:list, values:list, shapes:list) -> list:
+    "Create training data based on the shape of the input and output."
+    input_size = shapes[0][0] - 1
+    output_size = shapes[1][0]
+    window_size = (shapes[0][0] - 1) + shapes[1][0]
+    training_data = list()
+
+    for time in range(times.len - window_size):
+        input = values[time:time+input_size]
+        input.append(times[time+input_size+1])
+        output = values[time+input_size+1:time+window_size]
+        training_data.append((input,output))
+    return training_data
+
+
+def RNN_Cr(times:list, values:list,time_gap:datetime.timedelta,how_far:int):
+    shapes = rnn_shape(time_gap,how_far)
+    training_data = rnn_training_data(times,values,shapes)
+
+    model = keras.models.Sequential()
+    model.add(keras.layers.SimpleRNN(2,input_shape=shapes[0],activation=['linear','linear']))
+    model.compile(loss='mean_squared_error', optimizer='adam')
+
+    with open('RNN.pkl','Wb') as pkl:
+        pickle.dump(model, pkl)
+    
+    return model
+
+    
+
+#TEST STRUCTURE
+
+    #TEST MAE/UPDATE FREQ
+wrapper('Carson', 'Average Air Temperature','Mesonet')
 
 
 
-#
+    #TEST RNN SHAPE
+#dates1, values1 = dictpull('Carson', 'Average Air Temperature', '2000-01-01', '2024-01-01', 'mesonet')
+#dates2, values2 = dictpull('Carson', 'Average Air Temperature', '2024-01-01', '2024-07-01', 'mesonet')
+#n_values, n_times, time_gap = fill_in_the_blanks(dates1,values1)
+#n_values2, n_times2, time_gap2 = fill_in_the_blanks(dates2, values2)
+
+#shapes = rnn_shape(time_gap,21)
+
+    #TEST RNN TRAINING VALUES
+#training_data = rnn_training_data(n_times,n_values,shapes=shapes)
+
+    #TEST RNN
+#RNN_Cr()
+    
+    
+
+
+
+
+
