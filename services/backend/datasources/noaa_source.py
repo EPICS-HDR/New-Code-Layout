@@ -8,3 +8,8 @@ class NOAADataSource(DataSource):
             "Minot, ND": ["MOT", "Minot"],
             "Williston, ND": ["ISN", "Williston"]
         }
+
+    def fetch(self, location = None, dataset = None, start_date = None, end_date = None):
+
+    def process(self, raw_data = None, location = None, dataset = None):
+

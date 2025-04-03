@@ -1,6 +1,7 @@
 import requests
 from services.backend.datasources.base import DataSource
 from services.backend.datasources.utils import DataParser
+from services.backend.datasources.utils import DateHelper
 
 class ShadehillDataSource(DataSource):
     """
@@ -24,13 +25,15 @@ class ShadehillDataSource(DataSource):
             "RAD": "Daily Mean Gate One Opening",
         }
         
-    def fetch(self, location, dataset, start_date, end_date):
+    def fetch(self, location, dataset = None, start_date = None, end_date = None):
         """
         Fetch data from Shadehill API.
         """
         # URL for the form action
         url = "https://www.usbr.gov/gp-bin/arcread.pl"
-        
+
+
+
         # Form data to be submitted
         form_data = {
             'st': 'SHR',
@@ -42,8 +45,10 @@ class ShadehillDataSource(DataSource):
             'ed': end_date['day'],
             'pa': dataset,
         }
+        print(form_data)
         
         try:
+            print(url)
             response = requests.post(url, data=form_data)
             
             if response.status_code != 200:
@@ -123,3 +128,8 @@ class ShadehillDataSource(DataSource):
                         self.store(times, values, "Shadehill", dataset_name)
             except Exception as e:
                 print(f"Error processing Shadehill data for {dataset_name}: {e}")
+
+#TESTING
+shadehill = ShadehillDataSource()
+print(DateHelper.string_to_list("20210624"))
+print((shadehill.fetch("Shadehill",dataset="AF", start_date=DateHelper.string_to_list("20210624"), end_date=DateHelper.string_to_list("20230401"))))

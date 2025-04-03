@@ -19,21 +19,21 @@ class DataSourceManager:
         Imports are done here to avoid circular imports.
         """
 
-        from services.backend.datasources.noaa-source import NOAADataSource
+        from services.backend.datasources.noaa_source import NOAADataSource
         from services.backend.datasources.usgs_source import USGSDataSource
         from services.backend.datasources.usace_source import USACEDataSource
         from services.backend.datasources.ndmes_source import NDMESDataSource
         from services.backend.datasources.cocorahs_source import CoCoRaHSDataSource
         from services.backend.datasources.shadehill_source import ShadehillDataSource
 
-        # self.sources = {
-        #     "noaa": NOAADataSource(),
-        #     "usgs": USGSDataSource(),
-        #     "usace": USACEDataSource(),
-        #     "ndmes": NDMESDataSource(),
-        #     "cocorahs": CoCoRaHSDataSource(),
-        #     "shadehill": ShadehillDataSource()
-        # }
+        self.sources = {
+            "noaa": NOAADataSource(),
+            "usgs": USGSDataSource(),
+            "usace": USACEDataSource(),
+            "ndmes": NDMESDataSource(),
+            "cocorahs": CoCoRaHSDataSource(),
+            "shadehill": ShadehillDataSource()
+        }
 
         # Map of location sets for each source type
         self.location_sets = {
@@ -166,15 +166,9 @@ class DataSourceManager:
         return self.sources.get(source_name)
 
     def list_sources(self):
-        """
-        List all available data sources.
-        """
         return list(self.sources.keys())
 
     def list_locations(self, source_name=None):
-        """
-        List available locations for a specific source or all sources.
-        """
         if source_name:
             if source_name in self.location_sets:
                 return {source_name: self.location_sets[source_name]}

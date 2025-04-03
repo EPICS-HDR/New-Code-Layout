@@ -81,6 +81,13 @@ class DateHelper:
         else:
             return f"{date_str} 00:00:00"
 
+    def string_to_list(date):
+        year = date[0:4]
+        month = date[4:6]
+        day = date[6:9]
+        return {"year": year, "month": month, "day": day}
+
+
 class DataParser:
     """
     Helper class for parsing data.

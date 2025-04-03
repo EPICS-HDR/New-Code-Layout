@@ -2,8 +2,10 @@ import requests
 import csv
 import pandas as pd
 import os
+import io
 from services.backend.datasources.base import DataSource
 from services.backend.datasources.utils import DataParser
+from services.backend.datasources.utils import DateHelper
 
 class NDMESDataSource(DataSource):
     """
@@ -19,19 +21,21 @@ class NDMESDataSource(DataSource):
             "Carson": ["96", "Carson, ND"],
         }
         
-    def fetch(self, location, dataset, start_date, end_date):
+    def fetch(self, location, dataset = None, start_date = None, end_date = None):
         """
         Fetch mesonet data from NDSU NDAWN.
         """
 
+
         location_data = self.location_dict[location]
         station = location_data[0]
-        
-        s_year, s_month, s_day = start_date['year'], start_date['month'], start_date['day']
-        e_year, e_month, e_day = end_date['year'], end_date['month'], end_date['day']
+
+    # Takes the date in a string format
+
+        s_year, s_month, s_day = start_date[0:4], start_date[4:6], start_date[6:8]
+        e_year, e_month, e_day = end_date[0:4], end_date[4:6], end_date[6:8]
         
         url_csv = f"https://ndawn.ndsu.nodak.edu/table.csv?ttype=hourly&station={station}&begin_date={s_year}-{s_month}-{s_day}&end_date={e_year}-{e_month}-{e_day}"
-
         try:
             response = requests.get(url_csv)
             
@@ -39,15 +43,10 @@ class NDMESDataSource(DataSource):
                 print(f"Error fetching NDMES data for {location}: HTTP {response.status_code}")
                 return None
 
-            file_name = f"./temp_{location}.csv"
+            data = csv.reader(response)
+            data = pd.read_csv(io.StringIO(response.text), skiprows=3)
+            return data
 
-            reader = csv.reader(response.text.splitlines())
-            with open(file_name, "w", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerows(reader)
-                
-            return file_name
-            
         except requests.exceptions.RequestException as e:
             print(f"Error fetching NDMES data for {location}: {e}")
             return None
@@ -56,10 +55,6 @@ class NDMESDataSource(DataSource):
         """
         Process the raw NDMES data.
         """
-        if not raw_data:
-            return [], []
-            
-        file_name = raw_data
         
         try:
             list_to_del = [
@@ -71,7 +66,7 @@ class NDMESDataSource(DataSource):
             
             list_to_del_2 = ["Station Name", "Latitude", "Longitude", "Elevation"]
 
-            df = pd.read_csv(file_name, skiprows=3)
+            df = raw_data
 
             df2 = df.iloc[1:]
 
@@ -168,3 +163,8 @@ class NDMESDataSource(DataSource):
                             self.store(times, values, location, dataset)
             except Exception as e:
                 print(f"Error processing NDMES data for {location}: {e}")
+
+# TESTING
+
+ndmes = NDMESDataSource()
+print(ndmes.process(ndmes.fetch("Fort Yates", start_date="20210624", end_date="20230401"), "Fort Yates", "Average Air Temperature"))

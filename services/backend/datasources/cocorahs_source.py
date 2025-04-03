@@ -16,7 +16,7 @@ class CoCoRaHSDataSource(DataSource):
             "Langdon, ND": ["NDCV0004", "20200311", "Langdon"]
         }
         
-    def fetch(self, location, dataset, start_date, end_date):
+    def fetch(self, location = None, dataset= None, start_date= None, end_date= None):
         if location not in self.station_dict:
             print(f"Unknown CoCoRaHS location: {location}")
             return None
@@ -147,4 +147,12 @@ class CoCoRaHSDataSource(DataSource):
         year, month, day = date_str.split('-')
         return f'{year}-{month}-{day} 00:00:00'
 
-print()
+
+# TESTING
+
+cocoRah = CoCoRaHSDataSource()
+print(cocoRah.get_link("SDFK0006", start_date="20210624", end_date="20230401"))
+data = cocoRah.fetch("Bison, SD", start_date="20210624", end_date="20230401")
+
+print(cocoRah.process(data, "Bison, SD", "Precipitation"))
+
