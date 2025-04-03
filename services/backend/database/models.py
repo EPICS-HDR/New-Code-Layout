@@ -16,6 +16,10 @@ import copy
 import re
 import pickle
 import keras 
+import os
+import sys
+import psutil
+
 
 #Function to get all data for a variable, returned as two lists, a time and a value.
 def getData(location: str, variable: str, table: str) -> tuple:
@@ -73,11 +77,6 @@ def trainTest(table:str, location:str, variable:str) -> tuple:
     #Take test_sections and turn it into dates
     
 
-
-    
-    
-
-
 #ARIMA Model
 def ARIMA(times: list, values:list) -> pmd.ARIMA:
     #Figure out orders
@@ -101,10 +100,10 @@ def ARIMA(times: list, values:list) -> pmd.ARIMA:
     print("Start of Arima Models")
     start_time = datetime.datetime.now()
     
-    #arima_exog_model = pmd.auto_arima(y=values, exogenous=exog, seasonal=True, m=24)
+    arima_exog_model = pmd.auto_arima(y=values, exogenous=exog, seasonal=True, m=24)
 
-    with open('pmdarima.pkl','rb') as pkl:
-        arima_exog_model = pickle.load(pkl)
+    # with open('pmdarima.pkl','rb') as pkl:
+    #     arima_exog_model = pickle.load(pkl)
         
 
     split_1 = datetime.datetime.now()
@@ -114,14 +113,14 @@ def ARIMA(times: list, values:list) -> pmd.ARIMA:
 
 
 
-    #params = arima_exog_model.get_params()
+    params = arima_exog_model.get_params()
 
     #print(params)
 
-    #final_arima = tsa.ARIMA(endog=values,exog=exog,seasonal_order=params['seasonal_order'])
-    #results_arima = final_arima.fit()
-    with open('tsaarima.pkl', 'rb') as pkl:
-        results_arima = pickle.load(pkl)
+    final_arima = tsa.ARIMA(endog=values,exog=exog,seasonal_order=params['seasonal_order'])
+    results_arima = final_arima.fit()
+    # with open('tsaarima.pkl', 'rb') as pkl:
+    #     results_arima = pickle.load(pkl)
 
 
 
@@ -133,12 +132,12 @@ def ARIMA(times: list, values:list) -> pmd.ARIMA:
     #Convert series to sktime format 
 
 
-    skt_auto_model = skta.AutoARIMA()
-    SeriesY = pd.DataFrame(values)
+    # skt_auto_model = skta.AutoARIMA()
+    # SeriesY = pd.DataFrame(values)
     #print(sktu.MTYPE_REGISTER)
-    exog.set_index(SeriesY.index)
-    sktu.check_raise(SeriesY,mtype='pd.DataFrame')
-    sktu.check_raise(exog,mtype='pd.DataFrame')
+    # exog.set_index(SeriesY.index)
+    # sktu.check_raise(SeriesY,mtype='pd.DataFrame')
+    # sktu.check_raise(exog,mtype='pd.DataFrame')
     #fitted_skt_auto_model = skt_auto_model.fit(y=SeriesY,X=exog)
     
 
@@ -150,7 +149,7 @@ def ARIMA(times: list, values:list) -> pmd.ARIMA:
 
     print(split_3 - split_2)
 
-    return arima_exog_model, results_arima
+    return results_arima
 
     #y_arima_exog_forecast = arima_exog_model.predict(n_periods=365, exogenous=exog_to_test)
 
@@ -165,7 +164,6 @@ def ARIMA(times: list, values:list) -> pmd.ARIMA:
     #sm.tsa.graphics.plot_pacf()
     
     #sm.tsa.ARIMA()
-
 
 
 #TBATS Model
@@ -206,7 +204,7 @@ def mae(model, test_data: list, time_data:list, time_delta: datetime, arima:bool
 
     day3_mae, day3_mse, day3_points_total, day7_mae, day7_mse, day7_points_total, day21_mae, day21_mse, day21_points_total, year_mae, year_mse, year_points_total = 0,0,0,0,0,0,0,0,0,0,0,0
     
-    for point in range(len(test_data)):
+    for point in range(0,len(test_data),step=update_size):
         if point % 10 == 0:
             print(point)
         predicts = model.predict(int(predict_size))
@@ -264,17 +262,7 @@ def mae(model, test_data: list, time_data:list, time_delta: datetime, arima:bool
     #out.append(year_mse/year_points_total)
     out.append(np.average(np.array(update_time)))
     return out
-
-
-
-            
-    
-        
-        
-
-
-
-
+      
 
 # dates1, values1 = dictpull('Carson', 'Average Air Temperature', '2000-01-01', '2024-01-01', 'mesonet')
 # dates2, values2 = dictpull('Carson', 'Average Air Temperature', '2024-01-01', '2024-07-01', 'mesonet')
@@ -338,8 +326,34 @@ def wrapper(location:str, variable:str, table:str) -> bool:
     filled_train_values, filled_train_times, train_time_gap = fill_in_the_blanks(train_times, train_values)
     test_times, test_values = dictpull(location, variable, '2024-01-01', '2024-07-01', table)
     filled_test_values, filled_train_times, test_time_gap = fill_in_the_blanks(test_times, test_values)
-    models.append(tbats_model(filled_train_values))
-    models.append(ARIMA(filled_train_values))
+
+    #Create and Save TBATS Model
+    tbats_filename = 'services/backend/database/models/' + location.replace(" ","") + '_' + variable.replace(" ", "") + '_tbats_initial.pkl'
+    if os.path.exists(tbats_filename):
+        print("Loading existing TBATS Model.")
+        with open(tbats_filename, 'rb') as pkl:
+            models.append(pickle.load(pkl))
+    else:
+        print("Creating TBATS Model. Est. Time: 30 min.")
+        tbats_model_initial = tbats_model(filled_train_values)
+        with open(tbats_filename, 'wb') as pkl:
+            pickle.dump(tbats_model_initial,pkl)
+        models.append(tbats_model_initial)
+    
+    #Create and Save ARIMA Model
+    arima_filename = 'services/backend/database/models/' + location.replace(" ","") + '_' + variable.replace(" ","") + '_ARIMA_initial.pkl'
+    if os.path.exists(arima_filename):
+        print("Loading existing ARIMA Model.")
+        with open(arima_filename, 'rb') as pkl:
+            models.append(pickle.load(pkl))
+    else:
+        print("Creating ARIMA Model. Est. Time: 30 min.")
+        arima_model = ARIMA(filled_train_times,filled_train_values)
+
+        with open(arima_filename, 'wb') as pkl:
+            pickle.dump(arima_model,pkl)
+        models.append(ARIMA(filled_train_times,filled_train_values))
+
     n = 0
     n_model = list()
     for model in models:
@@ -388,10 +402,6 @@ def wrapper(location:str, variable:str, table:str) -> bool:
 
 
 #ARIMA(dates1,values1,True)
-
-
-
-
 
 
 #RNN Model
@@ -452,6 +462,14 @@ def RNN_Cr(times:list, values:list,time_gap:datetime.timedelta,how_far:int):
 #TEST STRUCTURE
 
     #TEST MAE/UPDATE FREQ
+
+def memory_limit():
+    memory_limit_bytes = 4* 1024 * 1024 * 1024  # 100 MB
+    soft, hard = memory_limit_bytes, memory_limit_bytes
+    p = psutil.Process(os.getpid())
+    p.rlimit(psutil.RLIMIT_AS, (soft, hard))
+
+memory_limit()
 wrapper('Carson', 'Average Air Temperature','Mesonet')
 
 
@@ -471,8 +489,4 @@ wrapper('Carson', 'Average Air Temperature','Mesonet')
 #RNN_Cr()
     
     
-
-
-
-
 
