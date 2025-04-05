@@ -1,8 +1,8 @@
 import requests
 import csv
-from backend.database.parseData import ParseData
+from services.backend.database.parseData import ParseData
 import os
-from backend.database.sqlclasses import updateDictionary
+from services.backend.database.sqlclasses import updateDictionary
 
 def pullDamData(dam_location):
 

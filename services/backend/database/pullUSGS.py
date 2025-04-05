@@ -1,6 +1,6 @@
 import requests
 import csv
-from backend.database.sqlclasses import updateDictionary
+from services.backend.database.sqlclasses import updateDictionary
 import os
 
 def pullGaugeData(city, start_day, start_month, start_year, end_day, end_month, end_year):

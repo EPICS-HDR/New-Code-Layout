@@ -1,8 +1,8 @@
 import requests
 import csv
 import pandas as pd
-from services.backend.database.parseData import ParseData
-from services.backend.database.sqlclasses import updateDictionary
+from backend.database.parseData import ParseData
+from backend.database.sqlclasses import updateDictionary
 import os
 
 

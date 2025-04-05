@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import calendar
 from datetime import datetime
+#FIXME: why is this import invalid?
 from backend.database.sqlclasses import updateDictionary
 
 def getForecasts(location, dataset):
