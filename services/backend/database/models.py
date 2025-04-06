@@ -471,8 +471,16 @@ def RNN_Cr(times:list, values:list,time_gap:datetime.timedelta,how_far:int):
     shapes = rnn_shape(time_gap,how_far)
     training_data = rnn_training_data(times,values,shapes)
 
-    model = keras.models.Sequential()
-    model.add(keras.layers.SimpleRNN(2,input_shape=shapes[0],activation='linear'))
+    #model = keras.models.Sequential()
+    inputs = keras.Input(shape=shapes[0])
+    
+    rnn = keras.layers.SimpleRNN(1024,activation='linear')
+    model = rnn(inputs)
+    model = keras.layers.SimpleRNN(1024,activation='linear')(model)
+    outputs = keras.layers.Dense(shapes[1][0])
+    model = keras.Model(inputs=inputs,outputs=outputs,name="first_model")
+    model.summary()
+    keras.utils.plot_model(model)
     model.compile(loss='mean_squared_error', optimizer='adam')
 
     with open('RNN.pkl','wb') as pkl:
