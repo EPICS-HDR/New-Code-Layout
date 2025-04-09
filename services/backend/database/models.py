@@ -19,6 +19,7 @@ import keras
 import os
 import sys
 import psutil
+from keras.utils import plot_model
 
 
 #Function to get all data for a variable, returned as two lists, a time and a value.
@@ -437,34 +438,50 @@ def rnn_shape(time_gap: datetime.timedelta, how_far: int) -> list:
     shapes = list()
     input_days = 21
     if time_gap == datetime.timedelta(hours=1):
-        input_size = input_days*24 + 1
+        input_size = input_days*24
         shapes.append((input_size, 1))
         output_size = how_far*24
         shapes.append((output_size, 1))
+        shapes.append((1))
 
 
     elif time_gap == datetime.timedelta(days=1):
-        input_size = input_days + 1
+        input_size = input_days
         shapes.append((input_size, 1))
         output_size = how_far
         shapes.append((output_size, 1))
+        
+        shapes.append(tuple(1))
+        
     
 
     return shapes
 
 def rnn_training_data(times:list, values:list, shapes:list) -> list:
     "Create training data based on the shape of the input and output."
-    input_size = shapes[0][0] - 1
+
+    times = pd.DataFrame(times)
+    print(times.columns.tolist())
+
+    values = np.array(values)
+    values_range = (max(values) - min(values))
+    values = (values - (min(values)+(values_range*.1)))/(values_range*1.2) 
+
+
+    input_size = shapes[0][0]
     output_size = shapes[1][0]
-    window_size = (shapes[0][0] - 1) + shapes[1][0]
-    training_data = list()
+    window_size = (shapes[0][0]) + shapes[1][0]
+    training_data = tuple()
+    input = list()
+    day = list()
+    output = list()
 
     for time in range(len(times) - window_size):
-        input = values[time:time+input_size]
-        input.append(times[time+input_size])
-        output = values[time+input_size:time+window_size]
-        training_data.append((input,output))
-    return training_data
+        #Append new data rather than overwrite it.
+        input.append(values[time:time+input_size])
+        day.append(times[0][time+input_size].dayofyear/ 366)
+        output.append(values[time+input_size:time+window_size])
+    return (np.array(input), np.array(output), np.array(day))
 
 
 def RNN_Cr(times:list, values:list,time_gap:datetime.timedelta,how_far:int):
@@ -472,16 +489,34 @@ def RNN_Cr(times:list, values:list,time_gap:datetime.timedelta,how_far:int):
     training_data = rnn_training_data(times,values,shapes)
 
     #model = keras.models.Sequential()
-    inputs = keras.Input(shape=shapes[0])
+    print(shapes[0])
+    inputRNN = keras.Input(shape=shapes[0])
+    inputDense = keras.Input(shape=shapes[2])
+
+    rnn = keras.layers.SimpleRNN(shapes[1][0],activation='linear')(inputRNN)
+    rnn = keras.Model(inputs=inputRNN,outputs=rnn)
+    inputDense = keras.Model(inputs=inputDense,outputs=inputDense)
+
+    combinedInput = keras.layers.concatenate([rnn.output,inputDense.output])
+
+
+    dense = keras.layers.Dense(4096)(combinedInput)
+    dense = keras.layers.Dense(1024)(dense)
+    dense = keras.layers.Dense(shapes[1][0])(dense)
+
+    model = keras.Model(inputs=[rnn.input,inputDense.input],outputs=dense)
+
     
-    rnn = keras.layers.SimpleRNN(1024,activation='linear')
-    model = rnn(inputs)
-    model = keras.layers.SimpleRNN(1024,activation='linear')(model)
-    outputs = keras.layers.Dense(shapes[1][0])
-    model = keras.Model(inputs=inputs,outputs=outputs,name="first_model")
+    # rnn = keras.layers.SimpleRNN(shapes[1][0],activation='linear')
+    # model = rnn(inputs)
+    # #model = keras.layers.SimpleRNN(shapes=[1][0],activation='linear')(model)
+    # outputs = keras.layers.Dense(shapes[1][0])
+    # model = keras.Model(inputs=inputs,outputs=outputs,name="first_model")
     model.summary()
-    keras.utils.plot_model(model)
+    plot_model(model,'model.png',show_shapes=True,show_layer_activations=True)
     model.compile(loss='mean_squared_error', optimizer='adam')
+
+    model.fit(x=[training_data[0], training_data[2]], y=training_data[1], epochs=5)
 
     with open('RNN.pkl','wb') as pkl:
         pickle.dump(model, pkl)
@@ -517,8 +552,8 @@ shapes = rnn_shape(time_gap,21)
 
     #TEST RNN TRAINING VALUES
 training_data = rnn_training_data(n_times,n_values,shapes=shapes)
-print(len(training_data[0][0]))
-print(len(training_data[0][1]))
+#print(len(training_data[0][0]))
+#print(len(training_data[0][1]))
 
     #TEST RNN
 RNN_Cr(n_times,n_values,time_gap,21)
