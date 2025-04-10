@@ -95,11 +95,8 @@ body, .dropdown-content, .dropdown-link {
 
 
 /* Update dropdown styles */
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
 
+/* Updated dropdown styles with hover fix */
 .dropdown-content {
   display: none;
   position: absolute;
@@ -112,13 +109,18 @@ body, .dropdown-content, .dropdown-link {
   border-radius: 8px;
   z-index: 1000;
   padding: 10px 0;
-  margin-top: 10px;
+  margin-top: 0; /* Remove problematic margin */
+  padding-top: 10px; /* Add padding to create hover-safe gap */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
 }
 
 .dropdown:hover .dropdown-content {
   display: block;
+  opacity: 1;
+  visibility: visible;
 }
-
 .dropdown-link {
   display: block;
   padding: 10px 20px;
