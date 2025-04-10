@@ -95,7 +95,32 @@ body, .dropdown-content, .dropdown-link {
 
 
 /* Update dropdown styles */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
 
+/*below is the old code 
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  min-width: 200px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  z-index: 1000;
+  padding: 10px 0;
+  margin-top: 10px;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+*/
 /* Updated dropdown styles with hover fix */
 .dropdown-content {
   display: none;
@@ -159,3 +184,4 @@ body, .dropdown-content, .dropdown-link {
     padding: 12px 20px;
   }
 }
+
