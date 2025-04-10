@@ -107,7 +107,7 @@ def signin(request):
             messages.error(request, "Bad Credentials!!")
             return redirect('home')
     
-    return render(request, "HTML/signin.html")
+    return render(request, "HTML/register.html")
 
 def signout(request):
     logout(request)
