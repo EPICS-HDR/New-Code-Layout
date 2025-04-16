@@ -124,6 +124,16 @@
             </thead>
             <tbody id="linkTableBody">
                 <!-- Table rows will be dynamically added here -->
+		{% for fav in favorites %}
+		<tr>
+			 <td><a href="{{ favorite.url }}" target="_blank">{{ favorite.url }}</a>\
+			 </td> <td><a href="{{ favorite.url }}" target="_blank">{{ favorite.url }}</a></td>
+		</tr>
+		{% empty %}
+		<tr>
+                    <td colspan="3" style="text-align: center;">No favorites yet.</td>
+                </tr>
+		{% endfor %}
             </tbody>
         </table>
 

@@ -33,8 +33,13 @@ import csv
 #         return HttpResponse('Data stored successfully')
 #     else:
 #         return HttpResponse('Invalid request method')
+
 def favorites(request):
-    return render(request, 'HTML/favorites.html')
+    favorites = []
+    if request.user.is_authenticated:
+        favorites = request.user.favorites.all()
+    return render(request, 'HTML/favorites.html', {"favorites": favorites})
+
 def contactus(request):
     return render(request,'HTML/contactus.html')
 def register(request):
