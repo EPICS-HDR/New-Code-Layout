@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - standingrock
+name: Build and deploy Python app to Azure Web App - standingrock-demo
 
 on:
   push:
@@ -13,14 +13,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python version
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Create and start virtual environment
         run: |
@@ -36,7 +38,7 @@ jobs:
         run: zip release.zip ./* -r
 
       - name: Upload artifact for deployment jobs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: python-app
           path: |
@@ -51,37 +53,29 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
       id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: python-app
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
-      - name: Collect static files
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
-          python manage.py collectstatic --noinput
-        env:
-          DJANGO_SETTINGS_MODULE: config.settings
-
       
       - name: Login to Azure
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_38ADCD741A1A4D0081BC4E3B2DBF20F7 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_6306F09254FB49C4974B722040063E24 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_69AA29EDA75644B6A8A861FCA88FE4EC }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7F37FD779D564604B4337EC5239885B6 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_27B32CE8E7B84C38ADEC4D7EB791D24C }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_5FD28C7849404FF5A4C07C9D2F35F607 }}
 
       - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v2
+        uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'standingrock'
+          app-name: 'standingrock-demo'
           slot-name: 'Production'
           
