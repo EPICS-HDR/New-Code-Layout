@@ -57,20 +57,21 @@ def signup(request):
         # so redirect back to page manually
         if User.objects.filter(username=username):
             messages.error(request, "Username is taken. Please try another username")
-            return redirect('signup')
+            # return redirect('register/')
+            return register(request)
         
         if len(username)>20:
             messages.error(request, "Username must be less than 20 charcters")
-            return redirect('signup')
+            return register(request)
         
         if pass1 != pass2:
             messages.error(request, "Pelase ensure both passwords match")
-            return redirect('signup')
+            return register(request)
         
         # TODO not sure why this is here, but we probably don't need to require this
         if not username.isalnum():
             messages.error(request, "Please only include letters and numbers")
-            return login(request)
+            return register(request)
         
         myuser = User.objects.create_user(username=username, password=pass1)
         myuser.save()
@@ -93,7 +94,7 @@ def signup(request):
         messages.success(request, "Your account has been created succesfully")
         return login(request)
 
-    return render(request, "HTML/signup.html")
+    return register(request)
 
 def signin(request):
     if request.method == 'POST':
@@ -110,14 +111,14 @@ def signin(request):
         uname = user.username
 
         messages.success(request, f"You're logged in! Hello {uname}")
+        print(f"user {uname} logged in")
     
-    # render page post or not
-    return register(request)
+    # bring user to homepage after they've logged in
+    return homepage(request)
 
 def signout(request):
     logout(request)
-    messages.success(request, "Logged Out Successfully")
-    return redirect('/register')
+    return homepage(request)
 
 def about(request):
     return render(request, 'HTML/about.html')

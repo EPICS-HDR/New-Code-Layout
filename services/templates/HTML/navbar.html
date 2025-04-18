@@ -34,8 +34,12 @@
           </div>
         </div>
         <span class="divider"></span>
-        <a href="/register" class="nav-link">Sign Up</a>
-        <a href="/login" class="sign-in-button">Sign In</a>
+        {% if user.is_authenticated %}
+          <a href="/signout" class="sign-in-button">Sign Out</a>
+        {% else %}
+          <a href="/register" class="nav-link">Sign Up</a>
+          <a href="/login" class="sign-in-button">Sign In</a>
+        {% endif %}
       </nav>
     </header>
   </body>

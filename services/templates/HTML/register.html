@@ -1,6 +1,6 @@
 <!doctype html>
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/register.css' %}" >
+<link rel="stylesheet" href="{% static 'css/register.css' %}">
 <html lang="en">
   <head>
     <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
@@ -17,37 +17,60 @@
     <main class="registration-container">
       <h1 class="registration-title">Register</h1>
       <p class="registration-subtitle">
-        Dedicated to displaying high end water quality data.
+        Dedicated to displaying high-end water quality data.
       </p>
-      <form class="registration-form">
-        <div class="form-group">
-          <label for="email" class="form-label">Enter Email:</label>
-          <input type="email" id="email" class="form-input" required />
-        </div>
+
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        <strong>Message:</strong> {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endfor %}
+
+      <form method="post" action="/signup" class="registration-form">
+        {% csrf_token %}
         <div class="form-group">
           <label for="username" class="form-label">Create Username:</label>
-          <input type="text" id="username" class="form-input" required />
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-input"
+            placeholder="Create A Username (use only letters and numbers)"
+            required
+          />
         </div>
         <div class="form-group">
-          <label for="password" class="form-label">Create Password:</label>
-          <input type="password" id="password" class="form-input" required />
-        </div>
-        <div class="form-group">
-          <label for="confirm-password" class="form-label"
-            >Confirm Password:</label
-          >
+          <label for="pass1" class="form-label">Create Password:</label>
           <input
             type="password"
-            id="confirm-password"
+            id="pass1"
+            name="pass1"
             class="form-input"
+            placeholder="Create Your Password"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="pass2" class="form-label">Confirm Password:</label>
+          <input
+            type="password"
+            id="pass2"
+            name="pass2"
+            class="form-input"
+            placeholder="Confirm Your Password"
             required
           />
         </div>
         <button type="submit" class="register-button">Register</button>
       </form>
+
       <footer class="contact-info">
         <span>Contact Us For More Questions at</span>
         <a href="mailto:Epics-hdr@ecn.purdue.edu">Epics-hdr@ecn.purdue.edu</a>
       </footer>
     </main>
   </body>
+</html>
