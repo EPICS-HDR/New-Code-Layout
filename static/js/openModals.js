@@ -86,7 +86,6 @@ for (var i = 0; i < lat.length; i++) {
       
       // Create and append iframes
       var iframeUrls = fetchedURLS[index];
-
       iframeUrls.forEach(function(url, iframeIndex) {
         var iframe = document.createElement('iframe');
         iframe.src = url;
@@ -102,7 +101,6 @@ for (var i = 0; i < lat.length; i++) {
         }
         modal.querySelector('.modal-content').appendChild(iframe);
       });
-
       // Add event listener to modal close button
       var closeButton = modal.querySelector('.close');
       closeButton.addEventListener('click', function() {
