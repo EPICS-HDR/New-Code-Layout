@@ -319,21 +319,6 @@ body {
   }
 }
 
-/* Placeholder Image */
-.placeholder-image {
-  justify-content: center;
-  align-items: center;
-  border-radius: 32px;
-  background-color: #eff2f6;
-  display: flex;
-  min-height: 377px;
-  flex-grow: 1;
-  padding: 141px 10px;
-  gap: 10px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
 @media (max-width: 991px) {
   .placeholder-image {
     margin-top: 40px;
@@ -341,15 +326,19 @@ body {
   }
 }
 
-/* Team Image */
+/* Arch Image */
 .team-image {
-  aspect-ratio: 1;
-  object-fit: contain;
-  object-position: center;
-  width: 96px;
-  fill: #9cb0c9;
-  align-self: stretch;
-  margin: auto;
+justify-content: center;
+align-items: center;
+border-radius: 32px;
+background-color: #eff2f6;
+display: flex;
+min-height: 377px;
+flex-grow: 1;
+/* padding: 141px 10px; */
+gap: 10px;
+width: 100%;
+box-sizing: border-box;
 }
 
 /* Page Footer */
