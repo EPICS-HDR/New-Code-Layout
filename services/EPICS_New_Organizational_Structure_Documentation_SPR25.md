@@ -42,7 +42,7 @@ Since there are numerous data sources with varied variables and different data t
 - The second table includes all of the actual data. The datasets have been joined using an outer join to preserve as many variables as possible.
 
 ## Addressing API Failures
-API failures are common as the data we work with is constantly changing at a varying pace. Some w6ebsites are phased out while others are phased in. With this, the APIs we call, also changes. When an API fails, it's crucial to have a strategy in place for managing the impact and ensuring minimal disruption. Pivoting effectively can mean switching to backup plans, whether that’s through retries, alternative sources, or degraded services.
+API failures are common as the data we work wit h is constantly changing at a varying pace. Some w6ebsites are phased out while others are phased in. With this, the APIs we call, also changes. When an API fails, it's crucial to have a strategy in place for managing the impact and ensuring minimal disruption. Pivoting effectively can mean switching to backup plans, whether that’s through retries, alternative sources, or degraded services.
 
 Retrying with Exponential Backoff: One of the simplest ways to pivot is to implement retry-logic. This ensures that if an API fails, the system will attempt to reconnect after waiting for increasing periods of time. This helps avoid overwhelming the API with repeated requests and allows the system some time to recover before retrying. Exponential backoff is particularly useful in case of temporary outages or rate limiting, as it reduces the frequency of retries over time.
 

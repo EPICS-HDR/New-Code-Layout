@@ -1,7 +1,9 @@
 """
 Utility classes and functions for data sources.
 """
-from datetime import datetime, date, timedelta
+
+from datetime import date, datetime, timedelta
+
 
 class DateHelper:
     """
@@ -31,17 +33,9 @@ class DateHelper:
         start_month = start_date_obj.strftime("%m")
         start_year = start_date_obj.strftime("%Y")
 
-        start_date = {
-            'day': start_day,
-            'month': start_month,
-            'year': start_year
-        }
+        start_date = {"day": start_day, "month": start_month, "year": start_year}
 
-        end_date = {
-            'day': end_day,
-            'month': end_month,
-            'year': end_year
-        }
+        end_date = {"day": end_day, "month": end_month, "year": end_year}
 
         return start_date, end_date
 
@@ -58,9 +52,7 @@ class DateHelper:
             Formatted date string
         """
         date_obj = datetime(
-            int(date_dict['year']),
-            int(date_dict['month']),
-            int(date_dict['day'])
+            int(date_dict["year"]), int(date_dict["month"]), int(date_dict["day"])
         )
         return date_obj.strftime(format_str)
 
@@ -121,21 +113,21 @@ class DataParser:
             value: Value to parse
 
         Returns:
-            Parsed numeric value or None if parsing fails
+            Parsed numeric value or None if parsing fails or value is special string
         """
         # Convert to string for parsing
         item_str = str(value)
 
-        # Check for special cases
-        if item_str in ["-", "Ice"]:
-            return 0
+        # Check for special cases - return None for these
+        if item_str in ["-", "Ice", "NA", "", "None"]:  # Added more cases
+            return None
 
         # Initialize negative flag
         is_negative = False
 
         # Remove quotes
         if '"' in item_str:
-            item_str = item_str.replace('"', '')
+            item_str = item_str.replace('"', "")
 
         # Remove commas
         if "," in item_str:
@@ -147,13 +139,21 @@ class DataParser:
             item_str = item_str.replace("-", "")
 
         # Strip any remaining whitespace or quotes
-        item_str = item_str.strip('"\'')
+        item_str = item_str.strip("\"' ")  # Added space stripping
+
+        # Handle empty string after cleaning
+        if not item_str:
+            return None
 
         # Convert to float
         try:
-            value = float(item_str)
+            parsed_value = float(item_str)
             if is_negative:
-                value = -value
-            return value
-        except:
+                parsed_value = -parsed_value
+            return parsed_value
+        except ValueError:  # Catch specific error
+            # Optionally log the error: print(f"Could not parse '{value}' to float.")
+            return None
+        except Exception as e:  # Catch unexpected errors
+            # Optionally log the error: print(f"Unexpected error parsing '{value}': {e}")
             return None

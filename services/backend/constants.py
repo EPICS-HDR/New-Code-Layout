@@ -7,33 +7,57 @@ DB_PATH = "./Measurements.db"
 
 # Location lists by data source type
 GAUGES = (
-    "Hazen", "Stanton", "Washburn", "Price", "Bismarck", "Schmidt",
-    "Judson", "Breien", "Mandan", "Cash", "Wakpala", "Whitehorse", "Little Eagle"
+    "Hazen",
+    "Stanton",
+    "Washburn",
+    "Price",
+    "Bismarck",
+    "Schmidt",
+    "Judson",
+    "Breien",
+    "Mandan",
+    "Cash",
+    "Wakpala",
+    "Whitehorse",
+    "Little Eagle",
 )
 
-DAMS = (
-    "Fort Peck", "Garrison", "Oahe", "Big Bend", "Fort Randall", "Gavins Point"
-)
+DAMS = ("Fort Peck", "Garrison", "Oahe", "Big Bend", "Fort Randall", "Gavins Point")
 
-MESONETS = (
-    "Carson", "Fort Yates", "Linton", "Mott"
-)
+MESONETS = ("Carson", "Fort Yates", "Linton", "Mott")
 
-COCORAHS = (
-    "Bison", "Faulkton", "Bismarck", "Langdon"
-)
+COCORAHS = ("Bison", "Faulkton", "Bismarck", "Langdon")
 
 NOAA = (
-    "Williston/Basin", "Tioga", "Stanley", "Minot", "Sidney/Richland",
-    "Watford City", "Garrison", "Glendive/Dawson", "Hazen/Mercer",
-    "Beach", "Dickinson/Roosevelt", "Glen", "Bismarck", "Miles City/Wiley",
-    "Baker", "Bowman", "Hettinger", "Linton", "Buffalo/Harding",
-    "Mobridge", "Faith", "Spearfish/Clyde", "Pierre", "Custer", "Rapid City", "Philip"
+    "Williston/Basin",
+    "Tioga",
+    "Stanley",
+    "Minot",
+    "Sidney/Richland",
+    "Watford City",
+    "Garrison",
+    "Glendive/Dawson",
+    "Hazen/Mercer",
+    "Beach",
+    "Dickinson/Roosevelt",
+    "Glen",
+    "Bismarck",
+    "Miles City/Wiley",
+    "Baker",
+    "Bowman",
+    "Hettinger",
+    "Linton",
+    "Buffalo/Harding",
+    "Mobridge",
+    "Faith",
+    "Spearfish/Clyde",
+    "Pierre",
+    "Custer",
+    "Rapid City",
+    "Philip",
 )
 
-SHADEHILL = (
-    "Shadehill",
-)
+SHADEHILL = ("Shadehill",)
 
 # SQL field mappings for variable names
 SQL_CONVERSION = {
@@ -77,23 +101,23 @@ SQL_CONVERSION = {
     "dewpoint": "dew_point",
     "relativeHumidity": "rel_humidity",
     "windChill": "wind_chill",
+    "Average Temperature": "avg_temp",
+    "Max Temperature": "max_temp",
+    "Min Temperature": "min_temp",
 }
 
 # Mapping of station IDs to location names
 LOCATION_DICT = {
-    '6340500': 'Hazen',
-    '6340700': 'Stanton',
-    '6341000': 'Washburn',
-    '6342020': 'Price',
-    '6342500': 'Bismarck',
-    '6349700': 'Schmidt',
-    '6348300': 'Judson',
-    '6349000': 'Mandan',
-    '6354000': 'Breien',
-    '06354881': 'Wakpala',
-    '06357800': 'Little Eagle',
-    '06356500': 'Cash',
-    '06360500': 'Whitehorse'
+    "6340500": "Hazen",
+    "6342500": "Bismarck",
+    "6349700": "Schmidt",
+    "6348300": "Judson",
+    "6349000": "Mandan",
+    "6354000": "Breien",
+    "06354881": "Wakpala",
+    "06357800": "Little Eagle",
+    "06356500": "Cash",
+    "06360500": "Whitehorse",
 }
 
 # Table schema definitions
@@ -116,7 +140,6 @@ TABLE_SCHEMAS = {
             PRIMARY KEY(location, datetime)
         )
     """,
-
     "gauge": """
         CREATE TABLE IF NOT EXISTS gauge(
             location TEXT, 
@@ -128,7 +151,6 @@ TABLE_SCHEMAS = {
             PRIMARY KEY(location, datetime)
         )
     """,
-
     "dam": """
         CREATE TABLE IF NOT EXISTS dam(
             location TEXT, 
@@ -144,7 +166,6 @@ TABLE_SCHEMAS = {
             PRIMARY KEY(location, datetime)
         )
     """,
-
     "cocorahs": """
         CREATE TABLE IF NOT EXISTS cocorahs(
             location TEXT, 
@@ -155,7 +176,6 @@ TABLE_SCHEMAS = {
             PRIMARY KEY(location, datetime)
         )
     """,
-
     "shadehill": """
         CREATE TABLE IF NOT EXISTS shadehill(
             location TEXT, 
@@ -175,18 +195,17 @@ TABLE_SCHEMAS = {
             PRIMARY KEY(location, datetime)
         )
     """,
-
-    "noaa": """
-        CREATE TABLE IF NOT EXISTS noaa(
-            location TEXT, 
+    "noaa_weather": """
+        CREATE TABLE IF NOT EXISTS noaa_weather(
+            location TEXT,
             datetime TEXT,
-            temperature REAL, 
-            dew_point REAL,
-            rel_humidity REAL, 
-            wind_chill REAL,
+            avg_temp REAL,      -- Corresponds to TAVG
+            max_temp REAL,      -- Corresponds to TMAX
+            min_temp REAL,      -- Corresponds to TMIN
+            precipitation REAL, -- Corresponds to PRCP
             PRIMARY KEY(location, datetime)
         )
-    """
+    """,
 }
 
 # Generate mapping of locations to their table types
@@ -202,6 +221,6 @@ for location in MESONETS:
 for location in COCORAHS:
     LOCATION_TO_TABLE[location] = "cocorahs"
 for location in NOAA:
-    LOCATION_TO_TABLE[location] = "noaa"
+    LOCATION_TO_TABLE[location] = "noaa_weather"
 for location in SHADEHILL:
     LOCATION_TO_TABLE[location] = "shadehill"
