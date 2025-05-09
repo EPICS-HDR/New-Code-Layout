@@ -1,56 +1,24 @@
 import sqlite3 as sql
 import json
 import datetime
+# import CONSTANTS
+from services.database.CONSTANTS import *
 
 # TODO Add new global lists, add sql conversions
-gauges = ("Hazen", "Stanton", "Washburn", "Price", "Bismarck", "Schmidt", "Judson", "Breien", "Mandan", "Cash", "Wakpala", "Whitehorse", "Little Eagle")
 
-dams = ("Fort Peck", "Garrison", "Oahe", "Big Bend", "Fort Randall", "Gavins Point")
+# North Dakota Locations
+gauges = CONSTANTS.gauges
+dams = CONSTANTS.dams
+mesonets = CONSTANTS.mesonets
+CoCoRaHs = CONSTANTS.CoCoRaHs
+NOAA = CONSTANTS.NOAA
 
-mesonets = ("Carson", "Fort Yates", "Linton", "Mott")
+#TODO: South Dakota Data Sources
 
-CoCoRaHs = ("Bison", "Faulkton", "Bismarck", "Langdon")
 
-NOAA = ("Williston/Basin", "Tioga", "Stanley", "Minot", "Sidney/Richland", "Watford City", "Garrison", "Glendive/Dawson", "Hazen/Mercer", \
-        "Beach", "Dickinson/Roosevelt", "Glen", "Bismarck", "Miles City/Wiley", "Baker", "Bowman", "Hettinger", "Linton", "Buffalo/Harding", \
-        "Mobridge", "Faith", "Spearfish/Clyde", "Pierre", "Custer", "Rapid City", "Philip")
-
-Shadehill = ("Shadehill")
-
-sql_conversion = {"Elevation" : "elevation", "Air Temperature": "air_temp", "Water Temperature" : "water_temp", \
-                  "Flow Spill" : "flow_spill", "Flow Powerhouse" : "flow_power", "Flow Out" : "flow_out", \
-                  "Tailwater Elevation" : "tail_ele", "Energy" : "energy", \
-                  "Discharge" : "discharge", "Gauge Height" : "gauge_height", \
-                  "Average Air Temperature" : "avg_air_temp", "Average Relative Humidity" : "avg_rel_hum", \
-                  "Average Bare Soil Temperature" : "avg_bare_soil_temp", "Average Turf Soil Temperature" : "avg_turf_soil_temp", \
-                  "Maximum Wind Speed" : "max_wind_speed", "Average Wind Direction" : "avg_wind_dir", \
-                  "Total Solar Radiation" : "total_solar_rad", "Total Rainfall" : "total_rainfall", \
-                  "Average Baromatric Pressure" : "avg_bar_pressure", "Average Dew Point" : "avg_dew_point", \
-                  "Average Dew Point" : "avg_dew_point", "Average Wind Chill" : "avg_wind_chill", "Precipitation" : "precipitation", \
-                  "Snowfall" : "snowfall", "Snow Depth" : "snow_depth", "Reservoir Storage Content" : "res_stor_content", \
-                  "Reservoir Forebay Elevation" : "res_forebay_elev", "Daily Mean Computed Inflow" : "daily_mean_comp_inflow", \
-                  "Daily Mean Air Temperature" : "daily_mean_air_temp", "Daily Minimum Air Temperature" : "daily_min_air_temp", \
-                  "Daily Maximum Air Temperature" : "daily_max_air_temp", "Total Precipitation (inches per day)" : "tot_precip_daily", \
-                  "Total Water Year Precipitation" : "tot_year_precip", "Daily Mean Total Discharge" : "daily_mean_tot_dis", \
-                  "Daily Mean River Discharge" : "daily_mean_river_dis", "Daily Mean Spillway Discharge" : "daily_mean_spill_dis", \
-                  "Daily Mean Gate One Opening" : "daily_mean_gate_opening", "temperature" : "temperature", \
-                  "dewpoint" : "dew_point", "relativeHumidity" : "rel_humidity" , "windChill" : "wind_chill", \
-}
-
-locationdict = {'6340500':'Hazen',
-                    '6340700':'Stanton',
-                    '6341000':'Washburn',
-                    '6342020':'Price',
-                    '6342500':'Bismarck',
-                    '6349700':'Schmidt',
-                    '6348300':'Judson',
-                    '6349000':'Mandan',
-                    '6354000':'Breien',
-                    '06354881':'Wakpala',
-                    '06357800':'Little Eagle',
-                    '06356500':'Cash',
-                    '06360500':'Whitehorse'
-    }
+# SQL Keys
+sql_conversion = CONSTANTS.sql_conversion
+locationdict = CONSTANTS.locationdict
 
 class SQLHandle:
     sqlpointer = sql.connect("Measurements.db")
@@ -134,6 +102,8 @@ def create_tables() -> None:
                 temperature REAL, dew_point REAL, \
                 rel_humidity REAL, wind_chill REAL, \
                 PRIMARY KEY(location, datetime))")
+
+# TODO @AP - The easiest solution for SD is to add a new table here in the same format they did it.
                 
 def clear_db():
     #COMPLETELY RESETS DATABASE USE WITH CAUTION: MAKE SURE BACKUP DATA IS AVAILABLE
@@ -149,7 +119,6 @@ def fill_sql_tables(full_dict: dict) -> None:
     conn = sql.connect("./Measurements.db")
     cur = conn.cursor()
 
-    
     for location in full_dict:
         for variable in full_dict[location]:
             for day in full_dict[location][variable]:
@@ -197,6 +166,7 @@ def fill_dict(db_name: str) ->dict:
     partical_dict = dict()
     rows = cur.execute("SELECT * FROM ? WHERE location = ? ORDER by datetime")
     for row in rows:
+        # TODO @AP - Theres no reference to a variable called 'variables'
         for variable in variables:
             datetime = row['datetime']
             partical_dict[variable][datetime] = row[variable]
@@ -211,7 +181,7 @@ def create_lists(db_name: str, location: str, variable:str, start_date: str, end
     date_list = []
     variable_list = []
     index = 0
-
+    #TODO: no variabled named table_name
     rows = cur.execute(f"SELECT * FROM {table_name} WHERE location = {location} AND {variable} IS NOT NULL AND datetime BETWEEN {start_date} AND {end_date} ORDER by datetime")
     for row in rows:
         date_list[index] = row['datetime']
