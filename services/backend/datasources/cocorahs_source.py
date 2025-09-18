@@ -2,7 +2,7 @@ from json import loads
 
 import requests
 
-from services.backend.datasources.base import DataSource
+from .base import DataSource
 
 
 class CoCoRaHSDataSource(DataSource):
