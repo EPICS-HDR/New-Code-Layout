@@ -1,13 +1,3 @@
-#Old dependances
-'''
-django
-gunicorn
-numpy
-pandasplotly
-xlsxwriter
-whitenoise
-'''
-
 #Latest dependances as of 10/16/2025
 #requirements.txt
 asgiref==3.10.0 #transitive dependency of django
