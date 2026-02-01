@@ -1,137 +1,236 @@
-from json import loads
+"""
+================================================================================
+FILE: cocorahs_source.py
+AUTHOR: Andrew Vu
+CREATED: 2026-01-29 
+PURPOSE: 
+    Fetches, processes, and stores CoCoRaHS (Community Collaborative Rain, 
+    Hail & Snow Network) precipitation and snow data. Uses a function-based 
+    approach with pandas to convert data to DataFrame and store in SQLite.
+    
+    Workflow: _pull() -> _process() -> _push()
+================================================================================
+"""
 
+# ============================================================================
+# PATH SETUP - Handle imports when file is run directly
+# ============================================================================
+import sys
+import os
+
+# Add project root to path when run directly (so it can find 'services' module)
+if __name__ == "__main__":
+    current_file_path = os.path.abspath(__file__)
+    # Navigate up 4 levels: cocorahs_source.py -> datasources -> backend -> services -> project_root
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(current_file_path))))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+# ============================================================================
+# IMPORTS
+# ============================================================================
 import requests
+import json
 from datetime import datetime, date
+import pandas as pd
+import sqlite3
+import traceback
+from services.backend.datasources.config import COCORAHS_STATIONS, SQL_CONVERSION, DB_PATH
 
-from services.backend.datasources.base2 import DataSource
-from services.backend.datasources.config import COCORAHS_STATIONS
-from services.backend.sqlclasses import updateDictionary
+# ============================================================================
+# CONSTANTS
+# ============================================================================
+BASE_URL = "http://data.rcc-acis.org/StnData"
+stations = COCORAHS_STATIONS
 
-class CoCoRaHSDataSource(DataSource):
+# Dataset mapping: name -> index in API response array
+# API returns: [date, precipitation, snowfall, snow_depth]
+DATASETS = {
+    'Precipitation': 1,
+    'Snowfall': 2,
+    'Snow Depth': 3,
+}
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+def _build_api_url(station_id, start_date, end_date):
     """
-    Data source for CoCoRaHS precipitation and snow data using base2 template.
+    Build CoCoRaHS API URL with parameters.
+    
+    Args:
+        station_id (str): CoCoRaHS station ID (e.g., 'SDFK0006')
+        start_date (str): Start date in 'YYYYMMDD' format
+        end_date (str): End date in 'YYYYMMDD' format
+    
+    Returns:
+        str: Complete API URL
     """
+    params = f'{{"sid":"{station_id}","sdate":"{start_date}","edate":"{end_date}","elems":"pcpn,snow,snwd"}}'
+    return f"{BASE_URL}?params={params}"
 
-    def __init__(self, start_date=None, format=None):
-        super().__init__("CoCoRaHS", start_date, format)
-        self.station_dict = COCORAHS_STATIONS
-        self.data = []
-        self.processed = []
+def _format_timestamp(date_str):
+    """
+    Convert date string from 'YYYY-MM-DD' to 'YYYY-MM-DD HH:MM:SS' format.
+    
+    Args:
+        date_str (str): Date in 'YYYY-MM-DD' format
+    
+    Returns:
+        str: Formatted datetime string
+    """
+    year, month, day = date_str.split("-")
+    return f"{year}-{month}-{day} 00:00:00"
 
-    def _pull(self):
-        """
-        Pull raw CoCoRaHS data for all configured stations from each station's start
-        date through today. Stores raw payloads in self.data.
-        """
-        self.data = []
-        end_date_str = date.today().strftime("%Y%m%d")
+# ============================================================================
+# FUNCTION: Pull data from API
+# ============================================================================
+def _pull(debug=False):
+    """
+    Fetch raw data from CoCoRaHS API for all configured stations.
+    
+    Args:
+        debug (bool): If True, print full error tracebacks
+    
+    Returns:
+        list: List of dicts with 'location', 'dict_location', 'raw' (JSON data)
+    """
+    data = []
+    end_date_str = date.today().strftime("%Y%m%d")
+    
+    for location, station_info in stations.items():
+        station_id = station_info[0]      # Station ID (e.g., 'SDFK0006')
+        start_date_str = station_info[1]  # Start date for this station
+        dict_location = station_info[2] if len(station_info) > 2 else location  # DB location name
+        
+        url = _build_api_url(station_id, start_date_str, end_date_str)
+        
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            results_dict = json.loads(response.text)
+        except Exception as e:
+            print(type(e).__name__ + f", skipping {location}")
+            if debug:
+                traceback.print_exc()
+            results_dict = None
+        
+        data.append({
+            'location': location,
+            'dict_location': dict_location,
+            'raw': results_dict
+        })
+    
+    return data
 
-        for location, station_info in self.station_dict.items():
-            station_id = station_info[0]
-            start_date_str = station_info[1]
-            url = self.get_link(station_id, start_date_str, end_date_str)
-            try:
-                response = requests.get(url)
-                response.raise_for_status()
-                results_dict = loads(response.text)
-            except Exception as e:
-                results_dict = None
-
-            self.data.append({
-                'location': location,
-                'dict_location': station_info[2] if len(station_info) > 2 else location,
-                'raw': results_dict
-            })
-
-    def _process(self):
-        """
-        Process raw CoCoRaHS data in self.data into standardized series.
-        Stores series in self.processed.
-        """
-        self.processed = []
-        datasets = {
-            'Precipitation': 1,
-            'Snowfall': 2,
-            'Snow Depth': 3,
-        }
-
-        for entry in self.data:
-            raw = entry.get('raw') or {}
-            data_list = raw.get('data') or []
-            location = entry.get('location')
-            dict_location = entry.get('dict_location', location)
-
-            # Build time list once
-            times_all = []
-            for row in data_list:
-                if not row:
-                    continue
-                date_str = row[0]
-                # Convert to full datetime string and apply cutoff filter
-                ts = self.change_time_string_ACIS(date_str)
-                if isinstance(self.cutoff, datetime):
-                    try:
-                        if datetime.strptime(ts, "%Y-%m-%d %H:%M:%S") <= self.cutoff:
-                            times_all.append(None)
-                            continue
-                    except Exception:
-                        pass
-                times_all.append(ts)
-
-            for ds_name, idx in datasets.items():
-                values = []
-                times = []
-                for i, row in enumerate(data_list):
-                    if not row:
+# ============================================================================
+# FUNCTION: Process raw data into structured format
+# ============================================================================
+def _process(data, cutoff=None):
+    """
+    Parse raw JSON data from API into structured records.
+    
+    API returns JSON with 'data' array: [[date, precipitation, snowfall, snow_depth], ...]
+    Groups all datasets by location and timestamp (one record per location/timestamp).
+    
+    Args:
+        data (list): List of dicts from _pull() with 'raw', 'location', 'dict_location'
+        cutoff (datetime, optional): Skip records with datetime <= cutoff
+    
+    Returns:
+        list: List of dicts, one per location/timestamp with all dataset values
+    """
+    all_records = {}  # {(location, timestamp): {location, datetime, precipitation, snowfall, snow_depth}}
+    
+    for entry in data:
+        raw = entry.get('raw') or {}
+        data_list = raw.get('data') or []  # API data array
+        location = entry.get('dict_location')  # Use dict_location for DB
+        
+        if not data_list:
+            continue
+        
+        for row in data_list:
+            if not row or len(row) < 2:
+                continue
+            
+            date_str = row[0]  # First element is date
+            timestamp = _format_timestamp(date_str)
+            
+            # Skip records before cutoff date (for incremental updates)
+            if cutoff:
+                try:
+                    record_time = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+                    if record_time <= cutoff:
                         continue
-                    val = row[idx] if len(row) > idx else None
+                except:
+                    pass
+            
+            # Create unique key for location + timestamp
+            key = (location, timestamp)
+            
+            # Initialize record for this location/timestamp if not exists
+            if key not in all_records:
+                all_records[key] = {
+                    'location': location,
+                    'datetime': timestamp
+                }
+            
+            # Extract values for each dataset
+            for ds_name, idx in DATASETS.items():
+                if len(row) > idx:
+                    val = row[idx]
                     try:
-                        v = float(val) if val not in (None, "") else None
-                    except Exception:
-                        v = None
-                    # Keep aligned with time filter
-                    t = times_all[i] if i < len(times_all) else None
-                    if t is not None and v is not None:
-                        times.append(t)
-                        values.append(v)
+                        value = float(val) if val not in (None, "") else None
+                        if value is not None:
+                            sql_field = SQL_CONVERSION.get(ds_name)
+                            if sql_field:
+                                all_records[key][sql_field] = value
+                    except:
+                        pass  # Skip invalid values
+    
+    return list(all_records.values())
 
-                self.processed.append({
-                    'location': dict_location,
-                    'dataset': ds_name,
-                    'times': times,
-                    'values': values,
-                })
+# ============================================================================
+# FUNCTION: Push data to SQLite database
+# ============================================================================
+def _push(records):
+    """
+    Store processed records in SQLite using pandas.
+    
+    Args:
+        records (list): List of dicts from _process()
+    """
+    if not records:
+        print("No records to push")
+        return
+    
+    # Use DB_PATH from config to ensure correct database location
+    conn = sqlite3.connect(DB_PATH)
+    
+    # Convert to DataFrame and write to database
+    db = pd.DataFrame(records)
+    db.to_sql('cocorahs', conn, if_exists='replace', index=False)
+    
+    print(f"Successfully stored {len(db)} records")
+    print(db)
+    conn.close()
 
-    def _push(self):
-        """
-        Push processed series into SQL using updateDictionary for 'cocorahs' table.
-        """
-        for series in self.processed:
-            times = series.get('times') or []
-            values = series.get('values') or []
-            location = series.get('location')
-            dataset = series.get('dataset')
-            if times and values:
-                updateDictionary(times, values, location, dataset, 'cocorahs')
+# ============================================================================
+# MAIN FUNCTION
+# ============================================================================
+def main():
+    """Orchestrate the data pipeline: pull -> process -> push"""
+    data = _pull(debug=True)
+    print(f"Pulled {len(data)} stations")
+    
+    records = _process(data)
+    print(f"Processed {len(records)} records")
+    
+    _push(records)
 
-    # HELPER FUNCTIONS
-    def get_link(self, station_id, start_date, end_date):
-        """
-        Create API URL for data retrieval.
-        """
-
-        params = f'{{"sid":"{station_id}","sdate":"{start_date}","edate":"{end_date}","elems":"pcpn,snow,snwd"}}'
-        url = f"http://data.rcc-acis.org/StnData?params={params}"
-        return url
-
-    def change_time_string_ACIS(self, date_str):
-        """
-        Convert to database format.
-
-        Input: date_str: Date string in format YYYY-MM-DD
-
-        Returns:
-            Formatted datetime string (YYYY-MM-DD HH:MM:SS)
-        """
-        year, month, day = date_str.split("-")
-        return f"{year}-{month}-{day} 00:00:00"
+# ============================================================================
+# ENTRY POINT
+# ============================================================================
+if __name__ == "__main__":
+    main()

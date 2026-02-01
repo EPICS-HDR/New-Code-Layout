@@ -1,205 +1,239 @@
+"""
+================================================================================
+FILE: shadehill_source.py
+AUTHOR: Andrew Vu
+CREATED: 2026-01-29 
+PURPOSE: 
+    Fetches, processes, and stores data from the Shadehill Reservoir API.
+    Uses a function-based approach with pandas to convert data to DataFrame
+    and store in SQLite.
+    
+    Workflow: _pull() -> _process() -> _push()
+================================================================================
+"""
+
+# ============================================================================
+# PATH SETUP - Handle imports when file is run directly
+# ============================================================================
+import sys
+import os
+
+# Add project root to path when run directly (so it can find 'services' module)
+if __name__ == "__main__":
+    current_file_path = os.path.abspath(__file__)
+    # Navigate up 4 levels: shadehill_source.py -> datasources -> backend -> services -> project_root
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(current_file_path))))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+# ============================================================================
+# IMPORTS
+# ============================================================================
 import requests
-from services.backend.datasources.base import DataSource
-from services.backend.datasources.utils import DataParser
-from services.backend.datasources.utils import DateHelper
-from services.backend.datasources.config import SHADEHILL_DATASETS
+import json
+from datetime import datetime
+import pandas as pd
 import sqlite3
-from services.backend.sqlclasses import SQL_CONVERSION
+import traceback
+from services.backend.datasources.config import SHADEHILL_DATASETS, SQL_CONVERSION, DB_PATH
 
-class ShadehillDataSource(DataSource):
+# ============================================================================
+# CONSTANTS
+# ============================================================================
+URL = "https://www.usbr.gov/gp-bin/arcread.pl"  # Shadehill API endpoint
+LOCATION = "Shadehill"
+datasets = SHADEHILL_DATASETS
+
+# ============================================================================
+# HELPER FUNCTION: Parse date string
+# ============================================================================
+def _parse_date_string(date_str):
     """
-    Data source for Shadehill reservoir data.
-    """
+    Convert date string 'YYYYMMDD' to dict with year, month, day.
+    API expects dates in separate fields, not a single string.
     
-    def __init__(self):
-        super().__init__("Shadehill", "shadehill")
-        self.datasets = SHADEHILL_DATASETS
-        
-    def fetch(self, location, dataset = None, start_date = None, end_date = None):
-        """
-        Fetch data from Shadehill API.
-        """
-        # URL for the form action
-        url = "https://www.usbr.gov/gp-bin/arcread.pl"
-
-
-
-        # Form data to be submitted
-        form_data = {
-            'st': 'SHR',
-            'by': start_date['year'],
-            'bm': start_date['month'],
-            'bd': start_date['day'],
-            'ey': end_date['year'],
-            'em': end_date['month'],
-            'ed': end_date['day'],
-            'pa': dataset,
+    Args:
+        date_str (str): Date in 'YYYYMMDD' format (e.g., '20210624')
+    
+    Returns:
+        dict: {'year': '2021', 'month': '06', 'day': '24'} or None if invalid
+    """
+    if len(date_str) == 8:
+        return {
+            'year': date_str[:4],
+            'month': date_str[4:6],
+            'day': date_str[6:8]
         }
-        print(form_data)
-        
-        try:
-            print(url)
-            response = requests.post(url, data=form_data)
-            
-            if response.status_code != 200:
-                print(f"Error fetching Shadehill data for {dataset}: HTTP {response.status_code}")
-                return None
-                
-            return response.text
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching Shadehill data for {dataset}: {e}")
-            return None
+    return None
+
+# ============================================================================
+# FUNCTION: Pull data from API
+# ============================================================================
+def _pull(start_date_str, end_date_str, debug=False):
+    """
+    Fetch raw data from Shadehill API for all datasets.
     
-    def process(self, raw_data, location, dataset):
-        """
-        Process the raw Shadehill data.
-        """
-        if not raw_data:
-            return [], []
+    Args:
+        start_date_str (str): Start date in 'YYYYMMDD' format
+        end_date_str (str): End date in 'YYYYMMDD' format
+        debug (bool): If True, print full error tracebacks
+    
+    Returns:
+        list: List of dicts with 'dataset_code', 'dataset_name', 'raw_data'
+    """
+    data = []
+    start_date = _parse_date_string(start_date_str)
+    end_date = _parse_date_string(end_date_str)
+    
+    if not start_date or not end_date:
+        print("Invalid date format. Expected YYYYMMDD")
+        return data
+    
+    for dataset_code, dataset_name in datasets.items():
+        try:
+            form_data = {
+                'st': 'SHR',                    # Station code
+                'by': start_date['year'],        # Begin year
+                'bm': start_date['month'],       # Begin month
+                'bd': start_date['day'],         # Begin day
+                'ey': end_date['year'],          # End year
+                'em': end_date['month'],         # End month
+                'ed': end_date['day'],           # End day
+                'pa': dataset_code,              # Parameter code
+            }
+            
+            response = requests.post(URL, data=form_data)
+            
+            if response.status_code == 200:
+                data.append({
+                    'dataset_code': dataset_code,
+                    'dataset_name': dataset_name,
+                    'raw_data': response.text
+                })
+            else:
+                print(f"Error fetching {dataset_name}: HTTP {response.status_code}")
+                
+        except Exception as e:
+            print(type(e).__name__ + f", skipping {dataset_name}")
+            if debug:
+                traceback.print_exc()
+    
+    return data
 
-        dataset_code = dataset
-        if dataset in self.datasets.values():
-            for code, name in self.datasets.items():
-                if name == dataset:
-                    dataset_code = code
-                    break
-
+# ============================================================================
+# FUNCTION: Process raw data into structured format
+# ============================================================================
+def _process(data, cutoff=None):
+    """
+    Parse raw text data from API into structured records.
+    
+    API format: First 3 lines are headers, then each line has date (YYYY/MM/DD) and value.
+    Groups all datasets by timestamp (one record per timestamp).
+    Filters invalid values (> 900000).
+    
+    Args:
+        data (list): List of dicts from _pull() with 'raw_data', 'dataset_name', etc.
+        cutoff (datetime, optional): Skip records with datetime <= cutoff (for incremental updates)
+    
+    Returns:
+        list: List of dicts, one per timestamp with all dataset values
+    """
+    all_records = {}  # {timestamp: {location, datetime, field1, field2, ...}}
+    
+    for item in data:
+        raw_data = item['raw_data']
+        dataset_name = item['dataset_name']
+        sql_field = SQL_CONVERSION.get(dataset_name)  # Map to SQL column name
+        
+        if not sql_field:
+            continue
+        
         lines = raw_data.splitlines()
         
-        times = []
-        values = []
-
         for i, line in enumerate(lines):
-            if i >= 3:
-                parts = line.split(" ")
+            if i >= 3:  # Skip header lines
+                parts = line.split()
+                
                 if len(parts) >= 2:
-
-                    date_parts = parts[0].strip("\n").split("/")
+                    date_parts = parts[0].strip().split("/")
+                    
                     if len(date_parts) == 3:
-                        year = date_parts[0]
-                        month = date_parts[1]
-                        day = date_parts[2]
-
+                        year, month, day = date_parts[0], date_parts[1], date_parts[2]
                         timestamp = f"{year}-{month}-{day} 00:00"
-                        times.append(timestamp)
-
+                        
+                        # Skip records before cutoff date (for incremental updates)
+                        if cutoff:
+                            try:
+                                record_time = datetime.strptime(timestamp, "%Y-%m-%d %H:%M")
+                                if record_time <= cutoff:
+                                    continue
+                            except:
+                                pass
+                        
+                        # Initialize record for this timestamp if not exists
+                        if timestamp not in all_records:
+                            all_records[timestamp] = {
+                                'location': LOCATION,
+                                'datetime': timestamp
+                            }
+                        
+                        # Parse and store the value
                         try:
                             value = float(parts[-1])
-
-                            if value > 900000:
-                                values.append(None)
-                            else:
-                                values.append(value)
+                            # API uses values > 900000 to indicate invalid/missing data
+                            if value <= 900000:
+                                all_records[timestamp][sql_field] = value
                         except:
-                            values.append(None)
-
-        if times and values and len(times) > len(values):
-            times.pop()
-        elif times and values and len(values) > len(times):
-            values.pop()
-        
-        return times, values
+                            pass  # Skip invalid values
     
-    def pull_all(self, start_date, end_date):
-        """
-        Pull data for all datasets and store them together to avoid overwriting.
-        """
-        print("Pulling Shadehill data...")
-        
-        # Collect all datasets first
-        all_data = {}  # {timestamp: {dataset_name: value}}
-        
-        for dataset_code, dataset_name in self.datasets.items():
-            try:
-                print(f"  Fetching {dataset_name}...")
+    return list(all_records.values())
 
-                raw_data = self.fetch("Shadehill", dataset_code, start_date, end_date)
-                
-                if raw_data:
-                    times, values = self.process(raw_data, "Shadehill", dataset_code)
-                    if times and values:
-                        # Store in our collection
-                        for time, value in zip(times, values):
-                            if time not in all_data:
-                                all_data[time] = {}
-                            all_data[time][dataset_name] = value
-            except Exception as e:
-                print(f"Error processing Shadehill data for {dataset_name}: {e}")
-        
-        # Now store all datasets together
-        if all_data:
-            print(f"  Storing {len(all_data)} records with all datasets...")
-            self.store_all_datasets(all_data, "Shadehill")
+# ============================================================================
+# FUNCTION: Push data to SQLite database
+# ============================================================================
+def _push(records):
+    """
+    Store processed records in SQLite using pandas.
     
-    def store_all_datasets(self, all_data, location):
-        """
-        Store all datasets for each timestamp in a single database operation.
-        Uses a custom approach to avoid overwriting data.
-        """
-        
-        # Use direct database connection instead of _get_db_connection
-        conn = None
-        try:
-            conn = sqlite3.connect('./Measurements.db')
-            cursor = conn.cursor()
-            
-            # Get all unique timestamps
-            timestamps = sorted(all_data.keys())
-            
-            for timestamp in timestamps:
-                datasets = all_data[timestamp]
-                
-                # Check if record already exists
-                cursor.execute("SELECT * FROM shadehill WHERE location = ? AND datetime = ?", (location, timestamp))
-                existing_record = cursor.fetchone()
-                
-                if existing_record:
-                    # Update existing record with new values
-                    update_fields = []
-                    update_values = []
-                    
-                    for dataset_name, value in datasets.items():
-                        if value is not None:
-                            sql_field = SQL_CONVERSION.get(dataset_name)
-                            if sql_field:
-                                update_fields.append(f"{sql_field} = ?")
-                                update_values.append(value)
-                    
-                    if update_fields:
-                        update_values.append(location)
-                        update_values.append(timestamp)
-                        sql = f"UPDATE shadehill SET {', '.join(update_fields)} WHERE location = ? AND datetime = ?"
-                        cursor.execute(sql, update_values)
-                else:
-                    # Insert new record with all values
-                    fields = ['location', 'datetime']
-                    values = [location, timestamp]
-                    placeholders = ['?', '?']
-                    
-                    for dataset_name, value in datasets.items():
-                        if value is not None:
-                            sql_field = SQL_CONVERSION.get(dataset_name)
-                            if sql_field:
-                                fields.append(sql_field)
-                                values.append(value)
-                                placeholders.append('?')
-                    
-                    if len(fields) > 2:  # More than just location and datetime
-                        sql = f"INSERT INTO shadehill ({', '.join(fields)}) VALUES ({', '.join(placeholders)})"
-                        cursor.execute(sql, values)
-            
-            conn.commit()
-            print(f"Successfully stored {len(timestamps)} records with all datasets")
-            
-        except Exception as e:
-            print(f"Error storing datasets: {e}")
-            if conn:
-                conn.rollback()
-        finally:
-            if conn:
-                conn.close()
+    Args:
+        records (list): List of dicts from _process()
+    """
+    if not records:
+        print("No records to push")
+        return
+    
+    # Use DB_PATH from config to ensure correct database location
+    conn = sqlite3.connect(DB_PATH)
+    
+    # Convert to DataFrame and write to database
+    db = pd.DataFrame(records)
+    db.to_sql('shadehill', conn, if_exists='replace', index=False)
+    
+    print(f"Successfully stored {len(db)} records")
+    print(db)
+    conn.close()
 
-#TESTING
-shadehill = ShadehillDataSource()
-print(DateHelper.string_to_list("20210624"))
-print((shadehill.fetch("Shadehill",dataset="AF", start_date=DateHelper.string_to_list("20210624"), end_date=DateHelper.string_to_list("20240401"))))
+# ============================================================================
+# MAIN FUNCTION
+# ============================================================================
+def main():
+    """Orchestrate the data pipeline: pull -> process -> push"""
+    start_date = "20210624"
+    
+    # Use today's date as end date to get most recent data
+    today = datetime.now()
+    end_date = today.strftime('%Y%m%d')
+    
+    data = _pull(start_date, end_date, debug=True)
+    print(f"Pulled {len(data)} datasets")
+    
+    records = _process(data)
+    print(f"Processed {len(records)} records")
+    
+    _push(records)
+
+# ============================================================================
+# ENTRY POINT
+# ============================================================================
+if __name__ == "__main__":
+    main()
