@@ -3,17 +3,16 @@ from datetime import datetime
 import pandas as pd
 import sqlite3
 import traceback
+from config import DANRConfig
 
-baseURLS = {"DANR" : "https://apps.sd.gov/NR92WQMAP/api/station/", "NDMES" : ""}
-StationList = {"DANR" : ["SWLAZZZ2411A", "CAMPPOCP01", "SD_11904"]}
-URL = baseURLS["DANR"]
-stations = StationList["DANR"]
+
 
 def _pull(debug=False):
     data = []
-    for station in stations:
+    for station in DANRConfig['stationList']:
         try:
-            data.append(requests.get(URL+station).json())
+            searchTerm = DANRConfig['baseURL'] + station
+            data.append(requests.get(searchTerm).json())
 
         except Exception as e:
             print(type(e).__name__+ ", skipping " + station)
@@ -23,10 +22,10 @@ def _pull(debug=False):
     return data
 
     
-def _process(self):
-    format_string = "%Y-%m-%dT%H:%M:%S"
+def _process(data):
+    format_string = DANRConfig['dateTimeFormat']
     count = 0
-    for station_index, station in enumerate(self.data):
+    for station_index, station in enumerate(data):
         for sample in station['parameters']:           
             EpochTime = datetime.strptime(sample['sampleDate'], format_string)
             if EpochTime<=self.cutoff:
@@ -35,7 +34,7 @@ def _process(self):
 
     del self.data[station_index]['parameters'][:count]
     
-def _push(self):
+def _push(data):
     conn = sqlite3.connect('mydatabase.db')
     db = pd.DataFrame()
     for data in self.data:
@@ -49,7 +48,12 @@ def _push(self):
     print(db)
     conn.close()
 
-    
+def update():
+    data = _pull()
+    data = _process(data)
+    _push(data)
+
+
 def main():
     data = _pull(True)
     print(data)

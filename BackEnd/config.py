@@ -10,7 +10,8 @@ Purpose: This is the master config for all source files. Everything hardcoded mu
 # --------------------------------------  DANR   --------------------------------------
 DANRConfig = {
     'baseURL' : "https://apps.sd.gov/NR92WQMAP/api/station/",
-    'stationList' : ["SWLAZZZ2411A", "CAMPPOCP01", "SD_11904"]
+    'stationList' : ["SWLAZZZ2411A", "CAMPPOCP01", "SD_11904"],
+    'dateTimeFormat' : "%Y-%m-%dT%H:%M:%S"
 }
 # --------------------------------------  NDGIS  --------------------------------------
 # --------------------------------------  NDMES  --------------------------------------
