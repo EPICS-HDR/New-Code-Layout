@@ -1,20 +1,15 @@
-'''
-Author: Andrew Vu
-Date: 2/19/2026
-Purpose: Shadehill data source following DANR pulling method pattern.
-'''
+'''Shadehill data source. DANR framework: _pull -> _process (temp_staging) -> _push.'''
 import requests
 import pandas as pd
 import sqlite3
 import sqlite_utils
-import traceback
 from datetime import datetime
 from services.backend.datasources.config import SHADEHILL_DATASETS, SQL_CONVERSION, DB_PATH
 
 URL = "https://www.usbr.gov/gp-bin/arcread.pl"
 LOCATION = "Shadehill"
 
-def _pull(debug=False):
+def _pull():
     data = []
     start = datetime(2021, 6, 24).strftime("%Y%m%d")
     end = datetime.now().strftime("%Y%m%d")
@@ -23,11 +18,9 @@ def _pull(debug=False):
     for code, name in SHADEHILL_DATASETS.items():
         try:
             r = requests.post(URL, data={"st": "SHR", "by": sd["year"], "bm": sd["month"], "bd": sd["day"], "ey": ed["year"], "em": ed["month"], "ed": ed["day"], "pa": code})
-            data.append({"code": code, "name": name, "raw": r.text})
-        except Exception as e:
-            print(type(e).__name__ + ", skipping " + name)
-            if debug:
-                traceback.print_exc()
+            data.append({"name": name, "raw": r.text})
+        except Exception:
+            pass
     return data
 
 def _process(data):
@@ -40,7 +33,7 @@ def _process(data):
             parts = line.split()
             if len(parts) >= 2:
                 try:
-                    y, m, d = parts[0].split("/")[:3]
+                    y, m, d = parts[0].split("/")
                     ts = f"{y}-{m}-{d} 00:00:00"
                     val = float(parts[-1])
                     if val <= 900000:
@@ -58,10 +51,8 @@ def _push():
     files["shadehill"].upsert_all(files["temp_staging"].rows, alter=True, hash_id="unique_id")
 
 def update():
-    data = _pull()
-    _process(data)
+    _process(_pull())
     _push()
-    print("Shadehill data update completed successfully")
 
 if __name__ == "__main__":
     update()

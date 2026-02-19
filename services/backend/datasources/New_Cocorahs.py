@@ -1,68 +1,48 @@
-'''
-Author: Andrew Vu
-Date: 2/19/2026
-Purpose: CoCoRaHS data source following DANR pulling method pattern.
-'''
+'''CoCoRaHS data source. DANR framework: _pull -> _process (temp_staging) -> _push.'''
 import requests
 import pandas as pd
 import sqlite3
 import sqlite_utils
-import json
-import traceback
 from datetime import date
 from services.backend.datasources.config import COCORAHS_STATIONS, SQL_CONVERSION, DB_PATH
 
 BASE_URL = "http://data.rcc-acis.org/StnData"
 DATASETS = {'Precipitation': 1, 'Snowfall': 2, 'Snow Depth': 3}
 
-def _build_api_url(station_id, start_date, end_date):
-    params = f'{{"sid":"{station_id}","sdate":"{start_date}","edate":"{end_date}","elems":"pcpn,snow,snwd"}}'
-    return f"{BASE_URL}?params={params}"
-
-def _format_timestamp(date_str):
-    year, month, day = date_str.split("-")
-    return f"{year}-{month}-{day} 00:00:00"
-
-def _pull(debug=False):
+def _pull():
     data = []
-    end_date_str = date.today().strftime("%Y%m%d")
-    for location, station_info in COCORAHS_STATIONS.items():
-        station_id = station_info[0]
-        start_date_str = station_info[1]
+    end = date.today().strftime("%Y%m%d")
+    for location, (station_id, start_date, *rest) in COCORAHS_STATIONS.items():
         try:
-            url = _build_api_url(station_id, start_date_str, end_date_str)
-            data.append(requests.get(url).json())
-        except Exception as e:
-            print(type(e).__name__ + ", skipping " + location)
-            if debug:
-                traceback.print_exc()
+            params = f'{{"sid":"{station_id}","sdate":"{start_date}","edate":"{end}","elems":"pcpn,snow,snwd"}}'
+            data.append(requests.get(f"{BASE_URL}?params={params}").json())
+        except Exception:
+            pass
     return data
 
 def _process(data):
-    conn = sqlite3.connect(DB_PATH)
-    db = pd.DataFrame()
+    recs = {}
+    locations = list(COCORAHS_STATIONS.keys())
     for idx, entry in enumerate(data):
         if not entry or 'data' not in entry:
             continue
-        location = list(COCORAHS_STATIONS.keys())[idx]
-        dict_location = COCORAHS_STATIONS[location][2] if len(COCORAHS_STATIONS[location]) > 2 else location
+        loc = COCORAHS_STATIONS[locations[idx]][2] if len(COCORAHS_STATIONS[locations[idx]]) > 2 else locations[idx]
         for row in entry.get('data', []):
-            if not row or len(row) < 2:
+            if len(row) < 2:
                 continue
-            record = {'location': dict_location, 'datetime': _format_timestamp(row[0])}
+            ts = f"{row[0]} 00:00:00"
+            recs.setdefault(ts, {"location": loc, "datetime": ts})
             for ds_name, idx_val in DATASETS.items():
-                if len(row) > idx_val:
-                    val = row[idx_val]
+                if len(row) > idx_val and row[idx_val] not in (None, ""):
                     try:
-                        value = float(val) if val not in (None, "") else None
-                        if value is not None:
-                            sql_field = SQL_CONVERSION.get(ds_name)
-                            if sql_field:
-                                record[sql_field] = value
-                    except:
+                        val = float(row[idx_val])
+                        col = SQL_CONVERSION.get(ds_name)
+                        if col:
+                            recs[ts][col] = val
+                    except (ValueError, TypeError):
                         pass
-            if len(record) > 2:  # Has data beyond location and datetime
-                db = pd.concat([db, pd.DataFrame([record])], ignore_index=True)
+    db = pd.DataFrame(recs.values()) if recs else pd.DataFrame()
+    conn = sqlite3.connect(DB_PATH)
     db.to_sql('temp_staging', conn, if_exists='replace', index=False)
     conn.close()
 
@@ -71,10 +51,8 @@ def _push():
     files["cocorahs"].upsert_all(files["temp_staging"].rows, alter=True, hash_id="unique_id")
 
 def update():
-    data = _pull()
-    _process(data)
+    _process(_pull())
     _push()
-    print("CoCoRaHS data update completed successfully")
 
 if __name__ == "__main__":
     update()
