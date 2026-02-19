@@ -1,3 +1,8 @@
+'''
+Author: Kartik Jariam
+Date: 2/16/2026
+Purpose: This is the DANR source file.
+''' 
 import requests
 import pandas as pd
 import sqlite3
