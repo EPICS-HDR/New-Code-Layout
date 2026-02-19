@@ -1,5 +1,5 @@
 '''
-Author: Kartik Jariam
+Author: Kartik Jariam & Andrew Vu
 Date: 1/29/2026
 Purpose: This is the master config for all source files. Everything hardcoded must be present in this file. The host must modify this file to add new
          stations or change how data pulling works.
