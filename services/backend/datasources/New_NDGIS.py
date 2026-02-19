@@ -14,36 +14,65 @@ from services.backend.datasources.config import SQL_CONVERSION, DB_PATH
 ARCGIS_URL = "https://ndgishub.nd.gov/arcgis/rest/services/Applications/DOH_SurfaceWaterSamplingSites/MapServer/0/query"
 WATERCHEM_URL = "https://deq.nd.gov/Webservices_SWDataApp/DownloadStationsData/GetStationsWaterChemData/{}"
 CSV_BASE = "https://deq.nd.gov/WQ/3_Watershed_Mgmt/SWDataApp/downloaddata/{}.csv"
-WQ_COLS = [k for k, v in SQL_CONVERSION.items() if v.startswith("total_phosphorus") or v.startswith("nitrate") or v.startswith("nitrogen") or v in ("e_coli", "ph", "ammonia", "dissolved_phosphorus") or "dissolved" in v or "tkn" in v or "forms_check" in v]
 PARAM_TO_COL = {k: SQL_CONVERSION[k] for k in SQL_CONVERSION if SQL_CONVERSION[k] in ["total_phosphorus", "total_kjeldahl_phosphorus", "nitrate_nitrite", "nitrate_forms_check", "nitrate_nitrite_dissolved", "total_kjeldahl_nitrogen", "tkn_dissolved", "total_nitrogen_dissolved", "e_coli", "total_nitrogen", "ph", "ammonia_nitrogen", "ammonia_nitrogen_dissolved", "ammonia_forms_check", "diss_ammonia_tkn_check", "dissolved_phosphorus"]}
 
-def _station_ids():
-    out = []
-    off = 0
-    while True:
-        r = requests.get(ARCGIS_URL, params={"where": "1=1", "outFields": "SITE_ID", "returnGeometry": "false", "f": "json", "resultOffset": off, "resultRecordCount": 2000}, timeout=30)
+
+def _station_ids(limit: int = 10):
+    """
+    Fetch a small set of NDGIS station IDs from ArcGIS.
+    We only take the first `limit` IDs to keep runtime reasonable.
+    """
+    try:
+        r = requests.get(
+            ARCGIS_URL,
+            params={
+                "where": "1=1",
+                "outFields": "SITE_ID",
+                "returnGeometry": "false",
+                "f": "json",
+                "resultRecordCount": limit,
+            },
+            timeout=30,
+        )
         r.raise_for_status()
         feats = r.json().get("features", [])
-        if not feats:
-            break
+        ids = []
         for f in feats:
             sid = f.get("attributes", {}).get("SITE_ID")
             if sid and str(sid).strip():
-                out.append(str(sid).strip())
-        if len(feats) < 2000:
-            break
-        off += 2000
-    return list(dict.fromkeys(out))
+                ids.append(str(sid).strip())
+        # Deduplicate and cap to limit
+        seen = set()
+        out = []
+        for sid in ids:
+            if sid not in seen:
+                seen.add(sid)
+                out.append(sid)
+            if len(out) >= limit:
+                break
+        return out
+    except Exception:
+        return []
 
-def _pull(debug=False):
+
+def _pull(debug: bool = False):
     data = []
-    for sid in _station_ids():
+    station_ids = _station_ids(limit=10)
+    if debug:
+        print(f"Found {len(station_ids)} NDGIS stations: {station_ids}")
+    for sid in station_ids:
         try:
-            name_r = requests.post(WATERCHEM_URL.format(sid))
+            name_r = requests.post(WATERCHEM_URL.format(sid), timeout=30)
             if name_r.status_code != 200 or not name_r.text:
+                if debug:
+                    print(f"Station {sid}: HTTP {name_r.status_code} or empty response")
                 continue
             name = name_r.text.replace('"', '').strip()
-            csv_r = requests.get(CSV_BASE.format(name))
+            if not name:
+                if debug:
+                    print(f"Station {sid}: Empty dataset name")
+                continue
+            csv_r = requests.get(CSV_BASE.format(name), timeout=30)
             csv_r.raise_for_status()
             txt = csv_r.text
             if txt.startswith("sep="):
@@ -53,7 +82,14 @@ def _pull(debug=False):
             except Exception:
                 df = pd.read_csv(io.StringIO(txt))
             if "DATE_COLL" in df.columns and "Parameter" in df.columns and "Result" in df.columns:
-                data.append({"station_id": sid, "rows": df.to_dict("records")})
+                if len(df) > 0:
+                    data.append({"station_id": sid, "rows": df.to_dict("records")})
+                    if debug:
+                        print(f"Station {sid}: Loaded {len(df)} rows")
+                elif debug:
+                    print(f"Station {sid}: CSV has correct columns but no data rows")
+            elif debug:
+                print(f"Station {sid}: Missing required columns in CSV")
         except Exception as e:
             print(type(e).__name__ + ", skipping " + str(sid))
             if debug:
@@ -91,7 +127,8 @@ def _push():
     files["water_quality"].upsert_all(files["temp_staging"].rows, alter=True, hash_id="unique_id")
 
 def update():
-    data = _pull()
+    data = _pull(debug=True)
+    print(f"Pulled data from {len(data)} stations")
     _process(data)
     _push()
     print("NDGIS water quality data update completed successfully")
