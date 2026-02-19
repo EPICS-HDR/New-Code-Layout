@@ -4,9 +4,7 @@ import pandas as pd
 import sqlite3
 import sqlite_utils
 from datetime import date, timedelta
-from services.backend.datasources.config import SQL_CONVERSION, DB_PATH
-
-LOCATIONS = {'Hazen': ['06340500', 1], 'Stanton': ['06340700', 2], 'Washburn': ['06341000', 2], 'Price': ['06342020', 2], 'Bismarck': ['06342500', 3], 'Schmidt': ['06349700', 2], 'Judson': ['06348300', 1], 'Mandan': ['06349000', 1], 'Breien': ['06354000', 1], 'Wakpala': ['06354881', 4], 'Little Eagle': ['06357800', 4], 'Cash': ['06356500', 4], 'Whitehorse': ['06360500', 4]}
+from BackEnd.SourceFiles.config import SQL_CONVERSION, DB_PATH, USGS_LOCATIONS as LOCATIONS
 QUERIES = {1: ('cb_00060=on&cb_00065=on&cb_63160=on', 56), 2: ('cb_00065=on&cb_63160=on', 54), 3: ('cb_00010=on&cb_00060=on&cb_00065=on&cb_63160=on', 58), 4: ('cb_00060=on&cb_00065=on', 54)}
 DS_MAP = {1: {4: "Elevation", 6: "Discharge", 8: "Gauge Height"}, 2: {4: "Elevation", 6: "Gauge Height"}, 3: {4: "Elevation", 6: "Water Temperature", 8: "Discharge", 10: "Gauge Height"}, 4: {4: "Discharge", 6: "Gauge Height"}}
 JUDSON_MAP = {4: "Elevation", 6: "Gauge Height", 8: "Discharge"}

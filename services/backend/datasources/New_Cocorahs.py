@@ -4,7 +4,7 @@ import pandas as pd
 import sqlite3
 import sqlite_utils
 from datetime import date
-from services.backend.datasources.config import COCORAHS_STATIONS, SQL_CONVERSION, DB_PATH
+from BackEnd.SourceFiles.config import COCORAHS_STATIONS, SQL_CONVERSION, DB_PATH
 
 BASE_URL = "http://data.rcc-acis.org/StnData"
 DATASETS = {'Precipitation': 1, 'Snowfall': 2, 'Snow Depth': 3}
@@ -12,7 +12,7 @@ DATASETS = {'Precipitation': 1, 'Snowfall': 2, 'Snow Depth': 3}
 def _pull():
     data = []
     end = date.today().strftime("%Y%m%d")
-    for location, (station_id, start_date, *rest) in COCORAHS_STATIONS.items():
+    for location, (station_id, start_date, dict_location) in COCORAHS_STATIONS.items():
         try:
             params = f'{{"sid":"{station_id}","sdate":"{start_date}","edate":"{end}","elems":"pcpn,snow,snwd"}}'
             data.append(requests.get(f"{BASE_URL}?params={params}").json())
@@ -22,11 +22,11 @@ def _pull():
 
 def _process(data):
     recs = {}
-    locations = list(COCORAHS_STATIONS.keys())
+    station_list = list(COCORAHS_STATIONS.keys())
     for idx, entry in enumerate(data):
         if not entry or 'data' not in entry:
             continue
-        loc = COCORAHS_STATIONS[locations[idx]][2] if len(COCORAHS_STATIONS[locations[idx]]) > 2 else locations[idx]
+        loc = COCORAHS_STATIONS[station_list[idx]][2]
         for row in entry.get('data', []):
             if len(row) < 2:
                 continue

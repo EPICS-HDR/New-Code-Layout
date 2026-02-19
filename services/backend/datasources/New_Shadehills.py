@@ -4,7 +4,7 @@ import pandas as pd
 import sqlite3
 import sqlite_utils
 from datetime import datetime
-from services.backend.datasources.config import SHADEHILL_DATASETS, SQL_CONVERSION, DB_PATH
+from BackEnd.SourceFiles.config import SHADEHILL_DATASETS, SQL_CONVERSION, DB_PATH
 
 URL = "https://www.usbr.gov/gp-bin/arcread.pl"
 LOCATION = "Shadehill"

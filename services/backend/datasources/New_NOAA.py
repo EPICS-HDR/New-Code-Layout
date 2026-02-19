@@ -5,9 +5,7 @@ import pandas as pd
 import sqlite3
 import sqlite_utils
 from datetime import datetime, timedelta
-from services.backend.datasources.config import DB_PATH
-
-NOAA_STATIONS = [("Bismarck", "GHCND:USW00024011"), ("Williston/Basin", "GHCND:USW00024018"), ("Minot", "GHCND:USW00024021")]
+from BackEnd.SourceFiles.config import DB_PATH, NOAA_STATIONS
 BASE_URL = "https://www.ncei.noaa.gov/cdo-web/api/v2/data"
 DATATYPES = {"TAVG": "avg_temp", "TMAX": "max_temp", "TMIN": "min_temp", "PRCP": "precipitation"}
 
@@ -15,7 +13,8 @@ def _pull():
     data = []
     end = datetime.now()
     start = end - timedelta(days=365)
-    headers = {"token": os.environ.get("NOAA_TOKEN", "")} if os.environ.get("NOAA_TOKEN") else {}
+    token = os.environ.get("NOAA_TOKEN", "")
+    headers = {"token": token} if token else {}
     for location, station_id in NOAA_STATIONS:
         try:
             r = requests.get(BASE_URL, params={"datasetid": "GHCND", "stationid": station_id, "startdate": start.strftime("%Y-%m-%d"), "enddate": end.strftime("%Y-%m-%d"), "limit": 1000}, headers=headers, timeout=30)
