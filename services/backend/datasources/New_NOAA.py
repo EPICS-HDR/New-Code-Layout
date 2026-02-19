@@ -1,4 +1,7 @@
 '''
+Author: Andrew Vu
+Date: 2/19/2026
+Purpose: NOAA weather data source following DANR pulling method pattern.
 NOAA weather source. DANR framework: _pull -> _process (temp_staging) -> _push.
 Uses NCEI CDO API. Set your API key in the environment before running:
   export NOAA_TOKEN=your_key
