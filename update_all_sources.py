@@ -21,6 +21,7 @@ sources = [
     ("CoCoRaHS", "services.backend.datasources.New_Cocorahs"),
     ("Shadehill", "services.backend.datasources.New_Shadehills"),
     ("NDGIS", "services.backend.datasources.New_NDGIS"),
+    ("NDMES", "services.backend.datasources.New_NDMES"),
     ("NOAA", "services.backend.datasources.New_NOAA"),
     ("USGS", "services.backend.datasources.New_USGS"),
 ]

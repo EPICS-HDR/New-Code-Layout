@@ -148,4 +148,12 @@ USGS_LOCATIONS = {
 # (Not yet implemented in new framework)
 
 # --------------------------------------  NDMES  --------------------------------------
-# (Not yet implemented in new framework)
+# Format: "Location": ["station_id", "display_name"]
+# To add a station: Add a new entry like: "City": ["123", "City, ND"]
+# Station IDs from: https://ndawn.ndsu.nodak.edu/
+NDMES_STATIONS = {
+    "Fort Yates": ["89", "Fort Yates, ND"],
+    "Linton": ["35", "Linton, ND"],
+    "Mott": ["69", "Mott, ND"],
+    "Carson": ["96", "Carson, ND"],
+}
