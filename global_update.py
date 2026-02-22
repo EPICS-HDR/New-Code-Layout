@@ -2,13 +2,15 @@
 '''Daily datasource update script. Run this to update all datasources in Measurements.db'''
 import sys
 import os
-from datetime import datetime
 
-# Set PYTHONPATH to project root
+# Must run from project root for imports to work
 project_root = os.path.dirname(os.path.abspath(__file__))
+os.chdir(project_root)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 os.environ['PYTHONPATH'] = project_root
+
+from datetime import datetime
 
 # Set NOAA token if available
 if 'NOAA_TOKEN' not in os.environ:
@@ -18,12 +20,14 @@ print(f"Starting datasource updates at {datetime.now().strftime('%Y-%m-%d %H:%M:
 print("=" * 60)
 
 sources = [
+    ("DANR", "services.backend.datasources.New_DANR"),
     ("CoCoRaHS", "services.backend.datasources.New_Cocorahs"),
     ("Shadehill", "services.backend.datasources.New_Shadehills"),
     ("NDGIS", "services.backend.datasources.New_NDGIS"),
     ("NDMES", "services.backend.datasources.New_NDMES"),
     ("NOAA", "services.backend.datasources.New_NOAA"),
     ("USGS", "services.backend.datasources.New_USGS"),
+    ("USACE", "services.backend.datasources.New_USACE"),
 ]
 
 for name, module_path in sources:

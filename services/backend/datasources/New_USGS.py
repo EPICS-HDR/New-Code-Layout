@@ -5,6 +5,7 @@ import sqlite3
 import sqlite_utils
 from datetime import date, timedelta
 from BackEnd.SourceFiles.config import SQL_CONVERSION, DB_PATH, USGS_LOCATIONS as LOCATIONS
+
 QUERIES = {1: ('cb_00060=on&cb_00065=on&cb_63160=on', 56), 2: ('cb_00065=on&cb_63160=on', 54), 3: ('cb_00010=on&cb_00060=on&cb_00065=on&cb_63160=on', 58), 4: ('cb_00060=on&cb_00065=on', 54)}
 DS_MAP = {1: {4: "Elevation", 6: "Discharge", 8: "Gauge Height"}, 2: {4: "Elevation", 6: "Gauge Height"}, 3: {4: "Elevation", 6: "Water Temperature", 8: "Discharge", 10: "Gauge Height"}, 4: {4: "Discharge", 6: "Gauge Height"}}
 JUDSON_MAP = {4: "Elevation", 6: "Gauge Height", 8: "Discharge"}
