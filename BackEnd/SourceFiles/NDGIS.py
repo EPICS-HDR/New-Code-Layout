@@ -1,7 +1,7 @@
 '''
 Author: Kartik Jariam
-Date: 2/19/2026
-Purpose: This is the USACE source file.
+Date: 3/05/2026
+Purpose: This is the NDGIS source file.
 ''' 
 import subprocess
 import sqlite_utils
@@ -36,7 +36,6 @@ def _process(data):
     db.to_sql('temp_staging', conn, if_exists='replace', index=False)
     conn.close()
 
-#The hash system needs to be changed. While good in theory, it creates issues for sources like USACE whose data is incomplete and updated live
 def _push():
     files = sqlite_utils.Database('mydatabase.db')
     files["USACE"].upsert_all(files["temp_staging"].rows, alter=True, hash_id="unique_id")
@@ -48,4 +47,5 @@ def update():
     _push()
 
 if (__name__ == "__main__"):
-    update()
+    data= _pull(True)
+    _process(data)

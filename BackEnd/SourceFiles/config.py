@@ -92,6 +92,7 @@ COCORAHS_STATIONS = {
 }
 
 # --------------------------------------Shadehill--------------------------------------
+<<<<<<< Updated upstream
 # Format: "code": "Dataset Name"
 # To add a dataset: Add a new entry like: "XX": "Dataset Description"
 SHADEHILL_DATASETS = {
@@ -123,6 +124,14 @@ NOAA_STATIONS = [
     ("Minot", "GHCND:USW00024021"),
 ]
 
+=======
+# --------------------------------------  USACE  --------------------------------------
+USACEConfig = {
+    'baseURL' : "https://www.nwd-mr.usace.army.mil/rcc/programs/data/",
+    'stationList' : ["GARR"],
+    'ColumnNames' : ['DateTime', 'Temp_Air', 'Flow_Out', 'Elev_Tailwater', 'Energy', 'Temp_Water', 'Elev', 'Flow_Spill', 'Flow_Powerhouse']
+}
+>>>>>>> Stashed changes
 # --------------------------------------  USGS   --------------------------------------
 # Format: 'Location': ['site_code', category]
 # Categories: 1=Elevation+Discharge+GaugeHeight, 2=Elevation+GaugeHeight, 3=All+WaterTemp, 4=Discharge+GaugeHeight
