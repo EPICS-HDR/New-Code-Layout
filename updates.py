@@ -2,6 +2,7 @@
 '''Daily datasource update script. Run this to update all datasources in Measurements.db'''
 import sys
 import os
+import importlib
 
 # Must run from project root for imports to work
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -16,28 +17,31 @@ from datetime import datetime
 if 'NOAA_TOKEN' not in os.environ:
     os.environ['NOAA_TOKEN'] = 'WkaDdDnFDuEUpiUEFiNMFcLcNKVsQgtp'
 
-print(f"Starting datasource updates at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-print("=" * 60)
-
 sources = [
-    ("DANR", "services.backend.datasources.New_DANR"),
-    ("CoCoRaHS", "services.backend.datasources.New_Cocorahs"),
-    ("Shadehill", "services.backend.datasources.New_Shadehills"),
-    ("NDGIS", "services.backend.datasources.New_NDGIS"),
-    ("NDMES", "services.backend.datasources.New_NDMES"),
-    ("NOAA", "services.backend.datasources.New_NOAA"),
-    ("USGS", "services.backend.datasources.New_USGS"),
-    ("USACE", "services.backend.datasources.New_USACE"),
+    ("DANR", "BackEnd.SourceFiles._DANR"),
+    ("NDGIS", "BackEnd.SourceFiles._NDGIS"),
+    ("USACE", "BackEnd.SourceFiles._USACE"),
 ]
 
-for name, module_path in sources:
-    try:
-        print(f"\nUpdating {name}...", end=" ", flush=True)
-        module = __import__(module_path, fromlist=['update'])
-        module.update()
-        print("✓")
-    except Exception as e:
-        print(f"✗ Error: {type(e).__name__}")
+def main():
+    print(f"Starting datasource updates at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 60)
 
-print("\n" + "=" * 60)
-print(f"Completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    for name, module_path in sources:
+        try:
+            print(f"\nUpdating {name}...", end=" ", flush=True)
+            module = importlib.import_module(module_path)
+            if hasattr(module, 'update'):
+                module.update()
+            else:
+                raise AttributeError(f"{module_path} has no update()")
+            print("✓")
+        except Exception as e:
+            print(f"✗ Error: {type(e).__name__}: {e}")
+
+    print("\n" + "=" * 60)
+    print(f"Completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+if __name__ == '__main__':
+    main()

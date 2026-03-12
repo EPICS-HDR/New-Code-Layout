@@ -1,0 +1,113 @@
+body {
+  margin: 0;
+  line-height: normal;
+}
+
+:root {
+  /* fonts */
+  --body-small: "DM Sans";
+  --font-roboto: Roboto;
+  --font-plus-jakarta-sans: "Plus Jakarta Sans";
+  --display-1-uppercase-semi-bold: Inter;
+
+  /* font sizes */
+  --body-small-size: 16px;
+  --font-size-xl: 20px;
+  --font-size-29xl: 48px;
+  --display-1-uppercase-semi-bold-size: 12px;
+  --font-size-lg-5: 18.5px;
+  --font-size-base-2: 16.2px;
+  --font-size-4xl-2: 23.2px;
+  --font-size-41xl: 60px;
+
+  /* Colors */
+  --neutral-0: #fff;
+  --neutral-colors-300: #f1f3f7;
+  --neutral-colors-400: #e1e4ed;
+  --color-gainsboro-100: #ddd;
+  --color-steelblue: #486284;
+  --color-darkslategray: #485151;
+  --color-lightblue: #bbecfd;
+  --neutral-colors-600: #6d7590;
+
+  /* Gaps */
+  --gap-5xl: 24px;
+  --gap-6xs: 7px;
+
+  /* Paddings */
+  --padding-xs: 12px;
+  --padding-xl: 20px;
+
+  /* Border radiuses */
+  --br-9xl: 28px;
+  --br-3xs-3: 9.3px;
+  --br-13xl: 32px;
+}
+
+/* Global mobile-friendly defaults */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+img,
+picture,
+video,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive container */
+.page-wrapper,
+.content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Responsive typography */
+@media (max-width: 991px) {
+  body {
+    font-size: 15px;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+  }
+  
+  h2 {
+    font-size: 2rem;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-wrapper,
+  .content-container {
+    padding: 0 12px;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+  }
+}

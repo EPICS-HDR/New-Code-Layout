@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Favorites</title>
+</head>
+<body>
+  <h1>Favorites</h1>
+  {% if favorites %}
+    <ul>
+      {% for item in favorites %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No favorites saved.</p>
+  {% endif %}
+</body>
+</html>
