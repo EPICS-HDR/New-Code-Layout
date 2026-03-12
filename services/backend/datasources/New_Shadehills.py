@@ -23,28 +23,31 @@ def _pull():
             pass
     return data
 
+import io
+
 def _process(data):
-    recs = {}
+    db = pd.DataFrame()
     for item in data:
         col = SQL_CONVERSION.get(item["name"])
         if not col:
             continue
-        for line in item["raw"].splitlines()[3:]:
-            parts = line.split()
-            if len(parts) >= 2:
-                try:
-                    y, m, d = parts[0].split("/")
-                    ts = f"{y}-{m}-{d} 00:00:00"
-                    val = float(parts[-1])
-                    if val <= 900000:
-                        recs.setdefault(ts, {"location": LOCATION, "datetime": ts})
-                        recs[ts][col] = val
-                except (ValueError, IndexError):
-                    pass
-    db = pd.DataFrame(recs.values()) if recs else pd.DataFrame()
-    conn = sqlite3.connect(DB_PATH)
-    db.to_sql("temp_staging", conn, if_exists="replace", index=False)
-    conn.close()
+        try:
+            temp = pd.read_csv(io.StringIO(item["raw"]), skiprows=4, sep=r'\s+', names=["datetime", col], usecols=[0, 1])
+            temp[col] = pd.to_numeric(temp[col], errors='coerce')
+            temp = temp[temp[col] <= 900000] # preserve the existing filter logic
+            temp["datetime"] = pd.to_datetime(temp["datetime"], format="%Y/%m/%d", errors="coerce").astype(str)
+            if db.empty:
+                db = temp
+            else:
+                db = db.merge(temp, on="datetime", how="outer")
+        except Exception:
+            pass
+            
+    if not db.empty:
+        db["location"] = LOCATION
+        conn = sqlite3.connect(DB_PATH)
+        db.to_sql("temp_staging", conn, if_exists="replace", index=False)
+        conn.close()
 
 def _push():
     files = sqlite_utils.Database(DB_PATH)

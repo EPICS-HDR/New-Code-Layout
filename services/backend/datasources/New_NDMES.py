@@ -39,34 +39,21 @@ def _pull():
     return data
 
 def _process(data):
-    groups = {}
+    db = pd.DataFrame()
     for item in data:
-        loc = item["location"]
         try:
-            df = pd.read_csv(io.StringIO(item["raw"]), skiprows=3)
+            temp = pd.read_csv(io.StringIO(item["raw"]), skiprows=[0, 1, 2, 4])
+            temp["datetime"] = pd.to_datetime(temp[["Year", "Month", "Day", "Hour"]].rename(columns={"Hour": "hour"}), format="%Y-%m-%d %H", errors="coerce").astype(str)
+            temp["location"] = item["location"]
+            if "Avg Wind Speed" in temp.columns: temp = temp.drop(columns=["Avg Wind Speed"])
+            temp = temp.rename(columns=COL_MAP)
+            
+            cols_to_keep = list(set(COL_MAP.values())) + ["location", "datetime"]
+            temp = temp[[c for c in cols_to_keep if c in temp.columns]]
+            
+            db = pd.concat([db, temp], ignore_index=True)
         except Exception:
             continue
-        if not all(c in df.columns for c in ["Year", "Month", "Day", "Hour"]):
-            continue
-        for _, row in df.iterrows():
-            try:
-                y, m, d = int(row["Year"]), int(row["Month"]), int(row["Day"])
-                h = int(row["Hour"])
-                hh, mm = h // 100, h % 100
-                ts = f"{y}-{m:02d}-{d:02d} {hh:02d}:{mm:02d}:00"
-                key = (loc, ts)
-                groups.setdefault(key, {"location": loc, "datetime": ts})
-                for csv_col, sql_col in COL_MAP.items():
-                    if csv_col in df.columns:
-                        val = row.get(csv_col)
-                        if pd.notna(val):
-                            try:
-                                groups[key][sql_col] = float(val)
-                            except (ValueError, TypeError):
-                                pass
-            except (ValueError, KeyError, TypeError):
-                continue
-    db = pd.DataFrame(groups.values()) if groups else pd.DataFrame(columns=["location", "datetime"])
     conn = sqlite3.connect(DB_PATH)
     db.to_sql("temp_staging", conn, if_exists="replace", index=False)
     conn.close()
