@@ -152,6 +152,7 @@
           <select name="data2see" class="control" required>
             <option value="" disabled selected>Choose Data Point</option>
           </select>
+          <p class="availability-indicator" style="margin-top:6px;font-size:0.9rem;color:#374151;"></p>
         </div>
 
         <div class="field">
@@ -190,8 +191,10 @@
   </main>
 
   <script>
-    // Server-injected graph index (scanned each request by maptabs view)
-    window.graphIndex = {{ graph_index_json|default:'{}'|safe }};
+    // Server-injected database-backed location metadata
+    window.locationOptions = JSON.parse('{{ location_options_json|default:"{}"|escapejs }}');
+    window.locationTableMap = JSON.parse('{{ location_table_map_json|default:"{}"|escapejs }}');
+    window.locationAvailability = JSON.parse('{{ location_availability_json|default:"{}"|escapejs }}');
 
     document.addEventListener('DOMContentLoaded', async () => {
       const today = new Date(); today.setHours(0,0,0,0);
@@ -207,6 +210,13 @@
         const m = String(d.getMonth()+1).padStart(2,'0');
         const day = String(d.getDate()).padStart(2,'0');
         return `${y}-${m}-${day}`;
+      };
+
+      const parseIsoDateAsLocal = v => {
+        if (!v || typeof v !== 'string') return null;
+        const m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!m) return null;
+        return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
       };
 
       // Config
@@ -233,6 +243,24 @@
           form.insertAdjacentElement('afterend', slot);
         }
         return slot;
+      }
+
+      function updateAvailabilityIndicator(form) {
+        const indicator = form.querySelector('.availability-indicator');
+        const locationEl = form.querySelector('input[type="hidden"]:not([name="csrfmiddlewaretoken"])');
+        const metricEl = form.querySelector('select[name="data2see"]');
+        if (!indicator || !locationEl || !metricEl) return;
+
+        const locKey = (locationEl.value || '').replace(/\s+(ND|SD)$/i, '').trim();
+        const metric = metricEl.value || '';
+        const availability = (window.locationAvailability || {})[locKey]?.[metric];
+
+        if (availability?.start && availability?.end) {
+          indicator.textContent = `Available data: ${availability.start} to ${availability.end}`;
+          return;
+        }
+
+        indicator.textContent = metric ? 'Availability range not found for this data point.' : '';
       }
 
       function renderHtmlIntoSlot(slot, html) {
@@ -346,6 +374,113 @@
           });
         };
 
+        const graphPayload = () => ({
+          action: form.getAttribute('action') || window.location.pathname,
+          locationField: locationEl?.name || null,
+          locationValue: locationEl?.value || null,
+          metric: datasetSel?.value || null,
+          startDate: startInput?.value || null,
+          endDate: endInput?.value || null,
+        });
+
+        async function generateGraph(options = {}) {
+          const { skipValidity = false } = options;
+          clearMsgs();
+          if (!skipValidity && !form.checkValidity()) { form.reportValidity(); return; }
+          if (!skipValidity && !validateDates()) { return; }
+
+          console.log('[maptabs] Generate graph submit', graphPayload());
+          const slot = ensureGraphSlot(form);
+          slot.innerHTML = '<div class="graph-loading">Loading graph…</div>';
+
+          const res = await probeHasData(form);
+          console.log('[maptabs] Probe result', { ...graphPayload(), state: res.state, status: res.status || null });
+          clearMsgs();
+
+          if (res.state === 'empty') {
+            const loc = (locationEl?.value || '').replace(/\s+(ND|SD)$/i, '');
+            console.warn('[maptabs] No data from probe', graphPayload());
+            slot.innerHTML = '';
+            nodataError.textContent =
+              `No graph is available for ${loc || 'this location'} with that metric and date range. Please choose another range or metric.`;
+            nodataError.style.display = 'block';
+            return;
+          }
+
+          if (res.state === 'serverError') {
+            console.error('[maptabs] Server error during probe', { ...graphPayload(), status: res.status || null });
+            slot.innerHTML = '';
+            serverError.textContent =
+              `⚠️ Server error while generating the graph (${res.status}).`;
+            serverError.style.display = 'block';
+            return;
+          }
+
+          if (res.state === 'networkError') {
+            console.error('[maptabs] Network error during probe', graphPayload());
+            slot.innerHTML = '';
+            serverError.textContent =
+              '⚠️ Network error while requesting the graph.';
+            serverError.style.display = 'block';
+            return;
+          }
+
+          if (res.state === 'hasData' && res.html) {
+            console.log('[maptabs] Probe returned graph HTML', { ...graphPayload(), htmlLength: res.html.length });
+            renderHtmlIntoSlot(slot, res.html);
+            return;
+          }
+
+          const action = form.getAttribute('action') || window.location.pathname;
+          const fd = new FormData(form);
+          console.log('[maptabs] Falling back to full fetch', graphPayload());
+          console.log('[maptabs] Form inputs at submission:', {
+            startInputValue: startInput?.value,
+            endInputValue: endInput?.value,
+            formDataStartDate: fd.get('start-date'),
+            formDataEndDate: fd.get('end-date'),
+            action
+          });
+
+          try {
+            const resp = await fetch(action, {
+              method: 'POST',
+              body: new URLSearchParams(fd),
+              credentials: 'same-origin',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCsrfToken()
+              },
+              redirect: 'manual'
+            });
+
+            const html = await resp.text();
+            console.log('[maptabs] Full fetch response', { ...graphPayload(), status: resp.status, htmlLength: html.length });
+            if (resp.status === 200) {
+              console.log('[maptabs] Rendering graph from full fetch', graphPayload());
+              renderHtmlIntoSlot(slot, html);
+            } else if (resp.status >= 500 && TREAT_ALL_500_AS_NO_DATA) {
+              console.warn('[maptabs] Treating server response as no data', { ...graphPayload(), status: resp.status });
+              slot.innerHTML = '';
+              nodataError.textContent = 'No graph is available for the selected range. Try a different range or metric.';
+              nodataError.style.display = 'block';
+            } else {
+              console.error('[maptabs] Full fetch could not render graph', { ...graphPayload(), status: resp.status });
+              slot.innerHTML = '';
+              serverError.textContent =
+                `⚠️ Could not render graph (${resp.status}).`;
+              serverError.style.display = 'block';
+            }
+          } catch (err) {
+            console.error('[maptabs] Full fetch network failure', { ...graphPayload(), error: err?.message || err });
+            slot.innerHTML = '';
+            serverError.textContent =
+              '⚠️ Network error while requesting the graph.';
+            serverError.style.display = 'block';
+          }
+        }
+
         function validateDates() {
           clearMsgs();
           if (!startInput.value || !endInput.value) return false;
@@ -385,11 +520,18 @@
             // Get the currently selected metric from the dropdown
             const metric = datasetSel?.value;
             
-            // Validate that both are selected
+            // Always fill date inputs, even if location/metric is not selected.
             if (!locValue || !metric) {
-              console.warn('Location or metric not selected', {location: locValue, metric, inputFound: !!currentLocationInput});
+              console.warn('Location or metric not selected, using fallback recent range', {location: locValue, metric, inputFound: !!currentLocationInput});
+              const end = new Date();
+              end.setHours(0,0,0,0);
+              const start = new Date(end);
+              start.setDate(start.getDate() - 30);
+              startInput.value = isoDate(start);
+              endInput.value = isoDate(end);
+
               clearMsgs();
-              nodataError.textContent = 'Please select a location and metric first';
+              nodataError.textContent = 'Selected the latest 30-day date window. Choose a location and metric to generate the graph.';
               nodataError.style.display = 'block';
               return;
             }
@@ -415,11 +557,15 @@
               });
 
               let latestDate = null;
+              let startDateValue = null;
+              let endDateValue = null;
               if (resp.ok) {
                 const data = await resp.json();
+                startDateValue = data.start_date || null;
+                endDateValue = data.end_date || data.latest_date || null;
                 if (data.latest_date) {
-                  latestDate = new Date(data.latest_date);
-                  latestDate.setHours(0,0,0,0);
+                  latestDate = parseIsoDateAsLocal(data.latest_date);
+                  if (latestDate) latestDate.setHours(0,0,0,0);
                   console.log(`Latest data available: ${data.latest_date}`);
                 }
               } else {
@@ -427,18 +573,31 @@
                 console.warn('Could not fetch latest date from DB:', {status: resp.status, error: errData.error, trace: errData.trace});
               }
 
-              // Use latest available date or fallback to today
+              // Use backend-provided DB window when available; otherwise derive a local-date fallback.
               const end = latestDate || new Date();
               end.setHours(0,0,0,0);
               const start = new Date(end);
-              start.setDate(start.getDate() - 30); // 30 days before latest
+              start.setDate(start.getDate() - 30);
 
-              startInput.value = isoDate(start);
-              endInput.value = isoDate(end);
+              startInput.value = startDateValue || isoDate(start);
+              endInput.value = endDateValue || isoDate(end);
               
-              console.log(`Recent Data: ${locKey} - ${metric} from ${isoDate(start)} to ${isoDate(end)}`);
-              
-              form.requestSubmit();
+              console.log(`Recent Data: ${locKey} - ${metric} from ${startInput.value} to ${endInput.value}`);
+              console.log('[maptabs] Recent Data filled dates:', { 
+                startInputValue: startInput?.value,
+                endInputValue: endInput?.value,
+                calculatedStart: startDateValue || isoDate(start),
+                calculatedEnd: endDateValue || isoDate(end)
+              });
+
+              console.log('[maptabs] Recent Data invoking graph generation', graphPayload());
+              try {
+                await generateGraph({ skipValidity: true });
+                console.log('[maptabs] Recent Data generateGraph completed successfully');
+              } catch (genErr) {
+                console.error('[maptabs] Recent Data generateGraph threw error:', genErr?.message || genErr);
+                throw genErr;
+              }
             } catch (err) {
               console.error('Error fetching latest date:', err);
               // Fallback to today
@@ -448,7 +607,14 @@
               start.setDate(start.getDate() - 30);
               startInput.value = isoDate(start);
               endInput.value = isoDate(end);
-              form.requestSubmit();
+              console.log('[maptabs] Recent Data fallback invoking graph generation', graphPayload());
+              try {
+                await generateGraph({ skipValidity: true });
+                console.log('[maptabs] Recent Data fallback generateGraph completed successfully');
+              } catch (genErr) {
+                console.error('[maptabs] Recent Data fallback generateGraph threw error:', genErr?.message || genErr);
+                throw genErr;
+              }
             }
           });
         }
@@ -491,94 +657,20 @@
         });
 
         form.addEventListener('submit', async (e) => {
-          if (!form.checkValidity()) { form.reportValidity(); return; }
-          if (!validateDates()) { e.preventDefault(); return; }
-
           e.preventDefault();
-          const slot = ensureGraphSlot(form);
-          slot.innerHTML = '<div class="graph-loading">Loading graph…</div>';
-
-          const res = await probeHasData(form);
-          clearMsgs();
-
-          if (res.state === 'empty') {
-            const loc = (locationEl?.value || '').replace(/\s+(ND|SD)$/i, '');
-            slot.innerHTML = '';
-            nodataError.textContent =
-              `No graph is available for ${loc || 'this location'} with that metric and date range. Please choose another range or metric.`;
-            nodataError.style.display = 'block';
-            return;
-          }
-
-          if (res.state === 'serverError') {
-            slot.innerHTML = '';
-            serverError.textContent =
-              `⚠️ Server error while generating the graph (${res.status}).`;
-            serverError.style.display = 'block';
-            return;
-          }
-
-          if (res.state === 'networkError') {
-            slot.innerHTML = '';
-            serverError.textContent =
-              '⚠️ Network error while requesting the graph.';
-            serverError.style.display = 'block';
-            return;
-          }
-
-          if (res.state === 'hasData' && res.html) {
-            renderHtmlIntoSlot(slot, res.html);
-            return;
-          }
-
-          // Fallback: normal fetch and render
-          const action = form.getAttribute('action') || window.location.pathname;
-          const fd = new FormData(form);
-
-          try {
-            const resp = await fetch(action, {
-              method: 'POST',
-              body: new URLSearchParams(fd),
-              credentials: 'same-origin',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCsrfToken()
-              },
-              redirect: 'manual'
-            });
-
-            const html = await resp.text();
-            if (resp.status === 200) {
-              renderHtmlIntoSlot(slot, html);
-            } else if (resp.status >= 500 && TREAT_ALL_500_AS_NO_DATA) {
-              slot.innerHTML = '';
-              nodataError.textContent = 'No graph is available for the selected range. Try a different range or metric.';
-              nodataError.style.display = 'block';
-            } else {
-              slot.innerHTML = '';
-              serverError.textContent =
-                `⚠️ Could not render graph (${resp.status}).`;
-              serverError.style.display = 'block';
-            }
-          } catch (err) {
-            slot.innerHTML = '';
-            serverError.textContent =
-              '⚠️ Network error while requesting the graph.';
-            serverError.style.display = 'block';
-          }
+          await generateGraph();
         });
       }
 
-      // Use server-injected graph index and update forms
+      // Use database-backed location metadata only
       function populateMetricsForLoc(selectEl, locKey) {
         if (!selectEl) return;
         selectEl.innerHTML = '<option value="" disabled selected>Choose Data Point</option>';
         try {
-          const index = window.graphIndex || {};
-          const info = index[locKey] || null;
-          if (info && info.metrics) {
-            Object.keys(info.metrics).forEach(m => {
+          const locationOptions = window.locationOptions || {};
+          const metrics = locationOptions[locKey] || [];
+          if (Array.isArray(metrics) && metrics.length) {
+            metrics.forEach(m => {
               const opt = document.createElement('option');
               opt.value = m;
               opt.textContent = m;
@@ -587,30 +679,22 @@
             return;
           }
         } catch (e) {}
-
-        ['Gauge Height','Elevation','Discharge','Water Temperature'].forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m;
-          opt.textContent = m;
-          selectEl.appendChild(opt);
-        });
       }
 
-      // Use server-injected graph index and update forms
-      function updateFormsFromIndex() {
+      // Keep form options aligned with database-backed location metadata.
+      function updateFormsFromDatabase() {
         try {
-          const index = window.graphIndex || {};
+          const locationOptions = window.locationOptions || {};
 
           document.querySelectorAll('section form[action="/customgaugegraph/"]').forEach(form => {
             const locInput = form.querySelector('input[name="location"]');
             const select = form.querySelector('select[name="data2see"]');
             if (!locInput || !select) return;
 
-            // Normalize location key used in index (strip trailing ND/SD)
+            // Normalize location key used in database-backed metadata (strip trailing ND/SD)
             const locKey = (locInput.value || '').replace(/\s+(ND|SD)$/i, '').trim();
-            const info = index[locKey];
-            if (!info || !info.metrics) {
-              // show small notice if there are no graphs for this location
+            const metrics = locationOptions[locKey] || [];
+            if (!Array.isArray(metrics) || !metrics.length) {
               let el = form.querySelector('.nodata-indicator');
               if (!el) {
                 el = document.createElement('p');
@@ -618,14 +702,12 @@
                 el.style.cssText = 'margin-top:6px;color:#b91c1c;font-weight:600;';
                 select.insertAdjacentElement('afterend', el);
               }
-              el.textContent = 'No historical graphs available for this location.';
+              el.textContent = 'No data points are available for this location.';
               return;
             }
 
-            const metrics = Object.keys(info.metrics || {});
             const existingValues = Array.from(select.options).map(o => o.value);
 
-            // Add any missing metric options
             metrics.forEach(m => {
               const found = existingValues.find(ev => ev.toLowerCase() === m.toLowerCase());
               if (!found) {
@@ -636,57 +718,14 @@
               }
             });
 
-            // Attach last-updated metadata to options by scanning filenames
-            const metricFiles = info.metrics || {};
-            Object.entries(metricFiles).forEach(([metric, files]) => {
-              let maxDate = null;
-              files.forEach(fn => {
-                // look for patterns like YYYYMMDD_YYYYMMDD_interactive
-                const m = fn.match(/(\d{6,8})_(\d{6,8})_interactive/i);
-                if (m) {
-                  const end = m[2];
-                  if (end.length === 8) {
-                    const dstr = `${end.slice(0,4)}-${end.slice(4,6)}-${end.slice(6,8)}`;
-                    if (!maxDate || dstr > maxDate) maxDate = dstr;
-                  }
-                } else {
-                  // try single date token
-                  const m2 = fn.match(/(\d{8})_interactive/);
-                  if (m2) {
-                    const d = m2[1];
-                    const dstr = `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;
-                    if (!maxDate || dstr > maxDate) maxDate = dstr;
-                  }
-                }
-              });
-
-              const opt = Array.from(select.options)
-                .find(o => o.value.toLowerCase() === metric.toLowerCase());
-              if (opt && maxDate) opt.dataset.lastUpdated = maxDate;
-            });
-
-            // show a small note about last-updated for the selected metric
-            let note = form.querySelector('.graph-last-updated');
-            if (!note) {
-              note = document.createElement('p');
-              note.className = 'graph-last-updated';
-              note.style.cssText = 'margin-top:6px;font-size:0.9rem;color:#374151;';
-              select.insertAdjacentElement('afterend', note);
-            }
-            function updateNote() {
-              const sel = select.value;
-              const opt = Array.from(select.options).find(o => o.value.toLowerCase() === sel.toLowerCase());
-              note.textContent = opt && opt.dataset.lastUpdated ? `Last graph update: ${opt.dataset.lastUpdated}` : '';
-            }
-            select.addEventListener('change', updateNote);
-            updateNote();
+            updateAvailabilityIndicator(form);
           });
         } catch (err) {
-          console.warn('Could not process graph index', err);
+          console.warn('Could not process database-backed location metadata', err);
         }
       }
 
-      updateFormsFromIndex();
+      updateFormsFromDatabase();
 
       document
         .querySelectorAll('section form[action="/customgaugegraph/"]')
@@ -734,6 +773,9 @@
 
         // Attach existing probe+render handlers to custom form (includes Recent Data button)
         try { attachHandlers(customForm); } catch (e) { /* ignore */ }
+        if (dataSel) {
+          dataSel.addEventListener('change', () => updateAvailabilityIndicator(customForm));
+        }
       })();
 
       (function wireTabStrip() {
@@ -757,7 +799,7 @@
 
         function applyChip(chip) {
           if (!chip) return;
-          const loc = chip.dataset.loc || chip.textContent.trim();
+          const loc = chip.dataset.loc || '';
           const endpoint = chip.dataset.endpoint || '/customgaugegraph/';
           const inputName = chip.dataset.inputname || 'location';
 
@@ -784,7 +826,8 @@
             : null;
           if (first) dataSel.value = first.value;
 
-          strip.scrollTo({ left: Math.max(0, chip.offsetLeft - 20), behavior: 'smooth' });
+          updateAvailabilityIndicator(customForm);
+
         }
 
         chips.forEach((chip, idx) => {

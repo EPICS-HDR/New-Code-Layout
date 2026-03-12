@@ -13,7 +13,9 @@ from django.shortcuts import render
 from plotly.offline import plot
 
 from BackEnd import custom_graph
-from BackEnd.SourceFiles.config import DB_PATH, LOCATION_TO_TABLE, SQL_CONVERSION
+from BackEnd.SourceFiles.config import DB_PATH as CONFIG_DB_PATH, LOCATION_TO_TABLE, SQL_CONVERSION
+
+DB_PATH = os.fspath(getattr(settings, 'MEASUREMENTS_DB_PATH', CONFIG_DB_PATH))
 
 
 def _quote_ident(name: str) -> str:
@@ -43,7 +45,10 @@ def _scan_location_table_map(conn):
     """Discover location->table mapping by scanning all DB tables with a location column."""
     location_table_map = {}
     tables = []
+    ignored_tables = {'temp_staging'}
     for table_name in _list_db_tables(conn):
+        if table_name in ignored_tables or table_name.lower().startswith(('temp_', 'staging_')):
+            continue
         try:
             cols = _table_columns(conn, table_name)
         except Exception:
@@ -106,6 +111,34 @@ def _normalize_metric_name(metric_name: str) -> str:
     return metric_name
 
 
+def _canonical_location_name(loc: str) -> str:
+    if not loc:
+        return ''
+    l = (loc or '').strip()
+    # Normalize punctuation/casing and remove common trailing state tags.
+    l = re.sub(r',', '', l)
+    l = re.sub(r"\s+(ND|SD|NORTH\s+DAKOTA|SOUTH\s+DAKOTA)$", '', l, flags=re.IGNORECASE)
+    return ' '.join(l.lower().split())
+
+
+def _resolve_location_name(loc: str, location_table_map):
+    """Resolve user-posted location text to the closest known DB location key."""
+    if not loc:
+        return loc
+    if loc in location_table_map:
+        return loc
+
+    canon = _canonical_location_name(loc)
+    if not canon:
+        return loc
+
+    for known in location_table_map.keys():
+        if _canonical_location_name(known) == canon:
+            return known
+
+    return loc
+
+
 def _to_epoch(date_str):
     if not date_str:
         return None
@@ -116,13 +149,187 @@ def _to_epoch(date_str):
     return int(dt.timestamp())
 
 
+def _parse_db_datetime(value):
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        try:
+            return datetime.fromtimestamp(int(value))
+        except Exception:
+            return None
+    raw = str(value).strip()
+    candidates = [raw]
+
+    # Some rows contain duplicated time segments like
+    # `2025-05-21T00:00:00 00:00:00`; keep the leading timestamp portion.
+    match = re.match(r'^(\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2})', raw)
+    if match:
+        candidates.insert(0, match.group(1))
+
+    if ' ' in raw and 'T' in raw:
+        candidates.insert(0, raw.split()[0])
+
+    # Mesonet can emit `24:00:00` to represent midnight of the next day.
+    rolled = re.match(r'^(\d{4}-\d{2}-\d{2})([T\s])24:00:00$', raw)
+    if rolled:
+        try:
+            next_day = datetime.strptime(rolled.group(1), "%Y-%m-%d") + timedelta(days=1)
+            candidates.insert(0, next_day.strftime(f"%Y-%m-%d{rolled.group(2)}00:00:00"))
+        except Exception:
+            pass
+
+    for candidate in candidates:
+        try:
+            return datetime.fromisoformat(candidate.replace('Z', '+00:00'))
+        except Exception:
+            for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+                try:
+                    return datetime.strptime(candidate, fmt)
+                except Exception:
+                    continue
+    return None
+
+
+def _closest_window_epochs(conn, table_name, col, loc, target_end_epoch):
+    """Find a closest available datetime for location/metric and return a 30-day epoch window."""
+    try:
+        table_cols = _table_columns(conn, table_name)
+        has_location_col = 'location' in table_cols
+        if col not in table_cols:
+            return None, None
+
+        time_fmt = custom_graph.get_time_format(conn, table_name)
+        target_epoch = target_end_epoch or int(datetime.now().timestamp())
+
+        where_parts = [f"{_quote_ident(col)} IS NOT NULL"]
+        params = []
+        if has_location_col:
+            where_parts.append("location = ?")
+            params.append(loc)
+
+        if time_fmt == 'epoch':
+            target_value = target_epoch
+        else:
+            target_value = datetime.fromtimestamp(target_epoch).strftime("%Y-%m-%d %H:%M:%S")
+
+        where_clause = ' AND '.join(where_parts)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            f"SELECT MAX(datetime) FROM {_quote_ident(table_name)} "
+            f"WHERE {where_clause} AND datetime <= ?",
+            params + [target_value],
+        )
+        left = cursor.fetchone()[0]
+
+        cursor.execute(
+            f"SELECT MIN(datetime) FROM {_quote_ident(table_name)} "
+            f"WHERE {where_clause} AND datetime >= ?",
+            params + [target_value],
+        )
+        right = cursor.fetchone()[0]
+
+        left_dt = _parse_db_datetime(left)
+        right_dt = _parse_db_datetime(right)
+        target_dt = datetime.fromtimestamp(target_epoch)
+
+        if left_dt and right_dt:
+            anchor_dt = left_dt if abs((target_dt - left_dt).total_seconds()) <= abs((right_dt - target_dt).total_seconds()) else right_dt
+        else:
+            anchor_dt = left_dt or right_dt
+
+        if not anchor_dt:
+            return None, None
+
+        end_e = int(anchor_dt.timestamp())
+        start_e = end_e - 30 * 24 * 3600
+        return start_e, end_e
+    except Exception:
+        return None, None
+
+
+def _load_direct_series(conn, table_name, col, loc, *, start_epoch=None, end_epoch=None):
+    """Directly load datetime/value rows for a location+metric, bypassing broader table queries."""
+    try:
+        table_cols = _table_columns(conn, table_name)
+        if col not in table_cols:
+            return None
+
+        has_location_col = 'location' in table_cols
+        selected_cols = ['datetime', col] + (['location'] if has_location_col else [])
+        where_parts = [f"{_quote_ident(col)} IS NOT NULL"]
+        params = []
+
+        if has_location_col:
+            where_parts.append('location = ?')
+            params.append(loc)
+
+        time_fmt = custom_graph.get_time_format(conn, table_name)
+        if start_epoch is not None and end_epoch is not None:
+            if time_fmt == 'epoch':
+                where_parts.append('datetime BETWEEN ? AND ?')
+                params.extend([start_epoch, end_epoch])
+            else:
+                start_dt = datetime.fromtimestamp(start_epoch).strftime('%Y-%m-%d %H:%M:%S')
+                end_dt = datetime.fromtimestamp(end_epoch).strftime('%Y-%m-%d %H:%M:%S')
+                where_parts.append('datetime BETWEEN ? AND ?')
+                params.extend([start_dt, end_dt])
+
+        query = (
+            f"SELECT {', '.join(_quote_ident(c) for c in selected_cols)} "
+            f"FROM {_quote_ident(table_name)} WHERE {' AND '.join(where_parts)} ORDER BY datetime ASC"
+        )
+        return custom_graph.pd.read_sql_query(query, conn, params=params)
+    except Exception:
+        return None
+
+
+def _post_graph_window(request):
+    return (
+        _to_epoch(request.POST.get('start-date', '')),
+        _to_epoch(request.POST.get('end-date', '')),
+    )
+
+
+def _render_posted_graph(
+    request,
+    *,
+    location_field='location',
+    fallback_table='gauge',
+    fixed_locations=None,
+    include_diagnostics=False,
+    fallback_to_recent_window=False,
+):
+    locations = fixed_locations if fixed_locations is not None else request.POST.getlist(location_field)
+    metric_name = _normalize_metric_name(request.POST.get('data2see', ''))
+    start_epoch, end_epoch = _post_graph_window(request)
+
+    return _render_graph_response(
+        request,
+        locations,
+        metric_name,
+        fallback_table,
+        start_epoch=start_epoch,
+        end_epoch=end_epoch,
+        fallback_to_recent_window=fallback_to_recent_window,
+        include_diagnostics=include_diagnostics,
+    )
+
+
 def _build_stats_table_html(sites, series_list):
     rows = []
     for idx, (_, values) in enumerate(series_list):
-        vals = [
-            v for v in values
-            if v is not None and not (isinstance(v, float) and math.isnan(v))
-        ]
+        vals = []
+        for v in values:
+            if v is None:
+                continue
+            try:
+                fv = float(v)
+            except (TypeError, ValueError):
+                continue
+            if math.isnan(fv):
+                continue
+            vals.append(fv)
         if not vals:
             rows.append({'site': sites[idx], 'mean': '', 'sd': '', 'median': '', 'min': '', 'max': '', 'range': ''})
             continue
@@ -199,6 +406,7 @@ def _render_graph_response(
     start_epoch=None,
     end_epoch=None,
     fallback_to_recent_window=False,
+    fallback_to_closest_window=True,
     include_diagnostics=False,
 ):
     sites = []
@@ -210,7 +418,8 @@ def _render_graph_response(
         location_table_map, _ = _scan_location_table_map(conn)
         source_tables = []
         for raw_loc in locations:
-            loc = _normalize_posted_location(raw_loc)
+            posted_loc = _normalize_posted_location(raw_loc)
+            loc = _resolve_location_name(posted_loc, location_table_map)
             sites.append(loc)
             table_name = location_table_map.get(loc, LOCATION_TO_TABLE.get(loc, fallback_table))
             source_tables.append(table_name)
@@ -229,17 +438,43 @@ def _render_graph_response(
                 end_e = end_epoch
 
             df = custom_graph.query_data(conn, table_name, start_e, end_e)
+            if (df is None or df.empty) and fallback_to_closest_window:
+                closest_start, closest_end = _closest_window_epochs(conn, table_name, col, loc, end_e)
+                if closest_start is not None and closest_end is not None:
+                    df = custom_graph.query_data(conn, table_name, closest_start, closest_end)
             if df is None or df.empty:
                 series_list.append(([], []))
                 continue
 
             if 'location' in df.columns:
-                df = df[df['location'] == loc]
+                loc_series = df['location'].astype(str)
+                exact = df[loc_series == loc]
+                if not exact.empty:
+                    df = exact
+                else:
+                    loc_canon = _canonical_location_name(loc)
+                    mask = loc_series.map(_canonical_location_name) == loc_canon
+                    df = df[mask]
             if col not in df.columns:
                 series_list.append(([], []))
                 continue
 
             clean = custom_graph._prepare_df_for_plot(df, 'datetime', col)
+            if clean.empty:
+                direct_df = _load_direct_series(conn, table_name, col, loc, start_epoch=start_e, end_epoch=end_e)
+                if (direct_df is None or direct_df.empty) and fallback_to_closest_window:
+                    closest_start, closest_end = _closest_window_epochs(conn, table_name, col, loc, end_e)
+                    if closest_start is not None and closest_end is not None:
+                        direct_df = _load_direct_series(
+                            conn,
+                            table_name,
+                            col,
+                            loc,
+                            start_epoch=closest_start,
+                            end_epoch=closest_end,
+                        )
+                if direct_df is not None and not direct_df.empty:
+                    clean = custom_graph._prepare_df_for_plot(direct_df, 'datetime', col)
             if clean.empty:
                 series_list.append(([], []))
             else:
@@ -283,32 +518,55 @@ def get_latest_date(request):
             return JsonResponse({'error': 'location and metric required'}, status=400)
         
         location = _normalize_posted_location(location)
-        conn = sqlite3.connect(DB_PATH)
-        location_table_map, _ = _scan_location_table_map(conn)
-        table_name = location_table_map.get(location, LOCATION_TO_TABLE.get(location, 'gauge'))
         col = _display_metric_to_sql_column(metric)
-        cursor = conn.cursor()
-        
-        # Query for max datetime where this column is not null
-        query = f"""
-            SELECT MAX(datetime) 
-            FROM {_quote_ident(table_name)} 
-            WHERE location = ? AND {_quote_ident(col)} IS NOT NULL
-        """
-        cursor.execute(query, (location,))
-        result = cursor.fetchone()
-        conn.close()
-        
-        if result and result[0]:
-            max_datetime = result[0]
-            
-            if isinstance(max_datetime, str):
-                latest_date = max_datetime
+
+        with sqlite3.connect(DB_PATH) as conn:
+            location_table_map, _ = _scan_location_table_map(conn)
+            location = _resolve_location_name(location, location_table_map)
+            table_name = location_table_map.get(location, LOCATION_TO_TABLE.get(location, 'gauge'))
+            cursor = conn.cursor()
+
+            table_cols = _table_columns(conn, table_name)
+            has_location_col = 'location' in table_cols
+            has_metric_col = col in table_cols
+
+            if not has_metric_col:
+                # Keep API stable for UI by returning no-data instead of raising SQL errors.
+                return JsonResponse(
+                    {'latest_date': None, 'message': f'Metric column not found: {col}'},
+                    status=404,
+                )
+
+            # Query for max datetime where this column is not null
+            if has_location_col:
+                query = f"""
+                    SELECT MAX(datetime)
+                    FROM {_quote_ident(table_name)}
+                    WHERE location = ? AND {_quote_ident(col)} IS NOT NULL
+                """
+                cursor.execute(query, (location,))
             else:
-                dt = datetime.fromtimestamp(max_datetime)
-                latest_date = dt.strftime('%Y-%m-%d')
-            
-            return JsonResponse({'latest_date': latest_date})
+                query = f"""
+                    SELECT MAX(datetime)
+                    FROM {_quote_ident(table_name)}
+                    WHERE {_quote_ident(col)} IS NOT NULL
+                """
+                cursor.execute(query)
+            result = cursor.fetchone()
+        
+        if result and result[0] is not None:
+            dt = _parse_db_datetime(result[0])
+
+            if dt is None:
+                return JsonResponse({'latest_date': None, 'message': 'Could not parse latest datetime'}, status=404)
+
+            end_date = dt.date()
+            start_date = end_date - timedelta(days=30)
+            return JsonResponse({
+                'latest_date': end_date.isoformat(),
+                'start_date': start_date.isoformat(),
+                'end_date': end_date.isoformat(),
+            })
         
         return JsonResponse({'latest_date': None, 'message': 'No data found'}, status=404)
         
@@ -336,7 +594,15 @@ def maptabs(request):
 
     rev = {v: k for k, v in SQL_CONVERSION.items()}
 
+    default_options = {
+        'gauge': ['Gauge Height', 'Elevation', 'Discharge', 'Water Temperature'],
+        'dam': ['Elevation', 'Flow Spill', 'Flow Powerhouse', 'Flow Out', 'Tailwater Elevation'],
+        'mesonet': ['Average Air Temperature', 'Average Relative Humidity', 'Total Rainfall'],
+    }
+
     location_options = {}
+    location_availability = {}
+    ignored_metric_columns = {'datetime', 'location', 'unique_id', 'id'}
     for loc in locations:
         base = loc
         table_name = location_table_map.get(base, LOCATION_TO_TABLE.get(base, 'gauge'))
@@ -349,82 +615,47 @@ def maptabs(request):
                 cols = []
 
         opts = []
+        availability_for_loc = {}
         for c in cols:
-            if c == 'datetime' or c == 'location':
+            if c in ignored_metric_columns:
                 continue
+            earliest = None
+            latest = None
+            if curr:
+                try:
+                    curr.execute(
+                        f"SELECT MIN(datetime), MAX(datetime) FROM {_quote_ident(table_name)} "
+                        f"WHERE location = ? AND {_quote_ident(c)} IS NOT NULL",
+                        (loc,),
+                    )
+                    min_max = curr.fetchone() or (None, None)
+                    earliest_dt = _parse_db_datetime(min_max[0])
+                    latest_dt = _parse_db_datetime(min_max[1])
+                    if earliest_dt:
+                        earliest = earliest_dt.date().isoformat()
+                    if latest_dt:
+                        latest = latest_dt.date().isoformat()
+                except Exception:
+                    earliest = None
+                    latest = None
             if c in rev:
-                opts.append(rev[c])
+                display_name = rev[c]
             else:
-                opts.append(c.replace('_', ' ').title())
+                display_name = c.replace('_', ' ').title()
+            opts.append(display_name)
+            availability_for_loc[display_name] = {
+                'start': earliest,
+                'end': latest,
+            }
 
         if not opts:
-            if table_name == 'gauge':
-                opts = ['Gauge Height', 'Elevation', 'Discharge', 'Water Temperature']
-            elif table_name == 'dam':
-                opts = ['Elevation', 'Flow Spill', 'Flow Powerhouse', 'Flow Out', 'Tailwater Elevation']
-            elif table_name == 'mesonet':
-                opts = ['Average Air Temperature', 'Average Relative Humidity', 'Total Rainfall']
-            else:
-                opts = ['Value']
+            opts = default_options.get(table_name, ['Value'])
 
         location_options[loc] = opts
+        location_availability[loc] = availability_for_loc
 
     if conn:
         conn.close()
-
-    graphs_dir = os.path.join(settings.BASE_DIR, 'static', 'graphs')
-    graph_index = {}
-    try:
-        files = os.listdir(graphs_dir)
-    except Exception:
-        files = []
-
-    def norm(s):
-        return ''.join((s or '').lower().split())
-
-    for fn in files:
-        if not fn.lower().endswith('.html'):
-            continue
-        stem = fn[:-5]
-        if '__' in stem:
-            parts = stem.split('__')
-            if len(parts) >= 3:
-                location = parts[1].replace('_', ' ').strip()
-                metric = parts[2].replace('_', ' ').strip()
-            else:
-                continue
-        else:
-            atm = re.split(r"\s+at\s+", stem, flags=re.IGNORECASE)
-            if len(atm) >= 2:
-                location = atm[-1].replace('_', ' ').strip()
-                metric = ' at '.join(atm[:-1]).replace('_', ' ').strip()
-            else:
-                continue
-
-        for loc in location_options.keys():
-            if norm(loc) == norm(location) or norm(loc) in norm(location):
-                latest = None
-                m = re.search(r"(\d{6,8})_(\d{6,8})_interactive", fn)
-                if m:
-                    end = m.group(2)
-                    if len(end) == 8:
-                        latest = f"{end[0:4]}-{end[4:6]}-{end[6:8]}"
-                else:
-                    m2 = re.search(r"(\d{8})_interactive", fn)
-                    if m2:
-                        d = m2.group(1)
-                        latest = f"{d[0:4]}-{d[4:6]}-{d[6:8]}"
-
-                entry = graph_index.setdefault(loc, {})
-                metrics = entry.setdefault('metrics', {})
-                lst = metrics.setdefault(metric.title(), [])
-                lst.append(fn)
-                if latest:
-                    cur = entry.setdefault('latest', {})
-                    prev = cur.get(metric.title())
-                    if not prev or latest > prev:
-                        cur[metric.title()] = latest
-                break
 
     table_to_endpoint = {
         'gauge': ('/customgaugegraph/', 'location'),
@@ -435,10 +666,17 @@ def maptabs(request):
         'noaa_weather': ('/customnoaagraph/', 'noaa')
     }
 
+    display_location_options = {}
+    display_location_table_map = {}
     location_entries = []
     for loc, opts in location_options.items():
+        # Skip purely numeric locations (USGS station codes, etc.)
+        if loc and loc.isdigit():
+            continue
         table = location_table_map.get(loc, LOCATION_TO_TABLE.get(loc, 'gauge'))
         endpoint, input_name = table_to_endpoint.get(table, ('/customgaugegraph/', 'location'))
+        display_location_options[loc] = opts
+        display_location_table_map[loc] = table
         location_entries.append({'location': loc, 'metrics': opts, 'endpoint': endpoint, 'input_name': input_name})
 
     today = datetime.utcnow().date()
@@ -447,9 +685,10 @@ def maptabs(request):
 
     return render(request, 'HTML/maptabs.html', {
         'location_entries': location_entries,
-        'location_options_json': json.dumps(location_options),
-        'location_table_map_json': json.dumps(location_table_map),
-        'graph_index_json': json.dumps(graph_index),
+        'location_options_json': json.dumps(display_location_options),
+        'location_table_map_json': json.dumps(display_location_table_map),
+        'location_availability_json': json.dumps(location_availability),
+        'graph_index_json': json.dumps({}),
         'default_start': default_start,
         'default_end': default_end,
     })
@@ -521,79 +760,26 @@ def interactiveMap(request):
     return render(request, 'HTML/interactiveMap.html', {'graph_map_json': json.dumps(graph_map)})
 
 def customgaugegraph(request):
-    return _render_graph_response(
-        request,
-        request.POST.getlist('location'),
-        _normalize_metric_name(request.POST['data2see']),
-        'gauge',
-        start_epoch=_to_epoch(request.POST['start-date']),
-        end_epoch=_to_epoch(request.POST['end-date']),
-        include_diagnostics=True,
-    )
+    return _render_posted_graph(request, fallback_table='gauge', include_diagnostics=True)
 
 def customdamgraph(request):
-    return _render_graph_response(
-        request,
-        request.POST.getlist('dam'),
-        _normalize_metric_name(request.POST['data2see']),
-        'dam',
-        start_epoch=_to_epoch(request.POST['start-date']),
-        end_epoch=_to_epoch(request.POST['end-date']),
-    )
+    return _render_posted_graph(request, location_field='dam', fallback_table='dam')
 
 def custommesonetgraph(request):
-    return _render_graph_response(
-        request,
-        request.POST.getlist('mesonet'),
-        _normalize_metric_name(request.POST['data2see']),
-        'mesonet',
-        start_epoch=_to_epoch(request.POST['start-date']),
-        end_epoch=_to_epoch(request.POST['end-date']),
-    )
+    return _render_posted_graph(request, location_field='mesonet', fallback_table='mesonet')
 
 def customcocograph(request):
-    return _render_graph_response(
-        request,
-        request.POST.getlist('cocorahs'),
-        _normalize_metric_name(request.POST['data2see']),
-        'cocorahs',
-        start_epoch=_to_epoch(request.POST['start-date']),
-        end_epoch=_to_epoch(request.POST['end-date']),
-    )
+    return _render_posted_graph(request, location_field='cocorahs', fallback_table='cocorahs')
 
 def customshadehillgraph(request):
-    return _render_graph_response(
-        request,
-        ['Shadehill'],
-        _normalize_metric_name(request.POST['data2see']),
-        'shadehill',
-        start_epoch=_to_epoch(request.POST['start-date']),
-        end_epoch=_to_epoch(request.POST['end-date']),
-    )
+    return _render_posted_graph(request, fallback_table='shadehill', fixed_locations=['Shadehill'])
 
 def customnoaagraph(request):
-    return _render_graph_response(
-        request,
-        request.POST.getlist('noaa'),
-        _normalize_metric_name(request.POST['data2see']),
-        'noaa_weather',
-        start_epoch=_to_epoch(request.POST['start-date']),
-        end_epoch=_to_epoch(request.POST['end-date']),
-    )
+    return _render_posted_graph(request, location_field='noaa', fallback_table='noaa_weather')
 
 
 def generate_maptab_graph(request):
     """Unified endpoint for maptabs forms: accepts location(s), data2see, start-date, end-date
     and returns the same HTML fragment as other graph endpoints (plot + stats table).
     """
-    locationlist = request.POST.getlist('location')
-    data2see = request.POST.get('data2see', '')
-    return _render_graph_response(
-        request,
-        locationlist,
-        _normalize_metric_name(data2see),
-        'gauge',
-        start_epoch=_to_epoch(request.POST.get('start-date', '')),
-        end_epoch=_to_epoch(request.POST.get('end-date', '')),
-        fallback_to_recent_window=True,
-    )
+    return _render_posted_graph(request, fallback_table='gauge', fallback_to_recent_window=True)
