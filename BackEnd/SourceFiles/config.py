@@ -10,6 +10,25 @@ import os
 # Database path - automatically calculated from project root
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "Measurements.db")
 
+LOCATION_TO_TABLE = {
+    "Big Bend": "dam",
+    "Fort Randall": "dam",
+    "Gavins Point": "dam",
+    "Garrison": "dam",
+    "Fort Peck": "dam",
+    "Bison": "cocorahs",
+    "Faulkton": "cocorahs",
+    "Langdon": "cocorahs",
+    "Shadehill": "shadehill",
+    "Bismarck": "noaa_weather",
+    "Williston/Basin": "noaa_weather",
+    "Minot": "noaa_weather",
+    "Fort Yates": "mesonet",
+    "Linton": "mesonet",
+    "Mott": "mesonet",
+    "Carson": "mesonet",
+}
+
 # SQL field mappings for variable names
 SQL_CONVERSION = {
     "Elevation": "elevation",

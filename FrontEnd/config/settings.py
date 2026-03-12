@@ -15,6 +15,7 @@ from . info import *
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = BASE_DIR.parent
 
 EMAIL_USE_TLS = EMAIL_USE_TLS
 EMAIL_HOST = EMAIL_HOST
@@ -44,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'services']
+    'FrontEnd.services']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -57,7 +58,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = 'FrontEnd.config.urls'
 
 TEMPLATES = [
     {
@@ -77,7 +78,8 @@ TEMPLATES = [
 
 LOGIN_REDIRECT_URL = '/' # urls.py matche empty / to homepage
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = 'FrontEnd.config.wsgi.application'
+ASGI_APPLICATION = 'FrontEnd.config.asgi.application'
 
 
 # Database
@@ -86,7 +88,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': REPO_ROOT / 'db.sqlite3',
     }
 }
 

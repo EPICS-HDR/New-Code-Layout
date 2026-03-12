@@ -15,9 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from services.views import health, interactiveMap, customnoaagraph, customshadehillgraph, customcocograph, customgaugegraph, customdam, customdamgraph, test, custommesonetgraph, maptabs, homepage, forecast, about, generate_maptab_graph, get_latest_date
+from FrontEnd.services.views import health, interactiveMap, customnoaagraph, customshadehillgraph, customcocograph, customgaugegraph, customdam, customdamgraph, test, custommesonetgraph, maptabs, homepage, forecast, about, generate_maptab_graph, get_latest_date
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from services.views import favorites, contactus
+from FrontEnd.services.views import favorites, contactus
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('customgaugegraph/', customgaugegraph),
