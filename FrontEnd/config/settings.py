@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'FrontEnd.services']
+    'FrontEnd.services',
+    'FrontEnd.admin_dashboard']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -77,6 +78,7 @@ TEMPLATES = [
 ]
 
 LOGIN_REDIRECT_URL = '/' # urls.py matche empty / to homepage
+LOGIN_URL = '/admin/login/'
 
 WSGI_APPLICATION = 'FrontEnd.config.wsgi.application'
 ASGI_APPLICATION = 'FrontEnd.config.asgi.application'
