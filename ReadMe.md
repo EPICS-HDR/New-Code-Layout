@@ -26,7 +26,6 @@ _push() – moves the processed data from temp_staging into the final database t
 
 This pattern ensures all data sources end up in a consistent format, making the website easier to maintain.
 
-![Flowchart1](Flowchart1.png)
 
 ___________________________________
 ___________________________________
@@ -133,8 +132,6 @@ It pushes the processed data into the database using the names and table info fr
 Key idea: config.py is like a roadmap — the source scripts follow it to know where to go, what to collect, and how to store it.
 
 
-![Flowchart2](Flowchart2.png)
-
 
 ________________________________
 ________________________________
@@ -189,8 +186,6 @@ If anything goes wrong with a source, the script catches the error and continues
 
 Bottom line: If you want the website to show the latest environmental data, this is the script you run. It’s the central point for updating the entire system.
 
-
-![Flowchart3](Flowchart3.png)
 
 
 _______________________
@@ -256,6 +251,3 @@ This approach keeps the main database safe — if something goes wrong while pro
 
 Key point: Think of mydatabase.db as a holding area or scratchpad for new data before it’s officially saved in Measurements.db.
 You usually don’t need to access it directly unless you’re troubleshooting a pull or processing issue.
-
-
-![Flowchart4](Flowchart4.png)
