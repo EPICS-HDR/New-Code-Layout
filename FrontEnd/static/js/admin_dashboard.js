@@ -127,9 +127,17 @@
     }
   }
 
-  // Initial fetch + polling
+  // Initial fetch (no auto-polling — use "Update Log" button to refresh)
   fetchLogs();
-  setInterval(fetchLogs, 3000);
+
+  // Manual "Update Log" button
+  const updateLogBtn = $('#btn-update-log');
+  if (updateLogBtn) {
+    updateLogBtn.addEventListener('click', () => {
+      consoleCleared = false;
+      fetchLogs();
+    });
+  }
 
   // Run script (admin only — button is hidden for data moderators)
   const runScriptBtn = $('#btn-run-script');

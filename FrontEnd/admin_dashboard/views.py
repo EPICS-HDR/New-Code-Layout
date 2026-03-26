@@ -3,6 +3,7 @@ import os
 import sqlite3
 import subprocess
 import threading
+from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
@@ -18,6 +19,19 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 MEASUREMENTS_DB = os.path.join(REPO_ROOT, 'Measurements.db')
 LOG_FILE = os.path.join(REPO_ROOT, 'BackEnd', 'log.txt')
 UPDATES_SCRIPT = os.path.join(REPO_ROOT, 'updates.py')
+
+
+def _write_log(message: str) -> None:
+    """Append a timestamped log entry to LOG_FILE."""
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    line = f'[{timestamp}] {message}\n'
+    try:
+        os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+        with open(LOG_FILE, 'a', encoding='utf-8') as f:
+            f.write(line)
+    except Exception:
+        pass  # don't let logging failures break the app
+
 
 # ── in-memory script output buffer ────────────────────────────────────
 _script_output_lock = threading.Lock()
@@ -138,6 +152,7 @@ def api_run_script(request):
     def _run():
         global _script_running
         _script_running = True
+        _write_log(f'SCRIPT RUN by {request.user.username}: updates.py started')
         with _script_output_lock:
             _script_output_lines.clear()
             _script_output_lines.append('─── Starting updates.py ───')
@@ -250,10 +265,15 @@ def api_insert(request):
         conn.commit()
         conn.close()
 
+        username = request.user.username if request.user.is_authenticated else 'unknown'
+        _write_log(f'DATA INSERT by {username}: table="{table_name}", data={filtered}')
+
         return JsonResponse({'status': 'ok', 'inserted': filtered})
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
+        username = request.user.username if request.user.is_authenticated else 'unknown'
+        _write_log(f'DATA INSERT ERROR by {username}: table="{table_name}", error={e}')
         return JsonResponse({'error': str(e)}, status=500)
 
 
