@@ -4,12 +4,10 @@ Date: 1/29/2026
 Purpose: This is the master config for all source files. Everything hardcoded must be present in this file. The host must modify this file to add new
          stations or change how data pulling works.
 ''' 
-import os
 
 # -------------------------------------- General --------------------------------------
-# Database path - automatically calculated from project root
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "Measurements.db")
 
+<<<<<<< HEAD
 LOCATION_TO_TABLE = {
     "Big Bend": "dam",
     "Fort Randall": "dam",
@@ -92,6 +90,8 @@ SQL_CONVERSION = {
     "Diss Ammonia TKN Check": "diss_ammonia_tkn_check",
     "Dissolved Phosphorus as P": "dissolved_phosphorus",
 }
+=======
+>>>>>>> 3d612f71973f7c18bfbf05a6e5867b2a94f7e90d
 
 # --------------------------------------  DANR   --------------------------------------
 DANRConfig = {
@@ -101,84 +101,19 @@ DANRConfig = {
 }
 
 # --------------------------------------  COCORAHS  --------------------------------------
-# Format: "Location Name": ["station_id", "start_date", "display_name"]
-# To add a station: Add a new entry like: "City, State": ["STCODE0001", "20200101", "City"]
-COCORAHS_STATIONS = {
-    "Bison, SD": ["SDFK0006", "20070624", "Bison"],
-    "Faulkton, SD": ["SDFK0009", "20230401", "Faulkton"],
-    "Bismarck, ND": ["NDBH0034", "20120416", "Bismarck"],
-    "Langdon, ND": ["NDCV0004", "20200311", "Langdon"],
+COCORAHSConfig = {
+    'baseURL' : "http://data.rcc-acis.org/StnData?params=",
+    'stationList' : {
+        "Bison, SD": ["SDFK0006", "20070624"],
+        "Faulkton, SD": ["SDFK0009", "20230401"],
+        "Bismarck, ND": ["NDBH0034", "20120416"],
+        "Langdon, ND": ["NDCV0004", "20200311"],
+    },
+    'Elements' : ['maxt', 'mint', 'avgt', 'obst', 'pcpn', 'snow', 'snwd']
 }
-
-# --------------------------------------Shadehill--------------------------------------
-# Format: "code": "Dataset Name"
-# To add a dataset: Add a new entry like: "XX": "Dataset Description"
-SHADEHILL_DATASETS = {
-    "AF": "Reservoir Storage Content",
-    "FB": "Reservoir Forebay Elevation",
-    "IN": "Daily Mean Computed Inflow",
-    "MM": "Daily Mean Air Temperature",
-    "MN": "Daily Minimum Air Temperature",
-    "MX": "Daily Maximum Air Temperature",
-    "PP": "Total Precipitation (inches per day)",
-    "PU": "Total Water Year Precipitation",
-    "QD": "Daily Mean Total Discharge",
-    "QRD": "Daily Mean River Discharge",
-    "QSD": "Daily Mean Spillway Discharge",
-    "RAD": "Daily Mean Gate One Opening",
-}
-
-# --------------------------------------  NDGIS  --------------------------------------
-# NDGIS automatically discovers stations from ArcGIS. To limit the number of stations processed,
-# modify the limit parameter in New_NDGIS.py's _station_ids() function (default: 10)
-
-# --------------------------------------  NOAA   --------------------------------------
-# Format: ("Location Name", "GHCND:station_id")
-# To add a station: Add a new entry like: ("City, State", "GHCND:USW00012345")
-# Get station IDs from: https://www.ncei.noaa.gov/cdo-web/
-NOAA_STATIONS = [
-    ("Bismarck", "GHCND:USW00024011"),
-    ("Williston/Basin", "GHCND:USW00024018"),
-    ("Minot", "GHCND:USW00024021"),
-]
-
 # --------------------------------------  USACE  --------------------------------------
 USACEConfig = {
     'baseURL' : "https://www.nwd-mr.usace.army.mil/rcc/programs/data/",
     'stationList' : ["GARR"],
     'ColumnNames' : ['DateTime', 'Temp_Air', 'Flow_Out', 'Elev_Tailwater', 'Energy', 'Temp_Water', 'Elev', 'Flow_Spill', 'Flow_Powerhouse']
-}
-# --------------------------------------  USGS   --------------------------------------
-# Format: 'Location': ['site_code', category]
-# Categories: 1=Elevation+Discharge+GaugeHeight, 2=Elevation+GaugeHeight, 3=All+WaterTemp, 4=Discharge+GaugeHeight
-# To add a gauge: Add a new entry like: 'Location': ['06340000', 1]
-# Get site codes from: https://waterdata.usgs.gov/nwis
-USGS_LOCATIONS = {
-    'Hazen': ['06340500', 1],
-    'Stanton': ['06340700', 2],
-    'Washburn': ['06341000', 2],
-    'Price': ['06342020', 2],
-    'Bismarck': ['06342500', 3],
-    'Schmidt': ['06349700', 2],
-    'Judson': ['06348300', 1],
-    'Mandan': ['06349000', 1],
-    'Breien': ['06354000', 1],
-    'Wakpala': ['06354881', 4],
-    'Little Eagle': ['06357800', 4],
-    'Cash': ['06356500', 4],
-    'Whitehorse': ['06360500', 4],
-}
-
-# --------------------------------------  USACE  --------------------------------------
-# (Not yet implemented in new framework)
-
-# --------------------------------------  NDMES  --------------------------------------
-# Format: "Location": ["station_id", "display_name"]
-# To add a station: Add a new entry like: "City": ["123", "City, ND"]
-# Station IDs from: https://ndawn.ndsu.nodak.edu/
-NDMES_STATIONS = {
-    "Fort Yates": ["89", "Fort Yates, ND"],
-    "Linton": ["35", "Linton, ND"],
-    "Mott": ["69", "Mott, ND"],
-    "Carson": ["96", "Carson, ND"],
 }
