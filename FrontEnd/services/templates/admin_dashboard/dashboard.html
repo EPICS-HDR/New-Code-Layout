@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Standing Rock</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}">
+</head>
+<body class="dashboard-body">
+
+  <!-- ═══ Top Bar ═══ -->
+  <header class="dash-topbar">
+    <div class="topbar-left">
+      <svg class="topbar-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#g1)" stroke-width="1.5">
+        <defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#6366f1"/>
+          <stop offset="100%" stop-color="#8b5cf6"/>
+        </linearGradient></defs>
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      <span class="topbar-title">Admin Dashboard</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-user">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        {{ current_user.username }}
+        <span class="topbar-role-badge">{{ user_role }}</span>
+      </span>
+      <a href="{% url 'admin_dashboard:logout' %}" class="topbar-logout" title="Sign out">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- ═══ Tab Navigation ═══ -->
+  <nav class="dash-tabs">
+    <button class="tab-btn active" data-tab="console" id="tab-btn-console">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+      </svg>
+      Console Log
+    </button>
+    <button class="tab-btn" data-tab="data" id="tab-btn-data">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+      </svg>
+      Data Entry
+    </button>
+    <button class="tab-btn" data-tab="users" id="tab-btn-users">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      User Control
+    </button>
+  </nav>
+
+  <!-- ═══ Tab Content ═══ -->
+  <main class="dash-content" data-role="{{ user_role }}">
+
+    <!-- ───── Console Log Tab ───── -->
+    <section class="tab-panel active" id="panel-console">
+      <div class="panel-header">
+        <h2 class="panel-title">Console Output</h2>
+        <div class="panel-actions">
+          <button class="btn btn-accent" id="btn-run-script">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Run Updates
+          </button>
+          <button class="btn btn-ghost" id="btn-update-log">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            Update Log
+          </button>
+          <button class="btn btn-ghost" id="btn-clear-console">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Clear
+          </button>
+        </div>
+      </div>
+      <div class="console-box" id="console-output">
+        <div class="console-placeholder">Loading logs…</div>
+      </div>
+      <div class="console-status" id="console-status">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Idle</span>
+      </div>
+    </section>
+
+    <!-- ───── Data Entry Tab ───── -->
+    <section class="tab-panel" id="panel-data">
+      <div class="panel-header">
+        <h2 class="panel-title">Insert Data into Measurements.db</h2>
+      </div>
+      <div class="data-form-wrapper">
+        <div class="form-group">
+          <label for="table-select">Select Table</label>
+          <select id="table-select" class="form-select">
+            <option value="">— Choose a table —</option>
+          </select>
+        </div>
+        <div id="dynamic-fields" class="dynamic-fields"></div>
+        <div id="insert-feedback" class="insert-feedback"></div>
+        <button class="btn btn-accent btn-lg" id="btn-insert" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Insert Row
+        </button>
+      </div>
+    </section>
+
+    <!-- ───── User Control Tab ───── -->
+    <section class="tab-panel" id="panel-users">
+      <div class="panel-header">
+        <h2 class="panel-title">User Management</h2>
+        <div class="panel-actions">
+          <button class="btn btn-accent" id="btn-add-user">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add User
+          </button>
+        </div>
+      </div>
+      <div class="users-table-wrap">
+        <table class="users-table" id="users-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Active</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Add/Edit User Modal -->
+      <div class="modal-overlay" id="user-modal" style="display:none">
+        <div class="modal-card">
+          <h3 class="modal-title" id="modal-title">Add User</h3>
+          <form id="user-form" autocomplete="off">
+            <input type="hidden" id="modal-user-id">
+            <div class="form-group">
+              <label for="modal-username">Username</label>
+              <input type="text" id="modal-username" required>
+            </div>
+            <div class="form-group">
+              <label for="modal-email">Email <span class="field-optional">(optional)</span></label>
+              <input type="email" id="modal-email" placeholder="optional">
+            </div>
+            <div class="form-group">
+              <label for="modal-password">Password</label>
+              <input type="password" id="modal-password" placeholder="Leave blank to keep current">
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:1">
+                <label for="modal-role">Role</label>
+                <select id="modal-role" class="form-select">
+                  <option value="admin">Admin</option>
+                  <option value="data_moderator" selected>Data Moderator</option>
+                </select>
+              </div>
+              <label class="toggle-label">
+                <input type="checkbox" id="modal-is-active" checked> Active
+              </label>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-ghost" id="btn-cancel-modal">Cancel</button>
+              <button type="submit" class="btn btn-accent">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="{% static 'js/admin_dashboard.js' %}?v=2"></script>
+</body>
+</html>
