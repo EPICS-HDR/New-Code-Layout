@@ -90,7 +90,16 @@ COCORAHS_STATIONS = {
     "Bismarck, ND": ["NDBH0034", "20120416", "Bismarck"],
     "Langdon, ND": ["NDCV0004", "20200311", "Langdon"],
 }
-
+COCORAHSConfig = {
+    'baseURL' : "http://data.rcc-acis.org/StnData?params=",
+    'stationList' : {
+        "Bison, SD": ["SDFK0006", "20070624"],
+        "Faulkton, SD": ["SDFK0009", "20230401"],
+        "Bismarck, ND": ["NDBH0034", "20120416"],
+        "Langdon, ND": ["NDCV0004", "20200311"],
+    },
+    'Elements' : ['maxt', 'mint', 'avgt', 'obst', 'pcpn', 'snow', 'snwd']
+}
 # --------------------------------------Shadehill--------------------------------------
 # Format: "code": "Dataset Name"
 # To add a dataset: Add a new entry like: "XX": "Dataset Description"
