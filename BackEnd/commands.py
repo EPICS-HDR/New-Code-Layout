@@ -11,14 +11,12 @@ def listAllSources():
     os.chdir('./BackEnd/SourceFiles')
     sources = []
     for file in Path('./').glob('_*.py'):
-        source += file.name.replace('.py','')
+        sources += file.name.replace('.py','') 
+        #bro syntax error smh source += file
     return sources
 
 def listStations(source):
     pass
-
-
-
 
 if (__name__ == "__main__"):
     listAllSources()

@@ -1,3 +1,8 @@
+/*
+Author: Fenix Do
+Date: 03/28/2026
+Purpose: Purdue HDR FrontEnd UI component/script/file.
+*/
 // Rewritten version of gauge_modals.js to implement looping structure with tabbed UI
 // This file deals with generating the pins on the interactive map and generating graphs after they are clicked
 

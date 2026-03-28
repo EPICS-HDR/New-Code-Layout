@@ -1,3 +1,8 @@
+/*
+Author: Fenix Do
+Date: 03/28/2026
+Purpose: Purdue HDR FrontEnd UI component/script/file.
+*/
 // services/static/js/updateGraphs.js
 
 /**

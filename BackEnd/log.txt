@@ -1,3 +1,16 @@
 [2026-03-26 13:58:07] DATA INSERT by admin: table="DANR", data={'id': 6767, 'station_ID': 'skibidi'}
 [2026-03-26 13:58:32] SCRIPT RUN by admin: updates.py started
 [2026-03-26 13:58:36] SCRIPT RUN by admin: updates.py started
+[2026-03-28 09:57:00] SCRIPT RUN by admin: List All Sources started
+[2026-03-28 09:58:49] SCRIPT RUN by admin: List All Sources started
+[2026-03-28 09:59:12] SCRIPT RUN by admin: List Stations started
+[2026-03-28 09:59:56] SCRIPT RUN by admin: List Stations started
+[2026-03-28 10:01:54] SCRIPT RUN by admin: Sync All Sources started
+[2026-03-28 10:02:01] SCRIPT RUN by admin: List All Sources started
+[2026-03-28 10:03:01] SCRIPT RUN by admin: List Stations started
+[2026-03-28 10:06:04] SCRIPT RUN by admin: List All Sources started
+[2026-03-28 10:06:20] SCRIPT RUN by admin: List Stations started
+[2026-03-28 10:10:37] SCRIPT RUN by admin: List Stations started
+[2026-03-28 10:10:40] SCRIPT RUN by admin: List All Sources started
+[2026-03-28 10:11:12] SCRIPT RUN by admin: List All Sources started
+[2026-03-28 10:12:54] SCRIPT RUN by admin: List All Sources started

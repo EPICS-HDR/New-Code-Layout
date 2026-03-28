@@ -1,7 +1,13 @@
+'''
+Author: Fenix Do
+Date: 03/28/2026
+Purpose: Coordinates backend Django processing, returning proper HTML templates or JSON endpoints.
+'''
 import json
 import os
 import sqlite3
 import subprocess
+import sys
 import threading
 from datetime import datetime
 
@@ -18,7 +24,7 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MEASUREMENTS_DB = os.path.join(REPO_ROOT, 'Measurements.db')
 LOG_FILE = os.path.join(REPO_ROOT, 'BackEnd', 'log.txt')
-UPDATES_SCRIPT = os.path.join(REPO_ROOT, 'updates.py')
+COMMANDS_SCRIPT = os.path.join(REPO_ROOT, 'BackEnd', 'commands.py')
 
 
 def _write_log(message: str) -> None:
@@ -37,7 +43,7 @@ def _write_log(message: str) -> None:
 _script_output_lock = threading.Lock()
 _script_output_lines: list[str] = []
 _script_running = False
-
+_last_exit_code = None
 
 DATA_MODERATOR_GROUP = 'Data Moderator'
 
@@ -112,6 +118,41 @@ def admin_dashboard(request):
 #  Console Log APIs
 # ══════════════════════════════════════════════════════════════════════
 
+def _get_command_catalog():
+    """Best-effort command metadata from BackEnd.commands."""
+    try:
+        from BackEnd.commands import get_command_catalog
+        commands = get_command_catalog()
+    except Exception:
+        commands = []
+
+    if not commands:
+        commands = [
+            {
+                'id': 'listAllSources',
+                'label': 'List All Sources',
+                'description': 'List all source files in the BackEnd/SourceFiles folder.',
+            },
+            {
+                'id': 'listStations',
+                'label': 'List Stations',
+                'description': 'List all stations for a specified source.',
+            }
+        ]
+
+    return commands
+
+
+@_dashboard_required
+@require_GET
+def api_commands(request):
+    """Return available backend commands for dashboard UI."""
+    commands = _get_command_catalog()
+    return JsonResponse({
+        'commands': commands,
+        'default': commands[0]['id'] if commands else 'listAllSources',
+    })
+
 @_dashboard_required
 @require_GET
 def api_logs(request):
@@ -136,6 +177,7 @@ def api_logs(request):
     return JsonResponse({
         'lines': combined[-max_lines:],
         'running': _script_running,
+        'exit_code': _last_exit_code,
     })
 
 
@@ -143,23 +185,39 @@ def api_logs(request):
 @_admin_only
 @require_POST
 def api_run_script(request):
-    """Run updates.py in background and capture output."""
-    global _script_running
+    """Run selected backend command in background and capture output."""
+    global _script_running, _last_exit_code
 
     if _script_running:
         return JsonResponse({'status': 'already_running'})
 
+    try:
+        body = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except Exception:
+        body = {}
+
+    commands = _get_command_catalog()
+    command_ids = {c.get('id') for c in commands}
+    command_id = body.get('command') or (commands[0]['id'] if commands else 'listAllSources')
+    if command_id not in command_ids:
+        return JsonResponse({'error': f'Unknown command: {command_id}'}, status=400)
+
+    selected = next((c for c in commands if c.get('id') == command_id), {'label': command_id})
+    selected_label = selected.get('label', command_id)
+
     def _run():
-        global _script_running
+        global _script_running, _last_exit_code
         _script_running = True
-        _write_log(f'SCRIPT RUN by {request.user.username}: updates.py started')
+        _last_exit_code = None
+        _write_log(f'SCRIPT RUN by {request.user.username}: {selected_label} started')
         with _script_output_lock:
             _script_output_lines.clear()
-            _script_output_lines.append('─── Starting updates.py ───')
+            _script_output_lines.append(f'─── Starting {selected_label} ({command_id}) ───')
 
         try:
+            py_code = f"import sys; sys.path.insert(0, r'{REPO_ROOT}'); import BackEnd.commands as cmds; res = getattr(cmds, '{command_id}')(); print('Returned:', res) if res is not None else None"
             proc = subprocess.Popen(
-                ['python', UPDATES_SCRIPT],
+                [sys.executable, '-c', py_code],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
@@ -169,18 +227,20 @@ def api_run_script(request):
                 with _script_output_lock:
                     _script_output_lines.append(line.rstrip('\n\r'))
             proc.wait()
+            _last_exit_code = proc.returncode
             with _script_output_lock:
                 _script_output_lines.append(
-                    f'─── updates.py finished (exit code {proc.returncode}) ───'
+                    f'─── {selected_label} finished (exit code {proc.returncode}) ───'
                 )
         except Exception as exc:
             with _script_output_lock:
                 _script_output_lines.append(f'[ERROR] {exc}')
+            _last_exit_code = 1
         finally:
             _script_running = False
 
     threading.Thread(target=_run, daemon=True).start()
-    return JsonResponse({'status': 'started'})
+    return JsonResponse({'status': 'started', 'command': command_id, 'label': selected_label})
 
 
 # ══════════════════════════════════════════════════════════════════════

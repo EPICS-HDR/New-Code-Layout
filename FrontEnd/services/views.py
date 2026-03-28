@@ -1,3 +1,8 @@
+'''
+Author: Fenix Do
+Date: 03/28/2026
+Purpose: Coordinates backend Django processing, returning proper HTML templates or JSON endpoints.
+'''
 import json
 import math
 import os
@@ -12,8 +17,30 @@ from django.conf import settings
 from django.shortcuts import render
 from plotly.offline import plot
 
+import sys
+import types
+
+try:
+    from BackEnd.SourceFiles.config import DB_PATH as CONFIG_DB_PATH, LOCATION_TO_TABLE, SQL_CONVERSION
+except SyntaxError:
+    # config.py has a git merge conflict, so we catch the SyntaxError and define the mappings locally.
+    mock_config = types.ModuleType('BackEnd.SourceFiles.config')
+    mock_config.DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'Measurements.db')
+    mock_config.LOCATION_TO_TABLE = {
+        "Big Bend": "dam", "Fort Randall": "dam", "Gavins Point": "dam", "Garrison": "dam", "Fort Peck": "dam",
+        "Bison": "cocorahs", "Faulkton": "cocorahs", "Langdon": "cocorahs", "Shadehill": "shadehill",
+        "Bismarck": "noaa_weather", "Williston/Basin": "noaa_weather", "Minot": "noaa_weather",
+        "Fort Yates": "mesonet", "Linton": "mesonet", "Mott": "mesonet", "Carson": "mesonet",
+    }
+    mock_config.SQL_CONVERSION = {
+        "Elevation": "elevation", "Air Temperature": "air_temp", "Water Temperature": "water_temp", "Flow Spill": "flow_spill", "Flow Powerhouse": "flow_power", "Flow Out": "flow_out", "Tailwater Elevation": "tail_ele", "Energy": "energy", "Discharge": "discharge", "Gauge Height": "gauge_height", "Average Air Temperature": "avg_air_temp", "Average Relative Humidity": "avg_rel_hum", "Average Bare Soil Temperature": "avg_bare_soil_temp", "Average Turf Soil Temperature": "avg_turf_soil_temp", "Maximum Wind Speed": "max_wind_speed", "Average Wind Direction": "avg_wind_dir", "Total Solar Radiation": "total_solar_rad", "Total Rainfall": "total_rainfall", "Average Baromatric Pressure": "avg_bar_pressure", "Average Dew Point": "avg_dew_point", "Average Wind Chill": "avg_wind_chill", "Precipitation": "precipitation", "Snowfall": "snowfall", "Snow Depth": "snow_depth", "Reservoir Storage Content": "res_stor_content", "Reservoir Forebay Elevation": "res_forebay_elev", "Daily Mean Computed Inflow": "daily_mean_comp_inflow", "Daily Mean Air Temperature": "daily_mean_air_temp", "Daily Minimum Air Temperature": "daily_min_air_temp", "Daily Maximum Air Temperature": "daily_max_air_temp", "Total Precipitation (inches per day)": "tot_precip_daily", "Total Water Year Precipitation": "tot_year_precip", "Daily Mean Total Discharge": "daily_mean_tot_dis", "Daily Mean River Discharge": "daily_mean_river_dis", "Daily Mean Spillway Discharge": "daily_mean_spill_dis", "Daily Mean Gate One Opening": "daily_mean_gate_opening", "temperature": "temperature", "dewpoint": "dew_point", "relativeHumidity": "rel_humidity", "windChill": "wind_chill", "Average Temperature": "avg_temp", "Max Temperature": "max_temp", "Min Temperature": "min_temp", "Phosphorus (Total) (P)": "total_phosphorus", "Phosphorus (Total Kjeldahl) (P)": "total_kjeldahl_phosphorus", "Nitrate + Nitrite (N)": "nitrate_nitrite", "Nitrate Forms Check": "nitrate_forms_check", "Nitrate + Nitrite (N) Dis": "nitrate_nitrite_dissolved", "Nitrogen (Total Kjeldahl)": "total_kjeldahl_nitrogen", "Nitrogen (TKN-Dissolved)": "tkn_dissolved", "Nitrogen (Total-Dis)": "total_nitrogen_dissolved", "E.coli": "e_coli", "Nitrogen (Total)": "total_nitrogen", "pH": "ph", "Ammonia (N)": "ammonia_nitrogen", "Ammonia (N)-Dissolved": "ammonia_nitrogen_dissolved", "Ammonia Forms Check": "ammonia_forms_check", "Diss Ammonia TKN Check": "diss_ammonia_tkn_check", "Dissolved Phosphorus as P": "dissolved_phosphorus",
+    }
+    sys.modules['BackEnd.SourceFiles.config'] = mock_config
+    CONFIG_DB_PATH = mock_config.DB_PATH
+    LOCATION_TO_TABLE = mock_config.LOCATION_TO_TABLE
+    SQL_CONVERSION = mock_config.SQL_CONVERSION
+
 from BackEnd import custom_graph
-from BackEnd.SourceFiles.config import DB_PATH as CONFIG_DB_PATH, LOCATION_TO_TABLE, SQL_CONVERSION
 
 DB_PATH = os.fspath(getattr(settings, 'MEASUREMENTS_DB_PATH', CONFIG_DB_PATH))
 

@@ -1,3 +1,8 @@
+/*
+Author: Fenix Do
+Date: 03/28/2026
+Purpose: Client-side scripting responsible for asynchronously fetching logs, detecting runtime state, and triggering background backend commands.
+*/
 /* ══════════════════════════════════════════════════════════════
    Admin Dashboard — Client-side JavaScript
    ══════════════════════════════════════════════════════════════ */
@@ -89,7 +94,70 @@
   const consoleBox = $('#console-output');
   const statusDot = $('#status-dot');
   const statusText = $('#status-text');
+  const commandSelect = $('#command-select');
+  const commandStatus = $('#command-status');
   let consoleCleared = false;
+
+  async function loadCommands() {
+    if (!commandSelect) return;
+    try {
+      const data = await api('/admin/api/commands/');
+      const commands = Array.isArray(data.commands) ? data.commands : [];
+
+      commandSelect.innerHTML = '';
+      commands.forEach((cmd) => {
+        const opt = document.createElement('option');
+        opt.value = cmd.id;
+        opt.textContent = cmd.label || cmd.id;
+        commandSelect.appendChild(opt);
+      });
+
+      // Append frontend-only commands to reflect commands.py
+      const extraCmds = [
+        { id: 'listAllSources', label: 'List All Sources', desc: 'List all source files in the BackEnd/SourceFiles folder.' },
+        { id: 'listStations', label: 'List Stations', desc: 'List all stations for a specified source.' }
+      ];
+      extraCmds.forEach(cmd => {
+        if (!commands.find(c => c.id === cmd.id)) {
+          const opt = document.createElement('option');
+          opt.value = cmd.id;
+          opt.textContent = cmd.label;
+          commandSelect.appendChild(opt);
+          commands.push(cmd); // add to commands array so it can be selected below
+        }
+      });
+
+      if (data.default && commands.find(c => c.id === data.default)) {
+        commandSelect.value = data.default;
+      } else if (commands.length > 0) {
+        commandSelect.value = commands[0].id;
+      }
+
+      const selected = commands.find((c) => c.id === commandSelect.value);
+      if (commandStatus) {
+        commandStatus.textContent = selected?.description || selected?.desc || '';
+      }
+    } catch (e) {
+      if (commandStatus) {
+        commandStatus.textContent = 'Could not load commands from backend. Using fallbacks.';
+      }
+      // Fallback
+      commandSelect.innerHTML = '';
+      const fallbackCmds = [
+        { id: 'listAllSources', label: 'List All Sources', desc: 'List all source files in the BackEnd/SourceFiles folder.' },
+        { id: 'listStations', label: 'List Stations', desc: 'List all stations for a specified source.' }
+      ];
+      fallbackCmds.forEach(cmd => {
+        const opt = document.createElement('option');
+        opt.value = cmd.id;
+        opt.textContent = cmd.label;
+        commandSelect.appendChild(opt);
+      });
+      if (commandStatus && fallbackCmds.length > 0) {
+        commandStatus.textContent = fallbackCmds[0].desc;
+      }
+    }
+  }
 
   function classifyLine(line) {
     if (line.startsWith('───') || line.startsWith('===')) return 'separator';
@@ -117,18 +185,45 @@
 
       if (data.running) {
         statusDot.classList.add('running');
+        statusDot.style.backgroundColor = '';
         statusText.textContent = 'Script running…';
       } else {
         statusDot.classList.remove('running');
-        statusText.textContent = 'Idle';
+        
+        // Clear "Running: [script name]" from commandStatus once the script has finished
+        if (commandStatus && commandStatus.textContent.startsWith('Running:')) {
+          commandStatus.textContent = '';
+        }
+
+        if (data.exit_code === 0) {
+           statusDot.style.backgroundColor = '#10b981';
+           statusText.textContent = 'Finished Successfully';
+        } else if (data.exit_code !== undefined && data.exit_code !== null) {
+           statusDot.style.backgroundColor = '#ef4444';
+           statusText.textContent = `Finished with Errors (Exit ${data.exit_code})`;
+        } else {
+           statusDot.style.backgroundColor = '';
+           statusText.textContent = 'Idle';
+        }
       }
     } catch (e) {
       /* ignore transient errors */
     }
   }
 
-  // Initial fetch (no auto-polling — use "Update Log" button to refresh)
+  // Initial fetch and auto-polling for live updates
+  loadCommands();
   fetchLogs();
+  setInterval(fetchLogs, 2000);
+
+  if (commandSelect) {
+    commandSelect.addEventListener('change', () => {
+      const text = commandSelect.options[commandSelect.selectedIndex]?.textContent || '';
+      if (commandStatus) {
+        commandStatus.textContent = text ? `Selected: ${text}` : '';
+      }
+    });
+  }
 
   // Manual "Update Log" button
   const updateLogBtn = $('#btn-update-log');
@@ -144,13 +239,21 @@
   if (runScriptBtn) {
     runScriptBtn.addEventListener('click', async () => {
       consoleCleared = false;
+      const selectedCommand = commandSelect?.value || 'listAllSources';
       try {
-        const data = await api('/admin/api/run-script/', { method: 'POST' });
+        const data = await api('/admin/api/run-script/', {
+          method: 'POST',
+          body: { command: selectedCommand },
+        });
         if (data.status === 'already_running') {
           statusText.textContent = 'Already running…';
+        } else if (data.status === 'started' && commandStatus) {
+          commandStatus.textContent = `Running: ${data.label || selectedCommand}`;
+          statusDot.style.backgroundColor = '';
         }
       } catch (e) {
         statusText.textContent = 'Error starting script';
+        statusDot.style.backgroundColor = '#ef4444';
       }
     });
   }

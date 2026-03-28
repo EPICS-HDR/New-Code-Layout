@@ -1,3 +1,8 @@
+<!--
+Author: Fenix Do, Previous EPICS HDR Team
+Date: 03/28/2026
+Purpose: Graphing page with a tabbed interface for exploring specific location data.
+-->
 <!DOCTYPE html>
 <html lang="en" style="height: 100%;">
 <head>
@@ -245,22 +250,73 @@
         return slot;
       }
 
+      const normalizeLocKey = (v) => (v || '')
+        .replace(/\s+(ND|SD)$/i, '')
+        .trim()
+        .toLowerCase();
+
+      function resolveLocationAvailability(locRaw) {
+        const availability = window.locationAvailability || {};
+        if (!locRaw) return null;
+
+        // Try direct key first.
+        if (availability[locRaw]) return availability[locRaw];
+
+        // Try the common ND/SD-stripped key.
+        const stripped = (locRaw || '').replace(/\s+(ND|SD)$/i, '').trim();
+        if (availability[stripped]) return availability[stripped];
+
+        // Fallback to canonicalized key matching.
+        const wanted = normalizeLocKey(locRaw);
+        const matchedKey = Object.keys(availability).find(k => normalizeLocKey(k) === wanted);
+        return matchedKey ? availability[matchedKey] : null;
+      }
+
+      const minDate = (a, b) => {
+        if (!a) return b || null;
+        if (!b) return a || null;
+        return a <= b ? a : b;
+      };
+
+      const maxDate = (a, b) => {
+        if (!a) return b || null;
+        if (!b) return a || null;
+        return a >= b ? a : b;
+      };
+
       function updateAvailabilityIndicator(form) {
         const indicator = form.querySelector('.availability-indicator');
         const locationEl = form.querySelector('input[type="hidden"]:not([name="csrfmiddlewaretoken"])');
         const metricEl = form.querySelector('select[name="data2see"]');
         if (!indicator || !locationEl || !metricEl) return;
 
-        const locKey = (locationEl.value || '').replace(/\s+(ND|SD)$/i, '').trim();
+        const locRaw = (locationEl.value || '').trim();
         const metric = metricEl.value || '';
-        const availability = (window.locationAvailability || {})[locKey]?.[metric];
+        const availabilityForLoc = resolveLocationAvailability(locRaw) || {};
+        const metricAvailability = metric ? availabilityForLoc[metric] : null;
 
-        if (availability?.start && availability?.end) {
-          indicator.textContent = `Available data: ${availability.start} to ${availability.end}`;
-          return;
+        // Determine location-wide availability range derived from all metrics.
+        let overallStart = null;
+        let overallEnd = null;
+        Object.values(availabilityForLoc).forEach(range => {
+          if (!range || typeof range !== 'object') return;
+          if (range.start) overallStart = minDate(overallStart, range.start);
+          if (range.end) overallEnd = maxDate(overallEnd, range.end);
+        });
+
+        let html = overallStart && overallEnd 
+            ? `<div>Location data range: ${overallStart} to ${overallEnd}</div>`
+            : `<div>Availability range not found for this location.</div>`;
+
+        // Also append metric-specific availability if a metric is selected.
+        if (metricAvailability?.start && metricAvailability?.end) {
+          html += `<div>${metric}: ${metricAvailability.start} to ${metricAvailability.end}</div>`;
         }
 
-        indicator.textContent = metric ? 'Availability range not found for this data point.' : '';
+        indicator.innerHTML = html;
+        indicator.style.display = 'flex';
+        indicator.style.flexDirection = 'column';
+        indicator.style.flexWrap = 'wrap';
       }
 
       function renderHtmlIntoSlot(slot, html) {
@@ -342,6 +398,9 @@
       }
 
       function attachHandlers(form) {
+        if (form.dataset.handlersBound === '1') return;
+        form.dataset.handlersBound = '1';
+
         const startInput = form.querySelector('input[name="start-date"]');
         const endInput   = form.querySelector('input[name="end-date"]');
         const datasetSel = form.querySelector('select[name="data2see"]');
@@ -666,6 +725,8 @@
       function populateMetricsForLoc(selectEl, locKey) {
         if (!selectEl) return;
         selectEl.innerHTML = '<option value="" disabled selected>Choose Data Point</option>';
+        const form = selectEl.closest('form');
+        let nodataEl = form ? form.querySelector('.nodata-indicator') : null;
         try {
           const locationOptions = window.locationOptions || {};
           const metrics = locationOptions[locKey] || [];
@@ -676,9 +737,21 @@
               opt.textContent = m;
               selectEl.appendChild(opt);
             });
+            if (nodataEl) nodataEl.style.display = 'none';
             return;
           }
         } catch (e) {}
+        
+        if (nodataEl) {
+          nodataEl.style.display = 'block';
+          nodataEl.textContent = 'No data points are available for this location.';
+        } else if (form) {
+          nodataEl = document.createElement('p');
+          nodataEl.className = 'nodata-indicator';
+          nodataEl.style.cssText = 'margin-top:6px;color:#b91c1c;font-weight:600;';
+          nodataEl.textContent = 'No data points are available for this location.';
+          selectEl.insertAdjacentElement('afterend', nodataEl);
+        }
       }
 
       // Keep form options aligned with database-backed location metadata.
@@ -686,7 +759,11 @@
         try {
           const locationOptions = window.locationOptions || {};
 
-          document.querySelectorAll('section form[action="/customgaugegraph/"]').forEach(form => {
+          const forms = Array.from(document.querySelectorAll('section form[action="/customgaugegraph/"]'));
+          const customForm = document.getElementById('custom-location-form');
+          if (customForm && !forms.includes(customForm)) forms.push(customForm);
+
+          forms.forEach(form => {
             const locInput = form.querySelector('input[name="location"]');
             const select = form.querySelector('select[name="data2see"]');
             if (!locInput || !select) return;
@@ -694,8 +771,9 @@
             // Normalize location key used in database-backed metadata (strip trailing ND/SD)
             const locKey = (locInput.value || '').replace(/\s+(ND|SD)$/i, '').trim();
             const metrics = locationOptions[locKey] || [];
+            
+            let el = form.querySelector('.nodata-indicator');
             if (!Array.isArray(metrics) || !metrics.length) {
-              let el = form.querySelector('.nodata-indicator');
               if (!el) {
                 el = document.createElement('p');
                 el.className = 'nodata-indicator';
@@ -703,7 +781,10 @@
                 select.insertAdjacentElement('afterend', el);
               }
               el.textContent = 'No data points are available for this location.';
+              el.style.display = 'block';
               return;
+            } else if (el) {
+              el.style.display = 'none';
             }
 
             const existingValues = Array.from(select.options).map(o => o.value);
@@ -727,9 +808,10 @@
 
       updateFormsFromDatabase();
 
-      document
-        .querySelectorAll('section form[action="/customgaugegraph/"]')
-        .forEach(attachHandlers);
+      const initialForms = Array.from(document.querySelectorAll('section form[action="/customgaugegraph/"]'));
+      const customLocationForm = document.getElementById('custom-location-form');
+      if (customLocationForm && !initialForms.includes(customLocationForm)) initialForms.push(customLocationForm);
+      initialForms.forEach(attachHandlers);
 
       // Delegated quick-range handling as a fallback (in case handlers haven't attached yet)
       document.addEventListener('click', (e) => {

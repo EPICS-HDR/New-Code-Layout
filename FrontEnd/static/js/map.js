@@ -1,3 +1,8 @@
+/*
+Author: Fenix Do
+Date: 03/28/2026
+Purpose: Purdue HDR FrontEnd UI component/script/file.
+*/
 mapboxgl.accessToken = 'pk.eyJ1IjoiYWxleGlzMTMiLCJhIjoiY2xkeGk4bXpvMDJmeTNwbXV2bmpleGxxeCJ9.4PMbriYdSiVtIskoEwAsfw';
       const map = new mapboxgl.Map({
         container: 'map',
