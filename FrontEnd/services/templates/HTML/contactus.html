@@ -9,6 +9,9 @@ Purpose: Contact form for user inquiries and feedback.
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us</title>
+
+    <link rel="stylesheet" href="css/Heading.css">
+
     <style>
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -25,8 +28,8 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    background-color: #000; /* Set background color to black */
-    z-index: 1000; /* Ensure it's above other content */
+    background-color: #000;
+    z-index: 1000;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -96,14 +99,22 @@ input[type="submit"]:disabled {
     cursor: not-allowed;
 }
     </style>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
 </head>
+
 <body>
-    {% include "HTML/navbar.html" %}
+
+    <div id="navbar-placeholder"></div>
+    <script>
+      fetch('HTML/navbar.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('navbar-placeholder').innerHTML = data;
+        });
+    </script>
 
     <form>
         <h1>Contact Us</h1>
+
         <label for="name">Your Name</label>
         <input type="text" id="name" name="name" required>
 
@@ -131,7 +142,6 @@ input[type="submit"]:disabled {
             const message = document.getElementById('message').value;
             const submitBtn = document.getElementById('submit');
             
-            // Enable submit button if all fields are filled out
             if (name && email && category && message) {
                 submitBtn.disabled = false;
             } else {
@@ -139,5 +149,6 @@ input[type="submit"]:disabled {
             }
         });
     </script>
+
 </body>
 </html>
