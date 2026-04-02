@@ -3,11 +3,21 @@ Author: Fenix Do, Previous EPICS HDR Team
 Date: 03/28/2026
 Purpose: Introductory page detailing the project's background and team.
 -->
-<!doctype html>
-{% load static %}
-<link rel="stylesheet" href="{% static 'css/Aboutus.css' %}">
-<link rel="stylesheet" href="{% static 'css/Heading.css' %}">
-{% include "HTML/navbar.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us</title>
+
+  <link rel="stylesheet" href="css/Aboutus.css">
+  <link rel="stylesheet" href="css/Heading.css">
+</head>
+
+<body>
+
+<!-- Navbar -->
+<div id="navbar-placeholder"></div>
 
 <header class="about-us-header">
   <h1 class="page-title">About Us</h1>
@@ -65,7 +75,7 @@ Purpose: Introductory page detailing the project's background and team.
       <div class="content-column">
         <div class="purdue-arch-image">
           <img
-            src="{% static 'images/purdue_arch.jpg' %}"
+            src="images/purdue_arch.jpg"
             alt="HDR Team"
             class="team-image"
           />
@@ -74,18 +84,18 @@ Purpose: Introductory page detailing the project's background and team.
       <div class="content-column">
         <p class="description-text">
           EPICS HDR (Harnessing Data Revolution) is a team within the EPICS
-           program, a service-learning initiative where students collaborate 
-           with communities to design solutions for human, environmental, and 
-           societal challenges. The HDR team develops interactive, user-friendly 
-           dashboards that synthesize complex environmental datasets into 
-           accessible visualizations. By integrating historical and real-time 
-           information, their platforms empower communities to analyze trends, 
-           monitor resources, and make data-driven decisions. Through the 
-           empowerment of the EPICS program, the HDR teams’ goals are to support 
-           sustainable practices and economic resilience using technology. EPICS 
-           HDR focuses on merging technical expertise with community-centered design, 
-           creating partnerships that bridge technology and real-world impact while 
-           equipping Purdue students with skills to address real-world challenges.
+          program, a service-learning initiative where students collaborate 
+          with communities to design solutions for human, environmental, and 
+          societal challenges. The HDR team develops interactive, user-friendly 
+          dashboards that synthesize complex environmental datasets into 
+          accessible visualizations. By integrating historical and real-time 
+          information, their platforms empower communities to analyze trends, 
+          monitor resources, and make data-driven decisions. Through the 
+          empowerment of the EPICS program, the HDR teams’ goals are to support 
+          sustainable practices and economic resilience using technology. EPICS 
+          HDR focuses on merging technical expertise with community-centered design, 
+          creating partnerships that bridge technology and real-world impact while 
+          equipping Purdue students with skills to address real-world challenges.
         </p>
       </div>
     </article>
@@ -95,60 +105,68 @@ Purpose: Introductory page detailing the project's background and team.
       <span class="link-icon"></span>
     </a>
   </section>
+
   <style>
     .contact-section {
-  margin-top: 50px;
-  padding: 20px;
-  text-align: center;
-}
+      margin-top: 50px;
+      padding: 20px;
+      text-align: center;
+    }
 
-@media (max-width: 640px) {
-  .contact-section {
-    margin-top: 30px;
-    padding: 15px;
-  }
-}
+    @media (max-width: 640px) {
+      .contact-section {
+        margin-top: 30px;
+        padding: 15px;
+      }
+    }
 
-.contact-text {
-  color: #1f242f;
-  font-size: 20px;
-  font-family:
-    "Roboto",
-    -apple-system,
-    "Roboto",
-    "Helvetica",
-    sans-serif;
-  font-weight: 600;
-  line-height: 1.1;
-  text-align: center;
-}
+    .contact-text {
+      color: #1f242f;
+      font-size: 20px;
+      font-family: "Roboto", -apple-system, "Helvetica", sans-serif;
+      font-weight: 600;
+      line-height: 1.1;
+      text-align: center;
+    }
 
-.contact-link {
-  color: #1f242f;
-  text-decoration: underline;
-}
+    .contact-link {
+      color: #1f242f;
+      text-decoration: underline;
+    }
 
-@media (max-width: 991px) {
-  .contact-section {
-    margin-top: 40px;
-  }
-  
-  .contact-text {
-    font-size: 18px;
-  }
-}
+    @media (max-width: 991px) {
+      .contact-section {
+        margin-top: 40px;
+      }
 
-@media (max-width: 640px) {
-  .contact-text {
-    font-size: 16px;
-  }
-}
+      .contact-text {
+        font-size: 18px;
+      }
+    }
 
+    @media (max-width: 640px) {
+      .contact-text {
+        font-size: 16px;
+      }
+    }
   </style>
+
   <footer class="contact-section">
-        <span>Contact Us For More Questions at</span>
-        <a href="mailto:Epics-hdr@ecn.purdue.edu" class="contact-link">
-          Epics-hdr@ecn.purdue.edu
-        </a>
-      </footer>
+    <span>Contact Us For More Questions at</span>
+    <a href="mailto:Epics-hdr@ecn.purdue.edu" class="contact-link">
+      Epics-hdr@ecn.purdue.edu
+    </a>
+  </footer>
 </main>
+
+<!-- Navbar Loader Script -->
+<script>
+  fetch('HTML/navbar.html')
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('navbar-placeholder').innerHTML = data;
+    });
+</script>
+
+</body>
+</html>
