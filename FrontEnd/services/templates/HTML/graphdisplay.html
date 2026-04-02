@@ -1,80 +1,71 @@
-<!--
-Author: Fenix Do, Previous EPICS HDR Team
-Date: 03/28/2026
-Purpose: A generalized template to display and embed generated data graphs.
--->
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name ="viewport" content = "width=device-width, initial-scale=1.0, shrink-to-fit=yes">
+<head>
+    <meta charset="utf-8">
+    <meta name ="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=yes">
 
-        <title>Your Generated Graph</title>
-        {% load static %}
-        <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
+    <title>Your Generated Graph</title>
 
-    </head>
-    <style>
-      /* Styles for the logo image */
-      .icon {
-        height: 5vh;
-        width: auto;
-        object-fit: contain;
-        display: inline-block;
-        margin-right: 0.5vw;
-        margin-left: 2vw;
-      }
+    <link rel="stylesheet" href="css/Heading.css">
+</head>
 
-      /* Spacious table styling */
-      table {
-        border-collapse: collapse;
-        width: 90%;
-        max-width: 1200px;
-        margin: 30px auto;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        background: #fff;
-        border-radius: 8px;
-        overflow: hidden;
-      }
+<style>
+  .icon {
+    height: 5vh;
+    width: auto;
+    object-fit: contain;
+    display: inline-block;
+    margin-right: 0.5vw;
+    margin-left: 2vw;
+  }
 
-      th, td {
-        padding: 16px 24px;
-        text-align: left;
-        border-bottom: 1px solid #e5e7eb;
-      }
+  table {
+    border-collapse: collapse;
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+  }
 
-      th {
-        background-color: #f9fafb;
-        font-weight: 600;
-        color: #374151;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 0.05em;
-      }
+  th, td {
+    padding: 16px 24px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+  }
 
-      td {
-        color: #1f2937;
-        font-size: 0.95rem;
-      }
+  th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+  }
 
-      tr:hover {
-        background-color: #f3f4f6;
-      }
+  td {
+    color: #1f2937;
+    font-size: 0.95rem;
+  }
 
-      tr:last-child td {
-        border-bottom: none;
-      }
-    </style>
-    <body>
-        <center>
-          {% autoescape off %}
-          {{ plot }}  
+  tr:hover {
+    background-color: #f3f4f6;
+  }
 
-          <br><br/>
-          {{ table }}
-          {% endautoescape %}
-          {% load static %}
+  tr:last-child td {
+    border-bottom: none;
+  }
+</style>
 
-        </center>
-    </body>
+<body>
+
+  <!-- Placeholder since Django backend is removed -->
+  <div style="text-align:center; margin-top:50px;">
+    <h2>Graph will appear here</h2>
+    <p>This page requires backend processing (not supported on Firebase).</p>
+  </div>
+
+</body>
 </html>
