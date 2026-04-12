@@ -200,7 +200,7 @@ def export_interactive_html_mpld3(fig, out_path):
     return out_path
 
 def ensure_graphs_dir():
-    graphs_dir = os.path.join(REPO_ROOT, "static", "graphs")
+    graphs_dir = os.path.join(REPO_ROOT, "FrontEnd", "static", "graphs")
     os.makedirs(graphs_dir, exist_ok=True)
     return graphs_dir
 
