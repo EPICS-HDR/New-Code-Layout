@@ -1,0 +1,880 @@
+{
+  "generated": "2026-04-12T14:53:47.123306",
+  "locations": [
+    {
+      "location": "Bison",
+      "table": "cocorahs",
+      "file": "cocorahs__Bison.json",
+      "metrics": [
+        {
+          "column": "precipitation",
+          "display_name": "Precipitation",
+          "start": "2012-04-16",
+          "end": "2026-02-22",
+          "count": 4591
+        },
+        {
+          "column": "snowfall",
+          "display_name": "Snowfall",
+          "start": "2012-04-17",
+          "end": "2026-02-22",
+          "count": 4107
+        },
+        {
+          "column": "snow_depth",
+          "display_name": "Snow Depth",
+          "start": "2012-10-04",
+          "end": "2026-02-22",
+          "count": 2849
+        }
+      ]
+    },
+    {
+      "location": "Shadehill",
+      "table": "shadehill",
+      "file": "shadehill__Shadehill.json",
+      "metrics": [
+        {
+          "column": "res_stor_content",
+          "display_name": "Reservoir Storage Content",
+          "start": "2021-06-24",
+          "end": "2026-02-21",
+          "count": 1704
+        },
+        {
+          "column": "res_forebay_elev",
+          "display_name": "Reservoir Forebay Elevation",
+          "start": "2021-06-24",
+          "end": "2026-02-21",
+          "count": 1703
+        },
+        {
+          "column": "daily_mean_comp_inflow",
+          "display_name": "Daily Mean Computed Inflow",
+          "start": "2021-06-24",
+          "end": "2026-02-21",
+          "count": 1704
+        },
+        {
+          "column": "daily_mean_air_temp",
+          "display_name": "Daily Mean Air Temperature",
+          "start": "2021-06-24",
+          "end": "2024-05-27",
+          "count": 1048
+        },
+        {
+          "column": "daily_min_air_temp",
+          "display_name": "Daily Minimum Air Temperature",
+          "start": "2021-06-24",
+          "end": "2024-05-27",
+          "count": 1048
+        },
+        {
+          "column": "daily_max_air_temp",
+          "display_name": "Daily Maximum Air Temperature",
+          "start": "2021-06-24",
+          "end": "2024-05-27",
+          "count": 1048
+        },
+        {
+          "column": "tot_precip_daily",
+          "display_name": "Total Precipitation (inches per day)",
+          "start": "2021-06-24",
+          "end": "2026-02-21",
+          "count": 1703
+        },
+        {
+          "column": "tot_year_precip",
+          "display_name": "Total Water Year Precipitation",
+          "start": "2021-06-24",
+          "end": "2026-02-21",
+          "count": 1703
+        },
+        {
+          "column": "daily_mean_tot_dis",
+          "display_name": "Daily Mean Total Discharge",
+          "start": "2021-06-24",
+          "end": "2026-02-21",
+          "count": 1704
+        },
+        {
+          "column": "daily_mean_river_dis",
+          "display_name": "Daily Mean River Discharge",
+          "start": "2021-06-24",
+          "end": "2026-02-21",
+          "count": 1704
+        },
+        {
+          "column": "daily_mean_spill_dis",
+          "display_name": "Daily Mean Spillway Discharge",
+          "start": "2021-06-24",
+          "end": "2026-02-21",
+          "count": 1704
+        },
+        {
+          "column": "daily_mean_gate_opening",
+          "display_name": "Daily Mean Gate One Opening",
+          "start": "2021-06-24",
+          "end": "2026-02-21",
+          "count": 1704
+        }
+      ]
+    },
+    {
+      "location": "Bismarck",
+      "table": "noaa_weather",
+      "file": "noaa_weather__Bismarck.json",
+      "metrics": [
+        {
+          "column": "precipitation",
+          "display_name": "Precipitation",
+          "start": "2025-02-19",
+          "end": "2025-05-21",
+          "count": 93
+        },
+        {
+          "column": "avg_temp",
+          "display_name": "Average Temperature",
+          "start": "2025-02-19",
+          "end": "2025-05-20",
+          "count": 91
+        },
+        {
+          "column": "max_temp",
+          "display_name": "Max Temperature",
+          "start": "2025-02-19",
+          "end": "2025-05-20",
+          "count": 91
+        },
+        {
+          "column": "min_temp",
+          "display_name": "Min Temperature",
+          "start": "2025-02-19",
+          "end": "2025-05-20",
+          "count": 91
+        }
+      ]
+    },
+    {
+      "location": "Minot",
+      "table": "noaa_weather",
+      "file": "noaa_weather__Minot.json",
+      "metrics": [
+        {
+          "column": "precipitation",
+          "display_name": "Precipitation",
+          "start": "2025-02-19",
+          "end": "2025-05-20",
+          "count": 91
+        },
+        {
+          "column": "avg_temp",
+          "display_name": "Average Temperature",
+          "start": "2025-02-19",
+          "end": "2025-05-20",
+          "count": 91
+        },
+        {
+          "column": "max_temp",
+          "display_name": "Max Temperature",
+          "start": "2025-02-19",
+          "end": "2025-05-20",
+          "count": 91
+        },
+        {
+          "column": "min_temp",
+          "display_name": "Min Temperature",
+          "start": "2025-02-19",
+          "end": "2025-05-20",
+          "count": 91
+        }
+      ]
+    },
+    {
+      "location": "Williston/Basin",
+      "table": "noaa_weather",
+      "file": "noaa_weather__Williston_Basin.json",
+      "metrics": [
+        {
+          "column": "precipitation",
+          "display_name": "Precipitation",
+          "start": "2025-02-19",
+          "end": "2025-05-20",
+          "count": 92
+        },
+        {
+          "column": "avg_temp",
+          "display_name": "Average Temperature",
+          "start": "2025-02-19",
+          "end": "2025-05-19",
+          "count": 91
+        },
+        {
+          "column": "max_temp",
+          "display_name": "Max Temperature",
+          "start": "2025-02-19",
+          "end": "2025-05-19",
+          "count": 91
+        },
+        {
+          "column": "min_temp",
+          "display_name": "Min Temperature",
+          "start": "2025-02-19",
+          "end": "2025-05-19",
+          "count": 90
+        }
+      ]
+    },
+    {
+      "location": "Bismarck",
+      "table": "usgs",
+      "file": "usgs__Bismarck.json",
+      "metrics": [
+        {
+          "column": "elevation",
+          "display_name": "Elevation",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4326
+        },
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4326
+        },
+        {
+          "column": "water_temp",
+          "display_name": "Water Temperature",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4326
+        },
+        {
+          "column": "discharge",
+          "display_name": "Discharge",
+          "start": "2025-11-24",
+          "end": "2025-12-12",
+          "count": 894
+        }
+      ]
+    },
+    {
+      "location": "Breien",
+      "table": "usgs",
+      "file": "usgs__Breien.json",
+      "metrics": [
+        {
+          "column": "elevation",
+          "display_name": "Elevation",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 6427
+        },
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 6427
+        },
+        {
+          "column": "discharge",
+          "display_name": "Discharge",
+          "start": "2025-11-24",
+          "end": "2026-01-14",
+          "count": 147
+        }
+      ]
+    },
+    {
+      "location": "Cash",
+      "table": "usgs",
+      "file": "usgs__Cash.json",
+      "metrics": [
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 3569
+        },
+        {
+          "column": "discharge",
+          "display_name": "Discharge",
+          "start": "2025-11-24",
+          "end": "2025-11-24",
+          "count": 27
+        }
+      ]
+    },
+    {
+      "location": "Hazen",
+      "table": "usgs",
+      "file": "usgs__Hazen.json",
+      "metrics": [
+        {
+          "column": "elevation",
+          "display_name": "Elevation",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4275
+        },
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4275
+        },
+        {
+          "column": "discharge",
+          "display_name": "Discharge",
+          "start": "2025-11-24",
+          "end": "2025-11-25",
+          "count": 79
+        }
+      ]
+    },
+    {
+      "location": "Judson",
+      "table": "usgs",
+      "file": "usgs__Judson.json",
+      "metrics": [
+        {
+          "column": "elevation",
+          "display_name": "Elevation",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 3592
+        },
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 3592
+        },
+        {
+          "column": "discharge",
+          "display_name": "Discharge",
+          "start": "2025-11-24",
+          "end": "2026-01-12",
+          "count": 98
+        }
+      ]
+    },
+    {
+      "location": "Little Eagle",
+      "table": "usgs",
+      "file": "usgs__Little_Eagle.json",
+      "metrics": [
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 2872
+        },
+        {
+          "column": "discharge",
+          "display_name": "Discharge",
+          "start": "2025-11-24",
+          "end": "2026-01-09",
+          "count": 82
+        }
+      ]
+    },
+    {
+      "location": "Mandan",
+      "table": "usgs",
+      "file": "usgs__Mandan.json",
+      "metrics": [
+        {
+          "column": "elevation",
+          "display_name": "Elevation",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4324
+        },
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4324
+        },
+        {
+          "column": "discharge",
+          "display_name": "Discharge",
+          "start": "2025-11-24",
+          "end": "2026-01-12",
+          "count": 134
+        }
+      ]
+    },
+    {
+      "location": "Price",
+      "table": "usgs",
+      "file": "usgs__Price.json",
+      "metrics": [
+        {
+          "column": "elevation",
+          "display_name": "Elevation",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4326
+        },
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4326
+        }
+      ]
+    },
+    {
+      "location": "Schmidt",
+      "table": "usgs",
+      "file": "usgs__Schmidt.json",
+      "metrics": [
+        {
+          "column": "elevation",
+          "display_name": "Elevation",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 5483
+        },
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 5483
+        }
+      ]
+    },
+    {
+      "location": "Stanton",
+      "table": "usgs",
+      "file": "usgs__Stanton.json",
+      "metrics": [
+        {
+          "column": "elevation",
+          "display_name": "Elevation",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4329
+        },
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4329
+        }
+      ]
+    },
+    {
+      "location": "Wakpala",
+      "table": "usgs",
+      "file": "usgs__Wakpala.json",
+      "metrics": [
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4314
+        },
+        {
+          "column": "discharge",
+          "display_name": "Discharge",
+          "start": "2025-11-24",
+          "end": "2025-11-25",
+          "count": 38
+        }
+      ]
+    },
+    {
+      "location": "Washburn",
+      "table": "usgs",
+      "file": "usgs__Washburn.json",
+      "metrics": [
+        {
+          "column": "elevation",
+          "display_name": "Elevation",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4281
+        },
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 4281
+        }
+      ]
+    },
+    {
+      "location": "Whitehorse",
+      "table": "usgs",
+      "file": "usgs__Whitehorse.json",
+      "metrics": [
+        {
+          "column": "gauge_height",
+          "display_name": "Gauge Height",
+          "start": "2025-11-24",
+          "end": "2026-02-22",
+          "count": 7053
+        },
+        {
+          "column": "discharge",
+          "display_name": "Discharge",
+          "start": "2025-11-24",
+          "end": "2025-11-25",
+          "count": 34
+        }
+      ]
+    },
+    {
+      "location": "Carson",
+      "table": "mesonet",
+      "file": "mesonet__Carson.json",
+      "metrics": [
+        {
+          "column": "avg_air_temp",
+          "display_name": "Average Air Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_rel_hum",
+          "display_name": "Average Relative Humidity",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_bare_soil_temp",
+          "display_name": "Average Bare Soil Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_turf_soil_temp",
+          "display_name": "Average Turf Soil Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "max_wind_speed",
+          "display_name": "Maximum Wind Speed",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_wind_dir",
+          "display_name": "Average Wind Direction",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "total_solar_rad",
+          "display_name": "Total Solar Radiation",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "total_rainfall",
+          "display_name": "Total Rainfall",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8736
+        },
+        {
+          "column": "avg_bar_pressure",
+          "display_name": "Average Barometric Pressure",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_dew_point",
+          "display_name": "Average Dew Point",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_wind_chill",
+          "display_name": "Average Wind Chill",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        }
+      ]
+    },
+    {
+      "location": "Fort Yates",
+      "table": "mesonet",
+      "file": "mesonet__Fort_Yates.json",
+      "metrics": [
+        {
+          "column": "avg_air_temp",
+          "display_name": "Average Air Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_rel_hum",
+          "display_name": "Average Relative Humidity",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_bare_soil_temp",
+          "display_name": "Average Bare Soil Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_turf_soil_temp",
+          "display_name": "Average Turf Soil Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "max_wind_speed",
+          "display_name": "Maximum Wind Speed",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_wind_dir",
+          "display_name": "Average Wind Direction",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "total_solar_rad",
+          "display_name": "Total Solar Radiation",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "total_rainfall",
+          "display_name": "Total Rainfall",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_bar_pressure",
+          "display_name": "Average Barometric Pressure",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_dew_point",
+          "display_name": "Average Dew Point",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_wind_chill",
+          "display_name": "Average Wind Chill",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        }
+      ]
+    },
+    {
+      "location": "Linton",
+      "table": "mesonet",
+      "file": "mesonet__Linton.json",
+      "metrics": [
+        {
+          "column": "avg_air_temp",
+          "display_name": "Average Air Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_rel_hum",
+          "display_name": "Average Relative Humidity",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_bare_soil_temp",
+          "display_name": "Average Bare Soil Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_turf_soil_temp",
+          "display_name": "Average Turf Soil Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "max_wind_speed",
+          "display_name": "Maximum Wind Speed",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_wind_dir",
+          "display_name": "Average Wind Direction",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "total_solar_rad",
+          "display_name": "Total Solar Radiation",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "total_rainfall",
+          "display_name": "Total Rainfall",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_bar_pressure",
+          "display_name": "Average Barometric Pressure",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_dew_point",
+          "display_name": "Average Dew Point",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_wind_chill",
+          "display_name": "Average Wind Chill",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        }
+      ]
+    },
+    {
+      "location": "Mott",
+      "table": "mesonet",
+      "file": "mesonet__Mott.json",
+      "metrics": [
+        {
+          "column": "avg_air_temp",
+          "display_name": "Average Air Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_rel_hum",
+          "display_name": "Average Relative Humidity",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_bare_soil_temp",
+          "display_name": "Average Bare Soil Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_turf_soil_temp",
+          "display_name": "Average Turf Soil Temperature",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "max_wind_speed",
+          "display_name": "Maximum Wind Speed",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_wind_dir",
+          "display_name": "Average Wind Direction",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "total_solar_rad",
+          "display_name": "Total Solar Radiation",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "total_rainfall",
+          "display_name": "Total Rainfall",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_bar_pressure",
+          "display_name": "Average Barometric Pressure",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_dew_point",
+          "display_name": "Average Dew Point",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        },
+        {
+          "column": "avg_wind_chill",
+          "display_name": "Average Wind Chill",
+          "start": "2025-02-22",
+          "end": "2026-02-22",
+          "count": 8760
+        }
+      ]
+    }
+  ]
+}

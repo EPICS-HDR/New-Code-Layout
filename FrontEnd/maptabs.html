@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" style="height:100%;">
+<head>
+  <title>Custom Graph Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/Heading.css">
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    :root{
+      --bg-page:#f6f8fc;--bg-card:#fff;--primary:#5b61f6;--primary-2:#4c54ea;
+      --primary-soft:rgba(91,97,246,.14);--border:#e5e9f4;--text:#0f172a;--muted:#667085;
+      --radius-xl:18px;--shadow-sm:0 6px 20px rgba(15,23,42,.06);--shadow-md:0 12px 36px rgba(15,23,42,.10);
+      --ctrl-h:48px;--t:.2s ease;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg-page);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+    .hero{background:radial-gradient(80% 60% at 10% -20%,#c7d2fe 0%,transparent 60%),radial-gradient(80% 60% at 100% -10%,#fde68a 10%,transparent 60%),linear-gradient(180deg,#fff,#fafbff 90%,transparent 100%);border-bottom:1px solid var(--border)}
+    .hero-inner{max-width:1200px;margin:0 auto;padding:28px 24px 10px;text-align:center}
+    .title{margin:8px 0 6px;font-size:clamp(24px,3.2vw,34px);font-weight:700}
+    .subtitle{margin:0 auto 18px;max-width:800px;color:var(--muted)}
+    .page{max-width:1200px;margin:0 auto;padding:16px 24px 60px}
+    .tab-strip{display:flex;gap:8px;padding:12px 0 4px;overflow-x:auto;white-space:nowrap;border-bottom:1px solid #dfe3ef;margin-bottom:16px;scrollbar-width:thin}
+    .loc-chip{border:1px solid var(--border);background:#fff;color:#3b4353;border-radius:999px;padding:9px 14px;font-weight:600;cursor:pointer;transition:all var(--t);white-space:nowrap}
+    .loc-chip:hover{box-shadow:0 6px 16px rgba(91,97,246,.18);color:var(--primary)}
+    .loc-chip.active{color:var(--primary);border-color:#dfe4ff;box-shadow:0 8px 18px rgba(91,97,246,.28);transform:translateY(-1px)}
+    .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);padding:18px 20px}
+    .station-title{margin:2px 0 10px;font-weight:700}
+    .form-grid{display:grid;gap:14px;grid-template-columns:repeat(3,minmax(220px,1fr));align-items:start}
+    .field{display:grid;grid-template-rows:auto var(--ctrl-h);gap:6px;min-width:0}
+    .label{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+    .control{height:var(--ctrl-h);width:100%;padding:10px 12px;border-radius:12px;background:#fbfcff;border:1px solid #dfe4f3;color:var(--text);font-size:.95rem;outline:none;transition:border var(--t),box-shadow var(--t)}
+    .control:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);background:#fff}
+    select.control{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#98a2b3 50%),linear-gradient(135deg,#98a2b3 50%,transparent 50%);background-position:calc(100% - 18px) 18px,calc(100% - 12px) 18px;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
+    .quick-row{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .chip{padding:6px 10px;border-radius:999px;border:1px solid #dfe4f3;background:#fff;color:#3b4353;font-size:.85rem;cursor:pointer;transition:all var(--t)}
+    .chip:hover{border-color:#cfd6ff;background:var(--primary-soft);color:var(--primary)}
+    .actions{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end}
+    .btn{padding:10px 18px;border-radius:999px;border:0;cursor:pointer;font-weight:600;font-size:.92rem;transition:transform var(--t),box-shadow var(--t)}
+    .btn-primary{background:var(--primary);color:#fff;box-shadow:0 10px 20px rgba(91,97,246,.25)}
+    .btn-primary:hover{background:var(--primary-2);transform:translateY(-1px)}
+    .btn-ghost{background:#fff;color:var(--primary);border:1px solid #cfd6ff}
+    .btn-ghost:hover{background:var(--primary-soft)}
+    .alert{padding:12px 14px;border-radius:12px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;margin-top:10px;grid-column:1/-1}
+    .alert.info{background:#eef2ff;border-color:#c7d2fe;color:#1e3a8a}
+    .alert.error{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+    .alert:empty{display:none}
+    .availability{margin-top:6px;font-size:.9rem;color:#374151}
+    #graph-container{margin-top:18px;border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-md);background:#fff;border:1px solid var(--border);min-height:500px}
+    .stats-table{border-collapse:collapse;width:90%;max-width:1200px;margin:20px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+    .stats-table th,.stats-table td{padding:14px 20px;text-align:left;border-bottom:1px solid #e5e7eb}
+    .stats-table th{background:#f9fafb;font-weight:600;color:#374151;text-transform:uppercase;font-size:.83rem;letter-spacing:.05em}
+    .stats-table tr:hover{background:#f3f4f6}
+    @media(max-width:980px){.form-grid{grid-template-columns:minmax(0,1fr)}.actions{justify-content:flex-start}}
+  </style>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <script>fetch('/navbar.html').then(r=>r.text()).then(h=>document.getElementById('navbar-placeholder').innerHTML=h);</script>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <h1 class="title">Custom Graph Dashboard</h1>
+      <p class="subtitle">Select a location, metric, and date range to generate interactive visualizations.</p>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="tab-strip" id="location-tab-strip"></div>
+
+    <div class="card" style="margin-bottom:24px;">
+      <h3 class="station-title" id="selected-location-heading">Select a location</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label class="label">Data Type</label>
+          <select id="metric-select" class="control">
+            <option value="" disabled selected>Choose Data Point</option>
+          </select>
+          <div class="availability" id="availability-info"></div>
+        </div>
+        <div class="field">
+          <label class="label">Start Date</label>
+          <input type="date" id="start-date" class="control">
+        </div>
+        <div class="field">
+          <label class="label">End Date</label>
+          <input type="date" id="end-date" class="control">
+        </div>
+
+        <div class="quick-row">
+          <span class="label" style="text-transform:none;color:#475467">Quick ranges:</span>
+          <button type="button" class="chip" data-range="7d">Last 7 days</button>
+          <button type="button" class="chip" data-range="30d">Last 30 days</button>
+          <button type="button" class="chip" data-range="ytd">YTD</button>
+          <button type="button" class="chip" data-range="1y">Last 1 year</button>
+          <button type="button" class="chip" data-range="all">All data</button>
+        </div>
+
+        <div id="messages"></div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="btn-generate">Generate</button>
+          <button class="btn btn-ghost" id="btn-recent">Recent Data</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="graph-container" style="display:none;"></div>
+    <div id="stats-container"></div>
+  </main>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // State
+    let manifest = null;
+    let locationData = {};  // cache: { "file.json": data }
+    let currentLocation = null;
+
+    const strip = document.getElementById('location-tab-strip');
+    const heading = document.getElementById('selected-location-heading');
+    const metricSelect = document.getElementById('metric-select');
+    const startInput = document.getElementById('start-date');
+    const endInput = document.getElementById('end-date');
+    const availInfo = document.getElementById('availability-info');
+    const messagesEl = document.getElementById('messages');
+    const graphContainer = document.getElementById('graph-container');
+    const statsContainer = document.getElementById('stats-container');
+
+    const isoDate = d => d.toISOString().slice(0, 10);
+
+    function showMessage(text, type) {
+      messagesEl.innerHTML = '<div class="alert ' + type + '">' + text + '</div>';
+    }
+    function clearMessages() { messagesEl.innerHTML = ''; }
+
+    // Load manifest
+    fetch('/static/data/manifest.json')
+      .then(r => r.json())
+      .then(data => {
+        manifest = data;
+        buildLocationChips();
+      })
+      .catch(err => {
+        showMessage('Failed to load data manifest. Is the data exported?', 'error');
+        console.error(err);
+      });
+
+    function buildLocationChips() {
+      // Deduplicate locations (some may appear in multiple tables)
+      const seen = {};
+      manifest.locations.forEach(loc => {
+        if (!seen[loc.location]) seen[loc.location] = [];
+        seen[loc.location].push(loc);
+      });
+
+      Object.keys(seen).sort().forEach(name => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'loc-chip';
+        btn.textContent = name;
+        btn.addEventListener('click', () => selectLocation(name, seen[name]));
+        strip.appendChild(btn);
+      });
+
+      // Auto-select first
+      const firstKey = Object.keys(seen).sort()[0];
+      if (firstKey) selectLocation(firstKey, seen[firstKey]);
+    }
+
+    function selectLocation(name, entries) {
+      // Update active chip
+      strip.querySelectorAll('.loc-chip').forEach(c =>
+        c.classList.toggle('active', c.textContent === name)
+      );
+
+      heading.textContent = name;
+      currentLocation = { name, entries };
+
+      // Populate metrics from all tables for this location
+      metricSelect.innerHTML = '<option value="" disabled selected>Choose Data Point</option>';
+      const allMetrics = [];
+      entries.forEach(entry => {
+        entry.metrics.forEach(m => {
+          if (!allMetrics.find(x => x.column === m.column && x.file === entry.file)) {
+            allMetrics.push({ ...m, file: entry.file, table: entry.table });
+          }
+        });
+      });
+
+      allMetrics.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.column + '|' + m.file;
+        opt.textContent = m.display_name;
+        metricSelect.appendChild(opt);
+      });
+
+      // Show overall date range
+      let minStart = null, maxEnd = null;
+      allMetrics.forEach(m => {
+        if (!minStart || m.start < minStart) minStart = m.start;
+        if (!maxEnd || m.end > maxEnd) maxEnd = m.end;
+      });
+      availInfo.textContent = minStart && maxEnd
+        ? 'Data available: ' + minStart + ' to ' + maxEnd
+        : '';
+
+      // Default to last 30 days of available data
+      if (maxEnd) {
+        const end = new Date(maxEnd + 'T00:00:00');
+        const start = new Date(end);
+        start.setDate(start.getDate() - 30);
+        endInput.value = isoDate(end);
+        startInput.value = isoDate(start);
+      }
+
+      clearMessages();
+      graphContainer.style.display = 'none';
+      statsContainer.innerHTML = '';
+    }
+
+    // Metric change -> update availability
+    metricSelect.addEventListener('change', () => {
+      const val = metricSelect.value;
+      if (!val || !currentLocation) return;
+      const [col, file] = val.split('|');
+      const entry = currentLocation.entries.find(e => e.file === file);
+      const metric = entry ? entry.metrics.find(m => m.column === col) : null;
+      if (metric) {
+        availInfo.textContent = metric.display_name + ': ' + metric.start + ' to ' + metric.end + ' (' + metric.count + ' points)';
+        // Set dates to metric range (last 30 days or full range if < 30 days)
+        const end = new Date(metric.end + 'T00:00:00');
+        const start = new Date(end);
+        start.setDate(start.getDate() - 30);
+        const metricStart = new Date(metric.start + 'T00:00:00');
+        endInput.value = isoDate(end);
+        startInput.value = isoDate(start < metricStart ? metricStart : start);
+      }
+    });
+
+    // Quick ranges
+    document.querySelector('.quick-row').addEventListener('click', e => {
+      const btn = e.target.closest('.chip');
+      if (!btn) return;
+      const range = btn.dataset.range;
+      const today = new Date(); today.setHours(0,0,0,0);
+      let start = new Date(today);
+
+      if (range === 'all') {
+        // Find the metric's full range
+        const val = metricSelect.value;
+        if (val && currentLocation) {
+          const [col, file] = val.split('|');
+          const entry = currentLocation.entries.find(e => e.file === file);
+          const metric = entry ? entry.metrics.find(m => m.column === col) : null;
+          if (metric) {
+            startInput.value = metric.start;
+            endInput.value = metric.end;
+            return;
+          }
+        }
+        start.setFullYear(start.getFullYear() - 5);
+      } else if (range === '7d') {
+        start.setDate(start.getDate() - 7);
+      } else if (range === '30d') {
+        start.setDate(start.getDate() - 30);
+      } else if (range === '1y') {
+        start.setFullYear(start.getFullYear() - 1);
+      } else if (range === 'ytd') {
+        start = new Date(today.getFullYear(), 0, 1);
+      }
+
+      startInput.value = isoDate(start);
+      endInput.value = isoDate(today);
+    });
+
+    // Generate graph
+    document.getElementById('btn-generate').addEventListener('click', generateGraph);
+    document.getElementById('btn-recent').addEventListener('click', () => {
+      // Set to last 30 days of available data for current metric, then generate
+      const val = metricSelect.value;
+      if (val && currentLocation) {
+        const [col, file] = val.split('|');
+        const entry = currentLocation.entries.find(e => e.file === file);
+        const metric = entry ? entry.metrics.find(m => m.column === col) : null;
+        if (metric) {
+          const end = new Date(metric.end + 'T00:00:00');
+          const start = new Date(end);
+          start.setDate(start.getDate() - 30);
+          endInput.value = isoDate(end);
+          startInput.value = isoDate(start);
+        }
+      }
+      generateGraph();
+    });
+
+    async function generateGraph() {
+      clearMessages();
+      const val = metricSelect.value;
+      if (!val || !currentLocation) {
+        showMessage('Please select a location and metric.', 'error');
+        return;
+      }
+
+      const [col, file] = val.split('|');
+      const startDate = startInput.value;
+      const endDate = endInput.value;
+
+      if (!startDate || !endDate) {
+        showMessage('Please select start and end dates.', 'error');
+        return;
+      }
+      if (startDate > endDate) {
+        showMessage('Start date must be before end date.', 'error');
+        return;
+      }
+
+      graphContainer.style.display = 'block';
+      graphContainer.innerHTML = '<div style="padding:20px;color:#667085;">Loading data...</div>';
+      statsContainer.innerHTML = '';
+
+      try {
+        // Load data file (cached)
+        let data = locationData[file];
+        if (!data) {
+          const resp = await fetch('/static/data/' + file);
+          if (!resp.ok) throw new Error('Failed to load data file');
+          data = await resp.json();
+          locationData[file] = data;
+        }
+
+        const colData = data.columns[col];
+        if (!colData || !colData.dates || !colData.dates.length) {
+          graphContainer.innerHTML = '';
+          graphContainer.style.display = 'none';
+          showMessage('No data available for this metric.', 'info');
+          return;
+        }
+
+        // Filter by date range, clean dates to YYYY-MM-DD for Plotly
+        const dates = [];
+        const values = [];
+        for (let i = 0; i < colData.dates.length; i++) {
+          const d = colData.dates[i].slice(0, 10);
+          if (d >= startDate && d <= endDate) {
+            dates.push(d);
+            values.push(colData.values[i]);
+          }
+        }
+
+        if (!dates.length) {
+          graphContainer.innerHTML = '';
+          graphContainer.style.display = 'none';
+          showMessage('No data in the selected date range. Try the "Recent Data" button or a different range.', 'info');
+          return;
+        }
+
+        // Get display name
+        const entry = currentLocation.entries.find(e => e.file === file);
+        const metric = entry ? entry.metrics.find(m => m.column === col) : null;
+        const displayName = metric ? metric.display_name : col;
+
+        // Render Plotly graph
+        const trace = {
+          x: dates,
+          y: values,
+          mode: 'lines+markers',
+          name: currentLocation.name,
+          line: { color: '#5b61f6', width: 2 },
+          marker: { size: 4, color: '#5b61f6' }
+        };
+
+        const yMin = Math.min(...values);
+        const yMax = Math.max(...values);
+        const yPad = (yMax - yMin) * 0.1 || 1;
+
+        const layout = {
+          title: { text: displayName + ' — ' + currentLocation.name, font: { size: 18, color: '#0f172a' } },
+          xaxis: { title: 'Date', gridcolor: '#f0f0f0', type: 'date' },
+          yaxis: {
+            title: displayName,
+            gridcolor: '#f0f0f0',
+            tickformat: '.4~g',
+            range: [Math.max(0, yMin - yPad), yMax + yPad],
+          },
+          plot_bgcolor: '#fff',
+          paper_bgcolor: '#fff',
+          height: 500,
+          margin: { l: 70, r: 30, t: 50, b: 50 },
+          hovermode: 'x unified'
+        };
+
+        Plotly.newPlot(graphContainer, [trace], layout, { responsive: true, displaylogo: false });
+
+        // Build stats table
+        const numVals = values.filter(v => v !== null && !isNaN(v));
+        if (numVals.length) {
+          const mean = numVals.reduce((a, b) => a + b, 0) / numVals.length;
+          const sorted = [...numVals].sort((a, b) => a - b);
+          const median = sorted.length % 2 ? sorted[Math.floor(sorted.length / 2)] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+          const min = sorted[0];
+          const max = sorted[sorted.length - 1];
+          const sd = Math.sqrt(numVals.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / numVals.length);
+
+          const r = v => Math.round(v * 1000) / 1000;
+          statsContainer.innerHTML =
+            '<table class="stats-table">' +
+            '<tr><th>Site</th><th>Points</th><th>Mean</th><th>SD</th><th>Median</th><th>Min</th><th>Max</th><th>Range</th></tr>' +
+            '<tr><td>' + currentLocation.name + '</td><td>' + numVals.length + '</td><td>' + r(mean) + '</td><td>' + r(sd) + '</td><td>' + r(median) + '</td><td>' + r(min) + '</td><td>' + r(max) + '</td><td>' + r(max - min) + '</td></tr>' +
+            '</table>';
+        }
+
+      } catch (err) {
+        graphContainer.innerHTML = '';
+        graphContainer.style.display = 'none';
+        showMessage('Error loading data: ' + err.message, 'error');
+        console.error(err);
+      }
+    }
+  })();
+  </script>
+</body>
+</html>

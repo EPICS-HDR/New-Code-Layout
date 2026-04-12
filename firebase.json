@@ -4,7 +4,28 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "config/**",
+      "admin_dashboard/**",
+      "services/**",
+      "__init__.py",
+      "**/*.pyc"
+    ],
+    "rewrites": [
+      { "source": "/about", "destination": "/about.html" },
+      { "source": "/map", "destination": "/map.html" },
+      { "source": "/maptabs", "destination": "/maptabs.html" },
+      { "source": "/contactus", "destination": "/contactus.html" },
+      { "source": "/home", "destination": "/index.html" },
+      { "source": "/home/", "destination": "/index.html" }
+    ],
+    "headers": [
+      {
+        "source": "/static/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=3600" }
+        ]
+      }
     ]
   }
 }

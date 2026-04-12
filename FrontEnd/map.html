@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interactive Map - Standing Rock</title>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/maptabs.css">
+  <link rel="stylesheet" href="/static/css/map.css">
+  <link rel="stylesheet" href="/static/css/Heading.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <script>fetch('/navbar.html').then(r=>r.text()).then(h=>document.getElementById('navbar-placeholder').innerHTML=h);</script>
+
+  <style>
+    #map{top:20%;left:10%;width:80%;height:70%}
+    .modal{position:relative;top:100vh;left:20%;z-index:auto;display:none;width:60%;overflow-y:visible;padding:20px;max-height:400%;background-color:#fefefe;border:1px solid #888}
+    .modal-content{width:100%;max-width:95%;margin:0 auto}
+    @media screen and (max-width:768px){
+      #map{top:0;left:0;width:100%;height:400px}
+      #map-legend{display:none}
+      .modal{position:relative;top:0;left:0;width:100%;padding:15px;max-height:none;overflow-y:auto}
+      .modal-content{max-width:100%}
+    }
+  </style>
+
+  <div id="map"></div>
+
+  <div id="map-legend">
+    <h4>Legend</h4>
+    <ul>
+      <li><span class="dot" style="background-color:#140ceb;"></span>Dam</li>
+      <li><span class="dot" style="background-color:#f91d1d;"></span>Gauge</li>
+      <li><span class="dot" style="background-color:#057c37;"></span>Mesonet</li>
+    </ul>
+  </div>
+
+  <div id="Hazen" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Stanton" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Washburn" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Price" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Bismarck" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Schmidt" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Judson" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Mandan" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Breien" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Oahe" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="BigBend" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="FortRandall" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="GavinsPoint" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Garrison" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="FortPeck" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="FortYates" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Mott" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Carson" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Linton" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Cash" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Wakpala" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Whitehorse" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="LittleEagle" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Lemmon" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="McIntosh" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="Mclaughlin" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="MoundCity" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <div id="TimberLake" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+
+  <script>
+    window.baseGraphUrl = "/static/graphs/";
+    window.graphMap = {};
+  </script>
+  <script src="/static/js/map.js"></script>
+  <script src="/static/js/openModals.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.modal').forEach(function(modal) {
+        new MutationObserver(function(mutations) {
+          mutations.forEach(function(m) {
+            if (m.type === 'attributes' && m.attributeName === 'style' && window.getComputedStyle(modal).display !== 'none')
+              modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+        }).observe(modal, { attributes: true, attributeFilter: ['style'] });
+      });
+    });
+  </script>
+</body>
+</html>
