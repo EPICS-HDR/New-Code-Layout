@@ -4,20 +4,20 @@ Date: 03/28/2026
 Purpose: Introductory page detailing the project's background and team.
 -->
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About Us</title>
 
-  <link rel="stylesheet" href="css/Aboutus.css">
-  <link rel="stylesheet" href="css/Heading.css">
+  <link rel="stylesheet" href="{% static 'css/Aboutus.css' %}">
+  <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
 </head>
 
 <body>
 
-<!-- Navbar -->
-<div id="navbar-placeholder"></div>
+{% include "HTML/navbar.html" %}
 
 <header class="about-us-header">
   <h1 class="page-title">About Us</h1>
@@ -158,15 +158,6 @@ Purpose: Introductory page detailing the project's background and team.
     </a>
   </footer>
 </main>
-
-<!-- Navbar Loader Script -->
-<script>
-  fetch('HTML/navbar.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('navbar-placeholder').innerHTML = data;
-    });
-</script>
 
 </body>
 </html>

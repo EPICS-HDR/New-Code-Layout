@@ -4,79 +4,101 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Standing Rock Community</title>
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="static/css/Heading.css">
-  <link rel="stylesheet" href="static/css/home.css">
-
-  <!-- Firebase SDKs -->
-  <script defer src="/__/firebase/12.11.0/firebase-app-compat.js"></script>
-  <script defer src="/__/firebase/12.11.0/firebase-auth-compat.js"></script>
-  <script defer src="/__/firebase/12.11.0/firebase-database-compat.js"></script>
-  <script defer src="/__/firebase/12.11.0/firebase-firestore-compat.js"></script>
-  <script defer src="/__/firebase/12.11.0/firebase-functions-compat.js"></script>
-  <script defer src="/__/firebase/12.11.0/firebase-messaging-compat.js"></script>
-  <script defer src="/__/firebase/12.11.0/firebase-storage-compat.js"></script>
-  <script defer src="/__/firebase/12.11.0/firebase-analytics-compat.js"></script>
-  <script defer src="/__/firebase/12.11.0/firebase-remote-config-compat.js"></script>
-  <script defer src="/__/firebase/12.11.0/firebase-performance-compat.js"></script>
-  <script defer src="/__/firebase/init.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Roboto:wght@400;600&family=Inter:wght@400;600;800&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/Heading.css">
+  <link rel="stylesheet" href="/static/css/home.css">
 </head>
 <body>
-  <!-- Navbar -->
   <div id="navbar-placeholder"></div>
-  <script>
-    fetch('services/templates/HTML/navbar.html')
-      .then(resp => resp.text())
-      .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
-  </script>
+  <script>fetch('/navbar.html').then(r=>r.text()).then(h=>document.getElementById('navbar-placeholder').innerHTML=h);</script>
 
-  <!-- Main Content -->
   <main class="landing-page">
-    <!-- Include homepage content from your original homepage.html -->
+    <header class="community-header">
+      <h1 class="community-title">Standing Rock Community</h1>
+    </header>
+
     <section class="goals-section">
       <div class="content-container">
         <div class="text-column">
           <h2 class="section-subtitle">What Are Our Goals?</h2>
           <h3 class="section-title">Assist Standing Rock</h3>
-          <p>Home to both the Lakota and Dakota people...</p>
+          <p class="section-description">
+            Home to both the Lakota and Dakota people, the Standing Rock
+            Reservation contains land in both North and South Dakota bordering
+            the Missouri River. They dedicate their community to the
+            protection and development of their community, economy, technology
+            and culture.
+          </p>
+          <div class="button-group">
+            <a href="#services" class="button button-filled">Services</a>
+            <a href="/about.html" class="button button-outlined">About Us</a>
+          </div>
         </div>
         <div class="image-column">
-          <img src="static/images/standing-rock-hero.jpg" alt="Standing Rock Community">
+          <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/dc9f399b-02bb-4ea5-b2bb-bbdbfa734725?placeholderIfAbsent=true&apiKey=1c65642a69d24b70abf48ff65c758fe5" alt="Standing Rock Community" class="section-image">
         </div>
       </div>
     </section>
 
-    <!-- Services Section -->
-    <section id="services">
-      <article class="service-card">
-        <a href="services/templates/HTML/map.html">Interactive Maps</a>
-      </article>
-      <article class="service-card">
-        <a href="services/templates/HTML/maptabs.html">Custom Graphs</a>
-      </article>
+    <section class="what-we-do-section">
+      <div class="content-container reverse">
+        <div class="text-column">
+          <h2 class="section-subtitle">What We Do</h2>
+          <h3 class="section-title">Provide Water Data</h3>
+          <p class="section-description">
+            Welcome to our hub of environmental insight, made especially for
+            Standing Rock Nation. Our site harnesses and displays information
+            from various monitoring sites across North and South Dakota. View
+            our interactive map, where you can effortlessly navigate through
+            various data types and delve into detailed monthly graphs. Want to
+            view more data?
+          </p>
+          <div class="button-group">
+            <a href="#services" class="button button-filled">Services</a>
+            <a href="/about.html" class="button button-outlined">About Us</a>
+          </div>
+        </div>
+        <div class="image-column">
+          <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/250c47b0da4c5e3be607dbad540ea86697f5342539b61ed59c294e3dcaa9eaae?placeholderIfAbsent=true&apiKey=1c65642a69d24b70abf48ff65c758fe5" alt="Standing Rock Community" class="section-image">
+        </div>
+      </div>
     </section>
 
-    <!-- Footer -->
+    <section id="services" class="services-section">
+      <h2 class="services-title">Services</h2>
+      <div class="cards-container">
+        <article class="service-card">
+          <div class="card-image-container">
+            <div class="card-image-bg">
+              <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/fb39a51b7cf3bfe9cef6ffe19d4c4da59f9812ed16edee912d3f2bfab800edf1?placeholderIfAbsent=true&apiKey=1c65642a69d24b70abf48ff65c758fe5" alt="Interactive Maps" class="card-icon">
+            </div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Interactive Maps</h3>
+            <p class="card-description">Click the learn more button to access the Interactive Maps page.</p>
+            <a href="/map.html" class="card-link"><span class="link-text">Learn more</span><span class="link-arrow"></span></a>
+          </div>
+        </article>
+
+        <article class="service-card">
+          <div class="card-image-container">
+            <div class="card-image-bg">
+              <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/eb0f98e5de768d348fb95a807076e19d3ca5e83b272fe341f0a6a782ebda36d0?placeholderIfAbsent=true&apiKey=1c65642a69d24b70abf48ff65c758fe5" alt="Custom Graphs" class="card-icon">
+            </div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Custom Graphs</h3>
+            <p class="card-description">Click the learn more button to access the Custom Graphs page.</p>
+            <a href="/maptabs.html" class="card-link"><span class="link-text">Learn more</span><span class="link-arrow"></span></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <footer class="contact-section">
-      <a href="mailto:Epics-hdr@ecn.purdue.edu">Contact Us</a>
+      <span>Contact Us For More Questions at</span>
+      <a href="mailto:Epics-hdr@ecn.purdue.edu" class="contact-link">Epics-hdr@ecn.purdue.edu</a>
     </footer>
   </main>
-
-  <p id="load">Firebase SDK Loading…</p>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const loadEl = document.querySelector('#load');
-      try {
-        const app = firebase.app();
-        const features = ['auth','database','firestore','functions','messaging','storage','analytics','remoteConfig','performance']
-          .filter(f => typeof app[f] === 'function');
-        loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-      } catch(e) {
-        console.error(e);
-        loadEl.textContent = 'Error loading Firebase SDK.';
-      }
-    });
-  </script>
 </body>
 </html>

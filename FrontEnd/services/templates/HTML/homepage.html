@@ -4,25 +4,18 @@ Date: 03/28/2026
 Purpose: Main landing page for the application.
 -->
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Standing Rock Community</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Roboto:wght@400;600&family=Inter:wght@400;600;800&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/Heading.css">
-  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
 </head>
 <body>
-  <!-- Navbar placeholder -->
-  <div id="navbar-placeholder"></div>
-  <script>
-    fetch('HTML/navbar.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('navbar-placeholder').innerHTML = data;
-      });
-  </script>
+  {% include "HTML/navbar.html" %}
 
   <main class="landing-page">
     <header class="community-header">
