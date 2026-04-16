@@ -29,7 +29,7 @@ def _pull(debug=False):
     return data
 
 def _process(data):
-    conn = sqlite3.connect('mydatabase.db')
+    conn = sqlite3.connect('database.db')
     db = pd.DataFrame()
     for stationData in data:
         temp = pd.json_normalize(stationData)
@@ -48,7 +48,7 @@ def _process(data):
     conn.close()
 
 def _push():
-    files = sqlite_utils.Database('mydatabase.db')
+    files = sqlite_utils.Database('database.db')
     files["COCORAHS"].upsert_all(files["temp_staging"].rows, alter=True, hash_id="unique_id") #TO DO: Remove hash_id?
 
 

@@ -23,7 +23,7 @@ def _pull(debug=False):
     return data
     
 def _process(data):
-    conn = sqlite3.connect('mydatabase.db')
+    conn = sqlite3.connect('database.db')
     db = pd.DataFrame()
     for dataPoint in data:
         meta = [['station', key] for key in list(dataPoint['station'].keys())]
@@ -33,7 +33,7 @@ def _process(data):
     conn.close()
 
 def _push():
-    files = sqlite_utils.Database('mydatabase.db')
+    files = sqlite_utils.Database('database.db')
     files["DANR"].upsert_all(files["temp_staging"].rows, alter=True, hash_id="unique_id")
 
 def update():

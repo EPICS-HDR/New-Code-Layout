@@ -25,7 +25,7 @@ def _pull(debug=False):
     return data
 
 def _process(data):
-    conn = sqlite3.connect('mydatabase.db')
+    conn = sqlite3.connect('database.db')
     db = pd.DataFrame()
     for dataPoint in data:
         io = StringIO(dataPoint[0].stdout)
@@ -38,7 +38,7 @@ def _process(data):
 
 #The hash system needs to be changed. While good in theory, it creates issues for sources like USACE whose data is incomplete and updated live
 def _push():
-    files = sqlite_utils.Database('mydatabase.db')
+    files = sqlite_utils.Database('database.db')
     files["USACE"].upsert_all(files["temp_staging"].rows, alter=True, hash_id="unique_id")
 
 

@@ -18,5 +18,8 @@ def listAllSources():
 def listStations(source):
     pass
 
+def updateAll():
+    pass
+
 if (__name__ == "__main__"):
     listAllSources()
