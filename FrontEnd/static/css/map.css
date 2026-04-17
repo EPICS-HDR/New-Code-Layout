@@ -85,36 +85,71 @@ body {
   position: absolute;
   bottom: 10%;
   right: 3%;
-  min-width: 180px;
-  width: auto;
   z-index: 100;
   background-color: #fff;
   padding: 10px 14px;
   border: 2px solid rgba(22, 76, 167, 0.6);
-  border-radius: 4px;
+  border-radius: 6px;
   box-sizing: border-box;
-  white-space: nowrap;
+  max-width: 300px; /* allow wrapping for longer labels */
+  width: auto;
+  overflow: hidden;
 }
 
 #map-legend h4 {
-  margin-top: 0;
+  margin: 0 0 8px 0;
+  font-size: 14px;
 }
 
 #map-legend ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 #map-legend li {
-  margin-bottom: 8px;
-  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.2;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .dot {
+  flex: none;
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  margin-right: 5px;
+  margin: 0;
+}
+
+/* On small screens, make legend wider and position above map */
+@media (max-width: 768px) {
+  #map-legend {
+    left: 5%;
+    right: 5%;
+    bottom: auto;
+    top: 6%;
+    max-width: none;
+    width: auto;
+    display: flex;
+    justify-content: center;
+    padding: 8px 12px;
+  }
+
+  #map-legend ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    justify-content: center;
+  }
+
+  #map-legend li { font-size: 13px; }
 }

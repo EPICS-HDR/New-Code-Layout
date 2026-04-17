@@ -27,7 +27,6 @@ except SyntaxError:
     mock_config = types.ModuleType('BackEnd.SourceFiles.config')
     mock_config.DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'database.db')
     mock_config.LOCATION_TO_TABLE = {
-        "Big Bend": "dam", "Fort Randall": "dam", "Gavins Point": "dam", "Garrison": "dam", "Fort Peck": "dam",
         "Bison": "cocorahs", "Faulkton": "cocorahs", "Langdon": "cocorahs", "Shadehill": "shadehill",
         "Bismarck": "noaa_weather", "Williston/Basin": "noaa_weather", "Minot": "noaa_weather",
         "Fort Yates": "mesonet", "Linton": "mesonet", "Mott": "mesonet", "Carson": "mesonet",
@@ -724,7 +723,6 @@ def maptabs(request):
 
     default_options = {
         'gauge': ['Gauge Height', 'Elevation', 'Discharge', 'Water Temperature'],
-        'dam': ['Elevation', 'Flow Spill', 'Flow Powerhouse', 'Flow Out', 'Tailwater Elevation'],
         'mesonet': ['Average Air Temperature', 'Average Relative Humidity', 'Total Rainfall'],
     }
 
@@ -829,7 +827,6 @@ def maptabs(request):
 
     table_to_endpoint = {
         'gauge': ('/customgaugegraph/', 'location'),
-        'dam': ('/customdamgraph/', 'dam'),
         'mesonet': ('/custommesonetgraph/', 'mesonet'),
         'cocorahs': ('/customcocograph/', 'cocorahs'),
         'COCORAHS': ('/generate_maptab_graph/', 'location'),
@@ -882,23 +879,8 @@ def _normalize_posted_location(loc: str) -> str:
         return 'Little Eagle'
     return l
     
-def tabs(request):
-    return render(request, 'graphing/tabs.html')
-
-def tabstest(request):
-    return render(request, 'graphing/tabstest.html')
-
 def test(request):
     return render(request, 'graphing/test.html')
-
-def customgauge(request):
-    return render(request, 'graphing/customgauge.html')
-
-def customdam(request):
-    return render(request, 'graphing/customdam.html')
-
-def custommesonet(request):
-    return render(request, 'graphing/custommesonet.html')
 
 def interactiveMap(request):
     locations = []
@@ -952,9 +934,6 @@ def interactiveMap(request):
 
 def customgaugegraph(request):
     return _render_posted_graph(request, fallback_table='gauge', include_diagnostics=True)
-
-def customdamgraph(request):
-    return _render_posted_graph(request, location_field='dam', fallback_table='dam')
 
 def custommesonetgraph(request):
     return _render_posted_graph(request, location_field='mesonet', fallback_table='mesonet')

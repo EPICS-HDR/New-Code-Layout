@@ -11,11 +11,6 @@ import os
 DB_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'database.db'))
 
 LOCATION_TO_TABLE = {
-    "Big Bend": "dam",
-    "Fort Randall": "dam",
-    "Gavins Point": "dam",
-    "Garrison": "dam",
-    "Fort Peck": "dam",
     "Bison": "cocorahs",
     "Faulkton": "cocorahs",
     "Langdon": "cocorahs",
