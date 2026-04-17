@@ -1,7 +1,7 @@
 """
 custom_graph.py
-Safely query Measurements.db and plot one selected variable over time.
-Automatically finds Measurements.db at the repository root.
+Safely query database.db and plot one selected variable over time.
+Automatically finds database.db at the repository root.
 """
 
 import sqlite3
@@ -56,13 +56,13 @@ def find_repo_root(start_dir, repo_name="New-Code-Layout"):
 
 def find_database_candidate_paths():
     """
-    Return a list of candidate paths where Measurements.db might live.
+    Return a list of candidate paths where database.db might live.
     We try (in order):
 
     1. MEASUREMENTS_DB_PATH env var (if set)
-    2. Django settings.BASE_DIR / Measurements.db (if Django is loaded)
+    2. Django settings.BASE_DIR / database.db (if Django is loaded)
     3. Repo root detected by walking up from SCRIPT_DIR
-    4. SCRIPT_DIR's parent / Measurements.db
+    4. SCRIPT_DIR's parent / database.db
     """
     candidates = []
 
@@ -76,7 +76,7 @@ def find_database_candidate_paths():
         from django.conf import settings
         base_dir = getattr(settings, "BASE_DIR", None)
         if base_dir is not None:
-            candidates.append(os.path.join(str(base_dir), "Measurements.db"))
+            candidates.append(os.path.join(str(base_dir), "database.db"))
     except Exception:
         # Not running inside Django or settings not configured yet
         pass
@@ -84,11 +84,11 @@ def find_database_candidate_paths():
     # 3) Repo root (if we can find it by name)
     repo_root = find_repo_root(SCRIPT_DIR)
     if repo_root:
-        candidates.append(os.path.join(repo_root, "Measurements.db"))
+        candidates.append(os.path.join(repo_root, "database.db"))
 
     # 4) Parent of SCRIPT_DIR
     parent_dir = os.path.dirname(SCRIPT_DIR)
-    candidates.append(os.path.join(parent_dir, "Measurements.db"))
+    candidates.append(os.path.join(parent_dir, "database.db"))
 
     return candidates
 
@@ -116,7 +116,7 @@ for candidate in find_database_candidate_paths():
 if DB_PATH:
     print(f"[custom_graph] Using database at: {DB_PATH}")
 else:
-    print("[custom_graph] WARNING: Measurements.db not found at import time. "
+    print("[custom_graph] WARNING: database.db not found at import time. "
           "Functions that require DB_PATH will fail until it is set.")
 
 # -----------------------

@@ -398,6 +398,35 @@ SELECT MIN(datetime), MAX(datetime) FROM mesonet WHERE location='Fort Yates' AND
 
 #### "No data found" on graph generation
 1. Check the location name matches exactly what's in the DB: `SELECT DISTINCT location FROM <table>;`
+
+---
+
+## Changelog
+
+### 2026-04-17 — Refactor: DB naming, schema-aware API, and frontend improvements
+
+- **High-level summary:** Standardized database naming (switched references from `Measurements.db` to `database.db`), added schema-aware table mappings and two new JSON API endpoints (`/api/map_locations/`, `/api/timeseries/`), refactored map/front-end templates to use Django `static` and `include`, replaced client-side navbar loader with a template partial, rewrote map/modal JS to fetch time series via the new API and render Plotly graphs in modals, and removed stale binary DB files.
+
+- **BackEnd/SourceFiles/config.py**: fixed leftover merge markers and added a `DB_PATH` computed from the repository layout using `os.path`.
+
+- **BackEnd/custom_graph.py**: updated candidate DB filenames and messages to use `database.db` and improved DB path detection.
+
+- **FrontEnd/config/urls.py**: registered two new API routes: `api/map_locations` and `api/timeseries`.
+
+- **FrontEnd/services/views.py**: major refactor — introduced `TABLE_SCHEMA` to describe non-standard table column names and mappings; added helpers to resolve location/datetime/lat/lon columns; made query functions schema-aware; added `api_map_locations` and `api_timeseries` endpoints; fixed many SQL queries to use quoted identifiers and proper datetime columns; replaced hardcoded `Measurements.db` fallbacks with `database.db`.
+
+- **Templates (about, homepage, interactiveMap, navbar)**: added `{% load static %}` where needed, converted static asset references to `{% static '...' %}`, replaced JS-based navbar injection with `{% include "HTML/navbar.html" %}`, and converted `navbar.html` into a proper Django partial (removed full HTML wrapper).
+
+- **Frontend JS/CSS**: rewrote `map.js`, `openModals.js`, and added `updateGraphs.js` to drive map markers, dynamic modals, and Plotly graph rendering from `/api/timeseries/`; updated CSS (`Heading.css`, `map.css`) to support responsive hamburger menu and map legend styling.
+
+- **Removed files**: deleted legacy binary DB files (`Measurements.db`, `mydatabase.db`) from the repo to avoid confusion — ensure your local/production DB is pointed via `DB_PATH` or `MEASUREMENTS_DB_PATH` setting if needed.
+
+- **Notes / Recommended follow-ups:**
+    - Verify `FrontEnd/config/settings.py` or environment variable `MEASUREMENTS_DB_PATH` points to your actual `database.db` path.
+    - Run `python manage.py collectstatic` after deploying templates/static changes.
+    - Run a quick smoke test: start dev server and visit `/map/` and `/maptabs/` to ensure API endpoints return expected JSON and graphs render.
+
+---
 2. Check the metric column exists and has data: `SELECT COUNT(*) FROM <table> WHERE location='X' AND <column> IS NOT NULL;`
 3. Check the date range overlaps with available data
 4. Look for location name normalization issues — the app strips trailing state abbreviations (ND, SD) and does case-insensitive matching

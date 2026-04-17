@@ -85,14 +85,15 @@ body {
   position: absolute;
   bottom: 10%;
   right: 3%;
-  width: 100px;
-  height: 150px;
-  z-index: 1;
-  background-color: #ffff;
-  padding: 10px;
+  min-width: 180px;
+  width: auto;
+  z-index: 100;
+  background-color: #fff;
+  padding: 10px 14px;
   border: 2px solid rgba(22, 76, 167, 0.6);
   border-radius: 4px;
-  z-index: 100;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 #map-legend h4 {

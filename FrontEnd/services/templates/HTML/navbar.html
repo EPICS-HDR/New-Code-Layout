@@ -1,81 +1,78 @@
 <!--
 Author: Fenix Do, Previous EPICS HDR Team
 Date: 03/28/2026
-Purpose: Shared navigation bar module included at the top of pages.
+Purpose: Shared navigation bar — loaded with Django template include tag.
+         Must NOT contain doctype/html/head/body tags.
 -->
-<!doctype html>
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/Heading.css' %}">
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Navigation Bar</title>
-    {% load static %}
-    <link rel="icon" type="image/jpeg" href="{% static 'images/logo.jpg' %}" />
-    <link rel="stylesheet" href="{% static 'css/global.css' %}" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <header class="navbar">
-      <div class="logo-container">
-        <a href="/">
-          <img
-          src="https://cdn.builder.io/api/v1/image/assets/TEMP/33a3523fd6976908bc3437ef17e24417ccd1f945"
-          alt="Logo"
-        
-          class="logo-header"
-        />
-        </a>
+<link rel="stylesheet" href="{% static 'css/global.css' %}">
+
+<header class="navbar">
+  <div class="logo-container">
+    <a href="/">
+      <img
+        src="https://cdn.builder.io/api/v1/image/assets/TEMP/33a3523fd6976908bc3437ef17e24417ccd1f945"
+        alt="Logo"
+        class="logo-header"
+      />
+    </a>
+  </div>
+
+  <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+    <span class="menu-toggle-bar"></span>
+    <span class="menu-toggle-bar"></span>
+    <span class="menu-toggle-bar"></span>
+  </button>
+
+  <nav class="nav-menu" id="nav-menu">
+    <a href="/" class="nav-link">Home</a>
+    <a href="/about" class="nav-link">About Us</a>
+    <div class="dropdown" id="services-dropdown">
+      <a href="#" class="nav-link dropdown-trigger">Services ▼</a>
+      <div class="dropdown-content">
+        <a href="/map" class="dropdown-link">Interactive Map</a>
+        <a href="/maptabs" class="dropdown-link">Custom Graphs</a>
       </div>
-      <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu">
-        <span class="menu-toggle-bar"></span>
-        <span class="menu-toggle-bar"></span>
-        <span class="menu-toggle-bar"></span>
-      </button>
-      <nav class="nav-menu" id="nav-menu">
-        <a href="/" class="nav-link">Home</a>
-        <a href="/about" class="nav-link">About Us</a>
-        <div class="dropdown" id="services-dropdown">
-          <a href="#" class="nav-link">Services ▼</a>
-          <div class="dropdown-content">
-            <a href="/map" class="dropdown-link">Interactive Map</a>
-            <a href="/maptabs" class="dropdown-link">Custom Graphs</a>
-          </div>
-        </div>
-      </nav>
-    </header>
-    <script>
-      // Mobile menu toggle
-      const menuToggle = document.getElementById('menu-toggle');
-      const navMenu = document.getElementById('nav-menu');
-      const servicesDropdown = document.getElementById('services-dropdown');
-      
-      if (menuToggle) {
-        menuToggle.addEventListener('click', function() {
-          navMenu.classList.toggle('open');
-        });
-      }
-      
-      // Mobile dropdown toggle
-      if (servicesDropdown && window.innerWidth <= 640) {
-        const dropdownLink = servicesDropdown.querySelector('.nav-link');
-        dropdownLink.addEventListener('click', function(e) {
+    </div>
+  </nav>
+</header>
+
+<script>
+(function () {
+  var toggle   = document.getElementById('menu-toggle');
+  var navMenu  = document.getElementById('nav-menu');
+  var dropdown = document.getElementById('services-dropdown');
+
+  if (!toggle || !navMenu) return;
+
+  // Hamburger open/close
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var isOpen = navMenu.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+
+  // Services dropdown tap (mobile) / hover handled by CSS (desktop)
+  if (dropdown) {
+    var trigger = dropdown.querySelector('.dropdown-trigger');
+    if (trigger) {
+      trigger.addEventListener('click', function (e) {
+        // Only intercept on mobile (hamburger visible)
+        if (window.getComputedStyle(toggle).display !== 'none') {
           e.preventDefault();
-          servicesDropdown.classList.toggle('active');
-        });
-      }
-      
-      // Close menu when clicking outside
-      document.addEventListener('click', function(e) {
-        if (!e.target.closest('.navbar')) {
-          navMenu.classList.remove('open');
-          servicesDropdown.classList.remove('active');
+          dropdown.classList.toggle('active');
         }
       });
-    </script>
-  </body>
-</html>
+    }
+  }
+
+  // Click outside to close
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.navbar')) {
+      navMenu.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+      if (dropdown) dropdown.classList.remove('active');
+    }
+  });
+})();
+</script>

@@ -3,11 +3,13 @@ Author: Kartik Jariam & Andrew Vu
 Date: 1/29/2026
 Purpose: This is the master config for all source files. Everything hardcoded must be present in this file. The host must modify this file to add new
          stations or change how data pulling works.
-''' 
+'''
+import os
 
 # -------------------------------------- General --------------------------------------
 
-# <<<<<<< HEAD
+DB_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'database.db'))
+
 LOCATION_TO_TABLE = {
     "Big Bend": "dam",
     "Fort Randall": "dam",
@@ -27,7 +29,6 @@ LOCATION_TO_TABLE = {
     "Carson": "mesonet",
 }
 
-# SQL field mappings for variable names
 SQL_CONVERSION = {
     "Elevation": "elevation",
     "Air Temperature": "air_temp",
@@ -90,8 +91,6 @@ SQL_CONVERSION = {
     "Diss Ammonia TKN Check": "diss_ammonia_tkn_check",
     "Dissolved Phosphorus as P": "dissolved_phosphorus",
 }
-# =======
-# >>>>>>> 3d612f71973f7c18bfbf05a6e5867b2a94f7e90d
 
 # --------------------------------------  DANR   --------------------------------------
 DANRConfig = {

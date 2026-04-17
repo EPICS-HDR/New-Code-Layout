@@ -3,11 +3,7 @@ Author: Fenix Do, Previous EPICS HDR Team
 Date: 03/28/2026
 Purpose: Main interactive map UI for selecting data layers and station locations.
 -->
-<!--
-Author: Fenix Do, Previous EPICS HDR Team
-Date: 03/28/2026
-Purpose: Main interactive map UI for selecting data layers and station locations.
--->
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,26 +17,17 @@ Purpose: Main interactive map UI for selecting data layers and station locations
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet" />
 
   <!-- Local CSS -->
-  <link rel="stylesheet" href="css/maptabs.css">
-  <link rel="stylesheet" href="css/map.css">
-  <link rel="stylesheet" href="css/Heading.css">
+  <link rel="stylesheet" href="{% static 'css/maptabs.css' %}">
+  <link rel="stylesheet" href="{% static 'css/map.css' %}">
+  <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-
-  <!-- Navbar -->
-  <div id="navbar-placeholder"></div>
-  <script>
-    fetch('HTML/navbar.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('navbar-placeholder').innerHTML = data;
-      });
-  </script>
 </head>
 <body>
+  {% include "HTML/navbar.html" %}
   <style>
     #map { top: 20%; left: 10%; width: 80%; height: 70%}
 
@@ -64,6 +51,32 @@ Purpose: Main interactive map UI for selecting data layers and station locations
       margin: 0 auto;
     }
 
+    .modal-content h3 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+      color: #0f172a;
+    }
+
+    .modal-dataset-select {
+      margin-bottom: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #dfe4f3;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .modal-graph-container {
+      width: 100%;
+      min-height: 300px;
+    }
+
+    .modal-loading {
+      color: #667085;
+      padding: 12px 0;
+      font-size: 0.9rem;
+    }
+
     @media screen and (max-width: 768px) {
       #map { top: 0; left: 0; width: 100%; height: 400px; }
       #map-legend { display: none; }
@@ -79,64 +92,45 @@ Purpose: Main interactive map UI for selecting data layers and station locations
   <div id="map-legend">
     <h4>Legend</h4>
     <ul>
-      <li><span class="dot" style="background-color: #140ceb;"></span>Dam</li>
-      <li><span class="dot" style="background-color: #f91d1d;"></span>Gauge</li>
-      <li><span class="dot" style="background-color: #057c37;"></span>Mesonet</li>
+      <li><span class="dot" style="background-color: #140ceb;"></span>USACE Dam</li>
+      <li><span class="dot" style="background-color: #f91d1d;"></span>DANR Water Quality</li>
+      <li><span class="dot" style="background-color: #057c37;"></span>COCORAHS Weather</li>
     </ul>
   </div>
 
-  <!-- Modals -->
-  <div id="Hazen" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Stanton" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Washburn" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Price" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Bismarck" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Schmidt" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Judson" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Mandan" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Breien" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Oahe" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="BigBend" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="FortRandall" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="GavinsPoint" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Garrison" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="FortPeck" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="FortYates" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Mott" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Carson" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Linton" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Cash" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Wakpala" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Whitehorse" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="LittleEagle" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Lemmon" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="McIntosh" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="Mclaughlin" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="MoundCity" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
-  <div id="TimberLake" class="modal"><div class="modal-content"><span class="close">&times;</span></div></div>
+  <!-- Dynamic modal container — populated by openModals.js -->
+  <div id="modal-container"></div>
+
+  <!-- Inject location data from database -->
+  <script>
+    window.mapLocations = JSON.parse('{{ locations_json|escapejs }}');
+  </script>
 
   <!-- JS Scripts -->
-  <script>
-    window.baseGraphUrl = "graphs/"; // static path
-    window.graphMap = {}; // Replace with JSON map if needed
-  </script>
-  <script src="js/map.js"></script>
-  <script src="js/openModals.js"></script>
+  <script src="{% static 'js/map.js' %}"></script>
+  <script src="{% static 'js/updateGraphs.js' %}"></script>
+  <script src="{% static 'js/openModals.js' %}"></script>
 
-  <!-- Auto-scroll to modal -->
+  <!-- Auto-scroll to modal on open -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const modals = document.querySelectorAll('.modal');
+      const container = document.getElementById('modal-container');
       const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1 && node.classList.contains('modal')) {
+              observer.observe(node, { attributes: true, attributeFilter: ['style'] });
+            }
+          });
           if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
             const modal = mutation.target;
-            const displayStyle = window.getComputedStyle(modal).display;
-            if (displayStyle !== 'none') modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (window.getComputedStyle(modal).display !== 'none') {
+              modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
           }
         });
       });
-      modals.forEach(modal => observer.observe(modal, { attributes: true, attributeFilter: ['style'] }));
+      observer.observe(container, { childList: true });
     });
   </script>
 </body>

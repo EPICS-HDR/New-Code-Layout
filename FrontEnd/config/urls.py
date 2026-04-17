@@ -18,6 +18,8 @@ from django.urls import include, path
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from FrontEnd.services.views import (
     about,
+    api_map_locations,
+    api_timeseries,
     contactus,
     customcocograph,
     customdam,
@@ -57,6 +59,8 @@ urlpatterns = [
     path('maptabs/', maptabs),
     path('generate_maptab_graph/', generate_maptab_graph),
     path('get_latest_date/', get_latest_date),
+    path('api/map_locations/', api_map_locations),
+    path('api/timeseries/', api_timeseries),
     path('', homepage),
     path('forecast/', forecast),
     path('about/', about),
