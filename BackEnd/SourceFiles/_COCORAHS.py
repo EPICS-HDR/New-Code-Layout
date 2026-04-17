@@ -11,6 +11,7 @@ from config import COCORAHSConfig as config
 import sqlite3
 from datetime import date
 import traceback
+import time
 
 def _pull(debug=False):
     data = []
@@ -20,7 +21,11 @@ def _pull(debug=False):
         try:
             params = f'{{"sid":"{station_id}","sdate":"{start_date}","edate":"{end}","elems":"{elements}"}}'
             searchTerm = f"{config['baseURL']}{params}"            
-            data.append(requests.get(searchTerm).json())
+            print(searchTerm)
+
+            result = requests.get(searchTerm, timeout=(3.05, 27)).json()
+            time.sleep(10)
+            data.append(result)
 
         except Exception as e:
             print(type(e).__name__+ ", skipping " + station)
@@ -32,15 +37,18 @@ def _process(data):
     conn = sqlite3.connect('database.db')
     db = pd.DataFrame()
     for stationData in data:
-        temp = pd.json_normalize(stationData)
-        temp = temp.explode('data').reset_index(drop=True)
-        temp[['date', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7']] = pd.DataFrame(temp['data'].tolist(), index=temp.index) #TO DO: replace v1 ... v7
-        temp = temp.drop(columns='data')
-        temp[['latitude', 'longitude']] = pd.DataFrame(temp['meta.ll'].tolist(), index=temp.index) #TO DO: replace v1 ... v7
-        temp = temp.drop(columns='meta.ll')
-        temp[['sid1', 'sid2']] = pd.DataFrame(temp['meta.sids'].tolist(), index=temp.index) #TO DO: replace v1 ... v7
-        temp = temp.drop(columns='meta.sids')
-        db = pd.concat([db, temp])
+        try:
+            temp = pd.json_normalize(stationData)
+            temp = temp.explode('data').reset_index(drop=True)
+            temp[['date', 'v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7']] = pd.DataFrame(temp['data'].tolist(), index=temp.index) #TO DO: replace v1 ... v7
+            temp = temp.drop(columns='data')
+            temp[['latitude', 'longitude']] = pd.DataFrame(temp['meta.ll'].tolist(), index=temp.index) #TO DO: replace v1 ... v7
+            temp = temp.drop(columns='meta.ll')
+            temp[['sid1', 'sid2']] = pd.DataFrame(temp['meta.sids'].tolist(), index=temp.index) #TO DO: replace v1 ... v7
+            temp = temp.drop(columns='meta.sids')
+            db = pd.concat([db, temp])
+        except Exception as e:
+            print(type(e).__name__+ ", skipping")
 
     print(db)
         
