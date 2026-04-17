@@ -25,7 +25,7 @@ try:
 except SyntaxError:
     # config.py has a git merge conflict, so we catch the SyntaxError and define the mappings locally.
     mock_config = types.ModuleType('BackEnd.SourceFiles.config')
-    mock_config.DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'Measurements.db')
+    mock_config.DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'database.db')
     mock_config.LOCATION_TO_TABLE = {
         "Big Bend": "dam", "Fort Randall": "dam", "Gavins Point": "dam", "Garrison": "dam", "Fort Peck": "dam",
         "Bison": "cocorahs", "Faulkton": "cocorahs", "Langdon": "cocorahs", "Shadehill": "shadehill",
@@ -43,6 +43,73 @@ except SyntaxError:
 from BackEnd import custom_graph
 
 DB_PATH = os.fspath(getattr(settings, 'MEASUREMENTS_DB_PATH', CONFIG_DB_PATH))
+
+# Schema config for tables in database.db that use non-standard column names.
+# lat_lon_swapped=True means the DB column named 'latitude' actually holds longitude and vice versa.
+TABLE_SCHEMA = {
+    'COCORAHS': {
+        'location_col': 'meta.name',
+        'datetime_col': 'date',
+        'lat_col': 'latitude',
+        'lon_col': 'longitude',
+        'lat_lon_swapped': True,
+        'data_cols': {
+            'Max Temperature': 'v1',
+            'Min Temperature': 'v2',
+            'Average Temperature': 'v3',
+            'Observed Temperature': 'v4',
+            'Precipitation': 'v5',
+            'Snowfall': 'v6',
+            'Snow Depth': 'v7',
+        },
+    },
+    'DANR': {
+        'location_col': 'station.stationId',
+        'datetime_col': 'sampleDate',
+        'lat_col': 'station.latitude',
+        'lon_col': 'station.longitude',
+        'lat_lon_swapped': False,
+        'data_cols': {
+            'Water Temperature': 'waterTemperature',
+            'Dissolved Oxygen': 'dissolvedOxygen',
+            'pH': 'pH',
+            'Specific Conductance': 'specificConductance',
+            'TSS': 'tss',
+            'TKN': 'tkn',
+            'Ammonia': 'ammonia',
+            'Nitrate/Nitrite': 'nitrateNitrite',
+            'Total Phosphorus': 'tp',
+            'E.coli': 'eColi',
+            'Chlorophyll Alpha': 'chlorophyllAlpha',
+        },
+    },
+    'USACE': {
+        'location_col': 'Station',
+        'datetime_col': 'DateTime',
+        'lat_col': None,
+        'lon_col': None,
+        'lat_lon_swapped': False,
+        'hardcoded_coords': {'GARR': (47.4988, -101.4194)},
+        'data_cols': {
+            'Elevation': 'Elev',
+            'Air Temperature': 'Temp_Air',
+            'Water Temperature': 'Temp_Water',
+            'Flow Out': 'Flow_Out',
+            'Flow Spill': 'Flow_Spill',
+            'Flow Powerhouse': 'Flow_Powerhouse',
+            'Tailwater Elevation': 'Elev_Tailwater',
+            'Energy': 'Energy',
+        },
+    },
+}
+
+
+def _get_location_col(table_name: str) -> str:
+    return TABLE_SCHEMA.get(table_name, {}).get('location_col', 'location')
+
+
+def _get_datetime_col(table_name: str) -> str:
+    return TABLE_SCHEMA.get(table_name, {}).get('datetime_col', 'datetime')
 
 
 def _quote_ident(name: str) -> str:
@@ -69,7 +136,8 @@ def _table_columns(conn, table_name):
 
 
 def _scan_location_table_map(conn):
-    """Discover location->table mapping by scanning all DB tables with a location column."""
+    """Discover location->table mapping. Handles both standard 'location' column
+    and the alternate location columns defined in TABLE_SCHEMA."""
     location_table_map = {}
     tables = []
     ignored_tables = {'temp_staging'}
@@ -80,13 +148,24 @@ def _scan_location_table_map(conn):
             cols = _table_columns(conn, table_name)
         except Exception:
             continue
-        if 'location' not in cols:
+
+        loc_col = None
+        if 'location' in cols:
+            loc_col = 'location'
+        elif table_name in TABLE_SCHEMA:
+            alt = TABLE_SCHEMA[table_name].get('location_col')
+            if alt and alt in cols:
+                loc_col = alt
+
+        if loc_col is None:
             continue
+
         tables.append(table_name)
         try:
             curr = conn.cursor()
             curr.execute(
-                f"SELECT DISTINCT location FROM {_quote_ident(table_name)} WHERE location IS NOT NULL"
+                f"SELECT DISTINCT {_quote_ident(loc_col)} FROM {_quote_ident(table_name)} "
+                f"WHERE {_quote_ident(loc_col)} IS NOT NULL"
             )
             for r in curr.fetchall():
                 if not r:
@@ -94,7 +173,6 @@ def _scan_location_table_map(conn):
                 loc = (r[0] or '').strip()
                 if not loc:
                     continue
-                # Keep first table encountered for a location to maintain deterministic routing.
                 if loc not in location_table_map:
                     location_table_map[loc] = table_name
         except Exception:
@@ -125,8 +203,15 @@ def homepage(request):
 
 
 def _display_metric_to_sql_column(metric_name: str) -> str:
+    # Check SQL_CONVERSION first, then check TABLE_SCHEMA data_cols mappings.
     col = SQL_CONVERSION.get(metric_name)
-    return col or metric_name.replace(' ', '_').lower()
+    if col:
+        return col
+    for schema in TABLE_SCHEMA.values():
+        data_cols = schema.get('data_cols', {})
+        if metric_name in data_cols:
+            return data_cols[metric_name]
+    return metric_name.replace(' ', '_').lower()
 
 
 def _normalize_metric_name(metric_name: str) -> str:
@@ -221,37 +306,34 @@ def _closest_window_epochs(conn, table_name, col, loc, target_end_epoch):
     """Find a closest available datetime for location/metric and return a 30-day epoch window."""
     try:
         table_cols = _table_columns(conn, table_name)
-        has_location_col = 'location' in table_cols
+        loc_col = _get_location_col(table_name)
+        dt_col = _get_datetime_col(table_name)
+        has_location_col = loc_col in table_cols
         if col not in table_cols:
             return None, None
 
-        time_fmt = custom_graph.get_time_format(conn, table_name)
         target_epoch = target_end_epoch or int(datetime.now().timestamp())
 
         where_parts = [f"{_quote_ident(col)} IS NOT NULL"]
         params = []
         if has_location_col:
-            where_parts.append("location = ?")
+            where_parts.append(f"{_quote_ident(loc_col)} = ?")
             params.append(loc)
 
-        if time_fmt == 'epoch':
-            target_value = target_epoch
-        else:
-            target_value = datetime.fromtimestamp(target_epoch).strftime("%Y-%m-%d %H:%M:%S")
-
+        target_value = datetime.fromtimestamp(target_epoch).strftime("%Y-%m-%d %H:%M:%S")
         where_clause = ' AND '.join(where_parts)
         cursor = conn.cursor()
 
         cursor.execute(
-            f"SELECT MAX(datetime) FROM {_quote_ident(table_name)} "
-            f"WHERE {where_clause} AND datetime <= ?",
+            f"SELECT MAX({_quote_ident(dt_col)}) FROM {_quote_ident(table_name)} "
+            f"WHERE {where_clause} AND {_quote_ident(dt_col)} <= ?",
             params + [target_value],
         )
         left = cursor.fetchone()[0]
 
         cursor.execute(
-            f"SELECT MIN(datetime) FROM {_quote_ident(table_name)} "
-            f"WHERE {where_clause} AND datetime >= ?",
+            f"SELECT MIN({_quote_ident(dt_col)}) FROM {_quote_ident(table_name)} "
+            f"WHERE {where_clause} AND {_quote_ident(dt_col)} >= ?",
             params + [target_value],
         )
         right = cursor.fetchone()[0]
@@ -276,37 +358,49 @@ def _closest_window_epochs(conn, table_name, col, loc, target_end_epoch):
 
 
 def _load_direct_series(conn, table_name, col, loc, *, start_epoch=None, end_epoch=None):
-    """Directly load datetime/value rows for a location+metric, bypassing broader table queries."""
+    """Directly load datetime/value rows for a location+metric, handling both standard
+    and TABLE_SCHEMA-defined column names."""
     try:
         table_cols = _table_columns(conn, table_name)
         if col not in table_cols:
             return None
 
-        has_location_col = 'location' in table_cols
-        selected_cols = ['datetime', col] + (['location'] if has_location_col else [])
+        loc_col = _get_location_col(table_name)
+        dt_col = _get_datetime_col(table_name)
+        has_location_col = loc_col in table_cols
+
+        selected_cols = [dt_col, col] + ([loc_col] if has_location_col else [])
         where_parts = [f"{_quote_ident(col)} IS NOT NULL"]
         params = []
 
         if has_location_col:
-            where_parts.append('location = ?')
+            where_parts.append(f"{_quote_ident(loc_col)} = ?")
             params.append(loc)
 
-        time_fmt = custom_graph.get_time_format(conn, table_name)
         if start_epoch is not None and end_epoch is not None:
-            if time_fmt == 'epoch':
-                where_parts.append('datetime BETWEEN ? AND ?')
-                params.extend([start_epoch, end_epoch])
-            else:
-                start_dt = datetime.fromtimestamp(start_epoch).strftime('%Y-%m-%d %H:%M:%S')
-                end_dt = datetime.fromtimestamp(end_epoch).strftime('%Y-%m-%d %H:%M:%S')
-                where_parts.append('datetime BETWEEN ? AND ?')
-                params.extend([start_dt, end_dt])
+            start_dt = datetime.fromtimestamp(start_epoch).strftime('%Y-%m-%d %H:%M:%S')
+            end_dt = datetime.fromtimestamp(end_epoch).strftime('%Y-%m-%d %H:%M:%S')
+            where_parts.append(f"{_quote_ident(dt_col)} BETWEEN ? AND ?")
+            params.extend([start_dt, end_dt])
 
         query = (
             f"SELECT {', '.join(_quote_ident(c) for c in selected_cols)} "
-            f"FROM {_quote_ident(table_name)} WHERE {' AND '.join(where_parts)} ORDER BY datetime ASC"
+            f"FROM {_quote_ident(table_name)} WHERE {' AND '.join(where_parts)} "
+            f"ORDER BY {_quote_ident(dt_col)} ASC"
         )
-        return custom_graph.pd.read_sql_query(query, conn, params=params)
+        df = custom_graph.pd.read_sql_query(query, conn, params=params)
+        if df is not None and not df.empty:
+            rename = {}
+            if dt_col != 'datetime' and dt_col in df.columns:
+                rename[dt_col] = 'datetime'
+            if loc_col != 'location' and loc_col in df.columns:
+                rename[loc_col] = 'location'
+            if rename:
+                df = df.rename(columns=rename)
+            # Coerce numeric columns (e.g. COCORAHS uses 'M' for missing)
+            if col in df.columns:
+                df[col] = custom_graph.pd.to_numeric(df[col], errors='coerce')
+        return df
     except Exception:
         return None
 
@@ -464,11 +558,20 @@ def _render_graph_response(
                 start_e = start_epoch
                 end_e = end_epoch
 
-            df = custom_graph.query_data(conn, table_name, start_e, end_e)
+            if table_name in TABLE_SCHEMA:
+                df = _load_direct_series(conn, table_name, col, loc,
+                                         start_epoch=start_e, end_epoch=end_e)
+            else:
+                df = custom_graph.query_data(conn, table_name, start_e, end_e)
+
             if (df is None or df.empty) and fallback_to_closest_window:
                 closest_start, closest_end = _closest_window_epochs(conn, table_name, col, loc, end_e)
                 if closest_start is not None and closest_end is not None:
-                    df = custom_graph.query_data(conn, table_name, closest_start, closest_end)
+                    if table_name in TABLE_SCHEMA:
+                        df = _load_direct_series(conn, table_name, col, loc,
+                                                 start_epoch=closest_start, end_epoch=closest_end)
+                    else:
+                        df = custom_graph.query_data(conn, table_name, closest_start, closest_end)
             if df is None or df.empty:
                 series_list.append(([], []))
                 continue
@@ -554,30 +657,28 @@ def get_latest_date(request):
             cursor = conn.cursor()
 
             table_cols = _table_columns(conn, table_name)
-            has_location_col = 'location' in table_cols
+            loc_col = _get_location_col(table_name)
+            dt_col = _get_datetime_col(table_name)
+            has_location_col = loc_col in table_cols
             has_metric_col = col in table_cols
 
             if not has_metric_col:
-                # Keep API stable for UI by returning no-data instead of raising SQL errors.
                 return JsonResponse(
                     {'latest_date': None, 'message': f'Metric column not found: {col}'},
                     status=404,
                 )
 
-            # Query for max datetime where this column is not null
             if has_location_col:
-                query = f"""
-                    SELECT MAX(datetime)
-                    FROM {_quote_ident(table_name)}
-                    WHERE location = ? AND {_quote_ident(col)} IS NOT NULL
-                """
+                query = (
+                    f"SELECT MAX({_quote_ident(dt_col)}) FROM {_quote_ident(table_name)} "
+                    f"WHERE {_quote_ident(loc_col)} = ? AND {_quote_ident(col)} IS NOT NULL"
+                )
                 cursor.execute(query, (location,))
             else:
-                query = f"""
-                    SELECT MAX(datetime)
-                    FROM {_quote_ident(table_name)}
-                    WHERE {_quote_ident(col)} IS NOT NULL
-                """
+                query = (
+                    f"SELECT MAX({_quote_ident(dt_col)}) FROM {_quote_ident(table_name)} "
+                    f"WHERE {_quote_ident(col)} IS NOT NULL"
+                )
                 cursor.execute(query)
             result = cursor.fetchone()
         
@@ -629,54 +730,96 @@ def maptabs(request):
 
     location_options = {}
     location_availability = {}
-    ignored_metric_columns = {'datetime', 'location', 'unique_id', 'id'}
+    # For TABLE_SCHEMA tables, use the pre-defined data_cols as the display options.
+    schema_display_cols = {
+        tbl: {v: k for k, v in schema['data_cols'].items()}
+        for tbl, schema in TABLE_SCHEMA.items()
+        if 'data_cols' in schema
+    }
+
+    ignored_metric_columns = {'datetime', 'location', 'unique_id', 'id', 'date',
+                               'sampleDate', 'DateTime', 'meta.uid', 'meta.state',
+                               'meta.elev', 'meta.name', 'meta.name', 'latitude',
+                               'longitude', 'sid1', 'sid2', 'station_ID', 'aU_ID',
+                               'sampleDepth', 'station.objectID', 'station.stationId',
+                               'station.latitude', 'station.longitude', 'station.auId',
+                               'station.waterbodyName', 'station.primaryType', 'station.type',
+                               'Station', 'id', 'station_ID'}
     for loc in locations:
         base = loc
         table_name = location_table_map.get(base, LOCATION_TO_TABLE.get(base, 'gauge'))
-        cols = []
-        if curr:
-            try:
-                curr.execute(f"PRAGMA table_info({_quote_ident(table_name)})")
-                cols = [r[1] for r in curr.fetchall()]
-            except Exception:
-                cols = []
+        loc_col = _get_location_col(table_name)
+        dt_col = _get_datetime_col(table_name)
 
-        opts = []
-        availability_for_loc = {}
-        for c in cols:
-            if c in ignored_metric_columns:
-                continue
-            earliest = None
-            latest = None
+        # For tables with known schema, use pre-defined data_cols mapping.
+        if table_name in TABLE_SCHEMA and 'data_cols' in TABLE_SCHEMA[table_name]:
+            data_cols = TABLE_SCHEMA[table_name]['data_cols']
+            opts = list(data_cols.keys())
+            availability_for_loc = {}
+            for display_name, sql_col in data_cols.items():
+                earliest = None
+                latest = None
+                if curr:
+                    try:
+                        curr.execute(
+                            f"SELECT MIN({_quote_ident(dt_col)}), MAX({_quote_ident(dt_col)}) "
+                            f"FROM {_quote_ident(table_name)} "
+                            f"WHERE {_quote_ident(loc_col)} = ? AND {_quote_ident(sql_col)} IS NOT NULL",
+                            (loc,),
+                        )
+                        min_max = curr.fetchone() or (None, None)
+                        earliest_dt = _parse_db_datetime(min_max[0])
+                        latest_dt = _parse_db_datetime(min_max[1])
+                        if earliest_dt:
+                            earliest = earliest_dt.date().isoformat()
+                        if latest_dt:
+                            latest = latest_dt.date().isoformat()
+                    except Exception:
+                        pass
+                availability_for_loc[display_name] = {'start': earliest, 'end': latest}
+        else:
+            cols = []
             if curr:
                 try:
-                    curr.execute(
-                        f"SELECT MIN(datetime), MAX(datetime) FROM {_quote_ident(table_name)} "
-                        f"WHERE location = ? AND {_quote_ident(c)} IS NOT NULL",
-                        (loc,),
-                    )
-                    min_max = curr.fetchone() or (None, None)
-                    earliest_dt = _parse_db_datetime(min_max[0])
-                    latest_dt = _parse_db_datetime(min_max[1])
-                    if earliest_dt:
-                        earliest = earliest_dt.date().isoformat()
-                    if latest_dt:
-                        latest = latest_dt.date().isoformat()
+                    curr.execute(f"PRAGMA table_info({_quote_ident(table_name)})")
+                    cols = [r[1] for r in curr.fetchall()]
                 except Exception:
-                    earliest = None
-                    latest = None
-            if c in rev:
-                display_name = rev[c]
-            else:
-                display_name = c.replace('_', ' ').title()
-            opts.append(display_name)
-            availability_for_loc[display_name] = {
-                'start': earliest,
-                'end': latest,
-            }
+                    cols = []
 
-        if not opts:
-            opts = default_options.get(table_name, ['Value'])
+            opts = []
+            availability_for_loc = {}
+            for c in cols:
+                if c in ignored_metric_columns:
+                    continue
+                earliest = None
+                latest = None
+                if curr:
+                    try:
+                        curr.execute(
+                            f"SELECT MIN({_quote_ident(dt_col)}), MAX({_quote_ident(dt_col)}) "
+                            f"FROM {_quote_ident(table_name)} "
+                            f"WHERE {_quote_ident(loc_col)} = ? AND {_quote_ident(c)} IS NOT NULL",
+                            (loc,),
+                        )
+                        min_max = curr.fetchone() or (None, None)
+                        earliest_dt = _parse_db_datetime(min_max[0])
+                        latest_dt = _parse_db_datetime(min_max[1])
+                        if earliest_dt:
+                            earliest = earliest_dt.date().isoformat()
+                        if latest_dt:
+                            latest = latest_dt.date().isoformat()
+                    except Exception:
+                        earliest = None
+                        latest = None
+                if c in rev:
+                    display_name = rev[c]
+                else:
+                    display_name = c.replace('_', ' ').title()
+                opts.append(display_name)
+                availability_for_loc[display_name] = {'start': earliest, 'end': latest}
+
+            if not opts:
+                opts = default_options.get(table_name, ['Value'])
 
         location_options[loc] = opts
         location_availability[loc] = availability_for_loc
@@ -689,6 +832,9 @@ def maptabs(request):
         'dam': ('/customdamgraph/', 'dam'),
         'mesonet': ('/custommesonetgraph/', 'mesonet'),
         'cocorahs': ('/customcocograph/', 'cocorahs'),
+        'COCORAHS': ('/generate_maptab_graph/', 'location'),
+        'DANR': ('/generate_maptab_graph/', 'location'),
+        'USACE': ('/generate_maptab_graph/', 'location'),
         'shadehill': ('/customshadehillgraph/', None),
         'noaa_weather': ('/customnoaagraph/', 'noaa')
     }
@@ -755,36 +901,54 @@ def custommesonet(request):
     return render(request, 'graphing/custommesonet.html')
 
 def interactiveMap(request):
-    from django.templatetags.static import static
-
-    graphs_dir = os.path.join(settings.BASE_DIR, 'static', 'graphs')
-    places = ['Hazen', 'Stanton', 'Washburn', 'Price', 'Mandan', 'Bismarck', 'Judson',
-              'Breien', 'Cash', 'Wakpala', 'Whitehorse', 'Schmidt', 'Little Eagle',
-              'Oahe', 'Big Bend', 'Fort Randall', 'Gavins Point', 'Garrison', 'Fort Peck',
-              'Fort Yates', 'Mott', 'Carson', 'Linton', 'Lemmon', 'McIntosh', 'Mclaughlin',
-              'Mound City', 'Timber Lake']
-
-    graph_map = {}
+    locations = []
     try:
-        files = os.listdir(graphs_dir)
+        with sqlite3.connect(DB_PATH) as conn:
+            location_table_map, _ = _scan_location_table_map(conn)
+            cur = conn.cursor()
+            for loc, table in location_table_map.items():
+                schema = TABLE_SCHEMA.get(table, {})
+                lat, lon = None, None
+
+                if schema.get('hardcoded_coords') and loc in schema['hardcoded_coords']:
+                    lat, lon = schema['hardcoded_coords'][loc]
+                elif schema.get('lat_col') and schema.get('lon_col'):
+                    lat_col = schema['lat_col']
+                    lon_col = schema['lon_col']
+                    loc_col = schema['location_col']
+                    try:
+                        cur.execute(
+                            f"SELECT {_quote_ident(lat_col)}, {_quote_ident(lon_col)} "
+                            f"FROM {_quote_ident(table)} WHERE {_quote_ident(loc_col)} = ? LIMIT 1",
+                            (loc,)
+                        )
+                        row = cur.fetchone()
+                        if row and row[0] is not None and row[1] is not None:
+                            if schema.get('lat_lon_swapped'):
+                                # Column names are swapped: 'latitude' col = real lon, 'longitude' col = real lat
+                                lon, lat = float(row[0]), float(row[1])
+                            else:
+                                lat, lon = float(row[0]), float(row[1])
+                    except Exception:
+                        pass
+
+                if lat is None or lon is None:
+                    continue
+
+                datasets = list(schema.get('data_cols', {}).keys()) if 'data_cols' in schema else []
+                locations.append({
+                    'name': loc,
+                    'lat': lat,
+                    'lon': lon,
+                    'table': table,
+                    'datasets': datasets,
+                })
     except Exception:
-        files = []
+        pass
 
-    def norm(s):
-        return ''.join((s or '').lower().split())
-
-    for fn in files:
-        if not fn.lower().endswith('.html'):
-            continue
-        fn_norm = norm(fn)
-        for place in places:
-            if norm(place) in fn_norm:
-                graph_map.setdefault(place, []).append(static(f'graphs/{fn}'))
-
-    for k in graph_map:
-        graph_map[k] = sorted(graph_map[k])
-
-    return render(request, 'HTML/interactiveMap.html', {'graph_map_json': json.dumps(graph_map)})
+    return render(request, 'HTML/interactiveMap.html', {
+        'locations_json': json.dumps(locations),
+    })
 
 def customgaugegraph(request):
     return _render_posted_graph(request, fallback_table='gauge', include_diagnostics=True)
@@ -810,3 +974,113 @@ def generate_maptab_graph(request):
     and returns the same HTML fragment as other graph endpoints (plot + stats table).
     """
     return _render_posted_graph(request, fallback_table='gauge', fallback_to_recent_window=True)
+
+
+def api_map_locations(request):
+    """Return JSON list of all locations with lat/lon from the database."""
+    locations = []
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            location_table_map, _ = _scan_location_table_map(conn)
+            cur = conn.cursor()
+            for loc, table in location_table_map.items():
+                schema = TABLE_SCHEMA.get(table, {})
+                lat, lon = None, None
+
+                if schema.get('hardcoded_coords') and loc in schema.get('hardcoded_coords', {}):
+                    lat, lon = schema['hardcoded_coords'][loc]
+                elif schema.get('lat_col') and schema.get('lon_col'):
+                    lat_col = schema['lat_col']
+                    lon_col = schema['lon_col']
+                    loc_col = schema['location_col']
+                    try:
+                        cur.execute(
+                            f"SELECT {_quote_ident(lat_col)}, {_quote_ident(lon_col)} "
+                            f"FROM {_quote_ident(table)} WHERE {_quote_ident(loc_col)} = ? LIMIT 1",
+                            (loc,)
+                        )
+                        row = cur.fetchone()
+                        if row and row[0] is not None and row[1] is not None:
+                            if schema.get('lat_lon_swapped'):
+                                lon, lat = float(row[0]), float(row[1])
+                            else:
+                                lat, lon = float(row[0]), float(row[1])
+                    except Exception:
+                        pass
+
+                if lat is None or lon is None:
+                    continue
+
+                datasets = list(schema.get('data_cols', {}).keys()) if 'data_cols' in schema else []
+                locations.append({
+                    'name': loc,
+                    'lat': lat,
+                    'lon': lon,
+                    'table': table,
+                    'datasets': datasets,
+                })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'locations': locations})
+
+
+def api_timeseries(request):
+    """Return time-series JSON for a location+dataset.
+    Query params: location, dataset
+    Response: {times, values, location, dataset}
+    """
+    location = request.GET.get('location', '').strip()
+    dataset = request.GET.get('dataset', '').strip()
+    if not location or not dataset:
+        return JsonResponse({'error': 'location and dataset required'}, status=400)
+
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            location_table_map, _ = _scan_location_table_map(conn)
+            loc = _resolve_location_name(location, location_table_map)
+            table = location_table_map.get(loc)
+            if not table:
+                return JsonResponse({'error': f'Location not found: {location}'}, status=404)
+
+            schema = TABLE_SCHEMA.get(table)
+            if not schema:
+                return JsonResponse({'error': f'No schema config for table: {table}'}, status=404)
+
+            data_cols = schema.get('data_cols', {})
+            sql_col = data_cols.get(dataset)
+            if not sql_col:
+                sql_col = _display_metric_to_sql_column(dataset)
+
+            loc_col = schema['location_col']
+            dt_col = schema['datetime_col']
+
+            cur = conn.cursor()
+            cur.execute(
+                f"SELECT {_quote_ident(dt_col)}, {_quote_ident(sql_col)} "
+                f"FROM {_quote_ident(table)} "
+                f"WHERE {_quote_ident(loc_col)} = ? AND {_quote_ident(sql_col)} IS NOT NULL "
+                f"ORDER BY {_quote_ident(dt_col)} ASC",
+                (loc,)
+            )
+            rows = cur.fetchall()
+
+        times, values = [], []
+        for row in rows:
+            raw_val = row[1]
+            try:
+                val = float(raw_val)
+            except (TypeError, ValueError):
+                continue
+            import math
+            if math.isnan(val):
+                continue
+            dt = _parse_db_datetime(row[0])
+            if dt is None:
+                continue
+            times.append(dt.isoformat())
+            values.append(val)
+
+        return JsonResponse({'times': times, 'values': values, 'location': loc, 'dataset': dataset})
+    except Exception as e:
+        import traceback
+        return JsonResponse({'error': str(e), 'trace': traceback.format_exc()}, status=500)

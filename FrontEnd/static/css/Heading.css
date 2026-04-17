@@ -141,6 +141,19 @@ body, .dropdown-content, .dropdown-link {
   margin: 5px 0;
   background-color: #000;
   border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Animate hamburger → ✕ when nav is open */
+#nav-menu.open ~ * .menu-toggle-bar:nth-child(1),
+.navbar:has(#nav-menu.open) .menu-toggle-bar:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+.navbar:has(#nav-menu.open) .menu-toggle-bar:nth-child(2) {
+  opacity: 0;
+}
+.navbar:has(#nav-menu.open) .menu-toggle-bar:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
 }
 
 /* ======= MEDIA QUERIES ======= */
@@ -156,7 +169,7 @@ body, .dropdown-content, .dropdown-link {
   }
 }
 
-/* Mobile */
+/* Mobile — hamburger layout */
 @media (max-width: 640px) {
   .navbar {
     padding: 16px;
