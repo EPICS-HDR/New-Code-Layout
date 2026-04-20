@@ -1,6 +1,8 @@
-# Standing Rock Water Data Dashboard — Documentation
+# Standing Rock Water Data Dashboard — Developer & Operator Guide
 
-A Django web application that displays water and weather data for the Standing Rock Nation and surrounding areas (ND/SD). Pulls data from government agencies (USGS, USACE, NOAA, Mesonet, CoCoRaHS, DANR) and presents it via interactive maps and custom graphs.
+A Django web application that aggregates water quality, climate, and dam-operations data for the Standing Rock Nation and surrounding areas in North and South Dakota. Data is pulled from three federal/state sources (COCORAHS precipitation, DANR water quality, USACE dam operations), stored in a single SQLite database, and exposed through an interactive Mapbox map, a custom graph dashboard, and a role-based admin panel.
+
+This guide is the single source of truth for running, debugging, and modifying the project. It assumes a technical reader comfortable with Python, Django, SQL, and the command line.
 
 ---
 
@@ -8,16 +10,19 @@ A Django web application that displays water and weather data for the Standing R
 
 1. [Setup & Running](#1-setup--running)
 2. [Project Structure](#2-project-structure)
-3. [URL Routes](#3-url-routes)
-4. [Admin API Endpoints](#4-admin-api-endpoints)
-5. [Configuration Deep Dive](#5-configuration-deep-dive)
+3. [Database Schema](#3-database-schema)
+4. [URL Routes](#4-url-routes)
+5. [Configuration Files](#5-configuration-files)
 6. [Frontend Pages](#6-frontend-pages)
 7. [Admin Dashboard](#7-admin-dashboard)
-8. [Data Sources & Database Schema](#8-data-sources--database-schema)
-9. [Custom Graph System](#9-custom-graph-system)
-10. [Debugging & Troubleshooting](#10-debugging--troubleshooting)
-11. [Deployment](#11-deployment)
-12. [Known Bugs & Limitations](#12-known-bugs--limitations)
+8. [Admin API Reference](#8-admin-api-reference)
+9. [Data Pipeline (Source Files)](#9-data-pipeline-source-files)
+10. [Custom Graph Rendering System](#10-custom-graph-rendering-system)
+11. [Interactive Map Rendering System](#11-interactive-map-rendering-system)
+12. [Common Tasks: Adding a Location, Metric, or Data Source](#12-common-tasks)
+13. [Debugging & Troubleshooting](#13-debugging--troubleshooting)
+14. [Deployment](#14-deployment)
+15. [Known Bugs & Limitations](#15-known-bugs--limitations)
 
 ---
 
@@ -26,7 +31,8 @@ A Django web application that displays water and weather data for the Standing R
 ### Prerequisites
 
 - Python 3.10+
-- pip
+- `pip`
+- A copy of `database.db` at the repository root (the DB is gitignored for size reasons; contact the team if missing)
 
 ### Local Development
 
@@ -35,36 +41,57 @@ A Django web application that displays water and weather data for the Standing R
 cd /path/to/New-Code-Layout
 
 # 2. Create and activate virtual environment
-python -m venv env
+python3 -m venv env
 source env/bin/activate        # Mac/Linux
 env\Scripts\activate           # Windows
 
 # 3. Install dependencies
-pip install django numpy plotly xlsxwriter whitenoise pandas matplotlib
+pip install django plotly pandas whitenoise numpy xlsxwriter sqlite-utils matplotlib requests
 
-# 4. Run migrations (for auth/user tables)
+# 4. Run Django migrations (creates db.sqlite3 for auth/sessions)
 python manage.py migrate
 
-# 5. Create a superuser (admin account)
+# 5. Create an admin account
 python manage.py createsuperuser
 
 # 6. Start the dev server
 python manage.py runserver
 ```
 
-- **Site:** http://127.0.0.1:8000
-- **Admin panel:** http://127.0.0.1:8000/admin/login
+URLs once running:
+
+| Page | URL |
+|------|-----|
+| Home | http://127.0.0.1:8000/ |
+| Interactive Map | http://127.0.0.1:8000/map/ |
+| Custom Graphs | http://127.0.0.1:8000/maptabs/ |
+| Admin login | http://127.0.0.1:8000/admin/login/ |
+
+### Database Path Resolution
+
+The measurement database is `database.db` at the repository root. The code finds it via this priority order:
+
+1. `MEASUREMENTS_DB_PATH` environment variable (explicit override)
+2. Django `settings.BASE_DIR / database.db` (falls back to nothing in this project since BASE_DIR is `FrontEnd/`)
+3. Repo root detected by walking up from `BackEnd/custom_graph.py` looking for a folder named `New-Code-Layout`
+4. `BackEnd/../database.db`
+
+If you deploy under a different folder name or keep the DB elsewhere, set:
+
+```bash
+export MEASUREMENTS_DB_PATH=/absolute/path/to/database.db
+```
 
 ### Common Startup Errors
 
 | Error | Fix |
 |-------|-----|
-| `ModuleNotFoundError: No module named 'django'` | Activate your venv, then `pip install django` |
-| `ModuleNotFoundError: No module named 'plotly'` | `pip install plotly` |
-| `ModuleNotFoundError: No module named 'whitenoise'` | `pip install whitenoise` |
-| `SyntaxError` from `BackEnd/SourceFiles/config.py` | The file has a git merge conflict. The app has a fallback that catches this — it will still run, but fix the conflict for clean imports |
-| `OperationalError: no such table` | Run `python manage.py migrate` |
-| Port 8000 in use | `python manage.py runserver 8080` or kill the process on 8000 |
+| `ModuleNotFoundError: No module named 'django'` | Activate your venv first |
+| `ModuleNotFoundError: No module named 'plotly' / 'whitenoise' / 'pandas'` | `pip install <module>` |
+| `OperationalError: no such table: auth_user` | Run `python manage.py migrate` |
+| `database.db not found` warning at import time | Ensure the DB file exists at the repo root, or set `MEASUREMENTS_DB_PATH` |
+| Port 8000 in use | `python manage.py runserver 8080` or `lsof -ti:8000 \| xargs kill` |
+| `SyntaxError` from `BackEnd/SourceFiles/config.py` | Merge conflict in config.py — fix the conflict markers. `FrontEnd/services/views.py` has a fallback that keeps the app running, but metric/location mappings may be incomplete |
 
 ---
 
@@ -72,473 +99,751 @@ python manage.py runserver
 
 ```
 New-Code-Layout/
-├── manage.py                          # Django entry point
-├── Measurements.db                    # Main data (water/weather measurements)
-├── db.sqlite3                         # Django auth DB (users, sessions)
-├── mydatabase.db                      # Secondary data store
-├── firebase.json / .firebaserc        # Firebase hosting config
+├── manage.py                         # Django entry point
+├── database.db                       # Measurement data (COCORAHS, DANR, USACE tables)
+├── db.sqlite3                        # Django auth DB (users, sessions)
+├── firebase.json / .firebaserc       # Firebase hosting config (static hosting only)
 │
 ├── BackEnd/
-│   ├── commands.py                    # Script runner (called from admin "Run Script")
-│   ├── custom_graph.py                # Graph generation (matplotlib, pandas, plotly)
-│   ├── log.txt                        # System activity log
+│   ├── commands.py                   # Command stubs called by admin "Run Updates" button
+│   ├── custom_graph.py               # DB path detection, query helpers, Plotly graph rendering
+│   ├── log.txt                       # System activity log (admin console reads this)
 │   └── SourceFiles/
-│       ├── config.py                  # DB_PATH, LOCATION_TO_TABLE, SQL_CONVERSION maps
-│       ├── _COCORAHS.py               # CoCoRaHS data fetcher
-│       ├── _DANR.py                   # DANR data fetcher
-│       └── _USACE.py                  # Army Corps data fetcher
+│       ├── config.py                 # DB_PATH, LOCATION_TO_TABLE, SQL_CONVERSION, per-source API configs
+│       ├── _COCORAHS.py              # CoCoRaHS precipitation fetcher (ACIS API)
+│       ├── _DANR.py                  # SD DANR water-quality fetcher
+│       └── _USACE.py                 # USACE Missouri River dam-ops fetcher
 │
 ├── FrontEnd/
+│   ├── 404.html, index.html          # Static placeholders (used by Firebase hosting, not Django)
 │   ├── config/
-│   │   ├── settings.py                # Django settings (DEBUG, ALLOWED_HOSTS, apps, DB)
-│   │   ├── urls.py                    # Root URL routing
-│   │   ├── wsgi.py / asgi.py          # Server entry points
-│   │   ├── api_config.py              # API settings
-│   │   └── info.py                    # Email config (imported by settings.py)
+│   │   ├── settings.py               # Django settings: DEBUG, ALLOWED_HOSTS, DBs, static, middleware
+│   │   ├── urls.py                   # Root URL routes + API routes
+│   │   ├── wsgi.py / asgi.py         # Server entry points
+│   │   ├── api_config.py             # API settings (currently empty / reserved)
+│   │   └── info.py                   # Email credentials (imported by settings.py)
 │   │
-│   ├── services/                      # Main public-facing app
-│   │   ├── views.py                   # All public page views + graph generation logic
-│   │   └── templates/HTML/            # Public templates
-│   │       ├── homepage.html
-│   │       ├── interactiveMap.html
-│   │       ├── maptabs.html           # Custom graph dashboard
-│   │       ├── graphdisplay.html      # Rendered graph output
-│   │       ├── about.html
-│   │       ├── contactus.html
-│   │       └── navbar.html
+│   ├── services/                     # Public-facing app
+│   │   ├── views.py                  # Page views, graph endpoints, JSON APIs, TABLE_SCHEMA
+│   │   └── templates/
+│   │       ├── HTML/                 # Public templates
+│   │       │   ├── homepage.html
+│   │       │   ├── navbar.html       # Partial — included via {% include %}, no <html> wrapper
+│   │       │   ├── interactiveMap.html
+│   │       │   ├── maptabs.html      # Custom graph dashboard
+│   │       │   ├── graphdisplay.html # Server-rendered graph fragment for maptabs
+│   │       │   ├── about.html
+│   │       │   └── contactus.html
+│   │       ├── admin_dashboard/      # Admin templates
+│   │       │   ├── login.html
+│   │       │   └── dashboard.html
+│   │       └── graphing/
+│   │           └── test.html         # Legacy test page at /homep/
 │   │
-│   ├── admin_dashboard/               # Admin app
-│   │   ├── views.py                   # Auth, log API, data insert API, user CRUD API
-│   │   ├── urls.py                    # /admin/* routes
-│   │   └── templates/admin_dashboard/
-│   │       ├── login.html
-│   │       └── dashboard.html
+│   ├── admin_dashboard/              # Admin app
+│   │   ├── views.py                  # Auth, console log API, data-insert API, user CRUD API
+│   │   └── urls.py                   # /admin/* routes
 │   │
 │   └── static/
-│       ├── css/                       # 13 stylesheets
-│       ├── js/                        # 10 JS files (map.js, openModals.js, admin_dashboard.js, etc.)
-│       ├── graphs/                    # Pre-generated HTML graphs (Plotly)
+│       ├── css/                      # 13 stylesheets
+│       ├── js/
+│       │   ├── map.js                # Mapbox init
+│       │   ├── openModals.js         # Builds markers + modals from window.mapLocations
+│       │   ├── updateGraphs.js       # Calls /api/timeseries/ and renders Plotly in modal
+│       │   ├── admin_dashboard.js    # Admin dashboard client logic
+│       │   ├── maptabs.js            # (legacy, not referenced)
+│       │   ├── mapgraphs.js          # (legacy, not referenced)
+│       │   ├── statistics.js         # (legacy, not referenced)
+│       │   ├── selectchecks.js       # (legacy, not referenced)
+│       │   ├── checkboxes.js         # (legacy, not referenced)
+│       │   └── service-worker.js     # (legacy PWA worker)
+│       ├── graphs/                   # 200+ pre-generated HTML graph files (LEGACY — no longer used at runtime)
 │       └── images/
 ```
 
-### Key Files to Know
+### Files That Matter Most
 
-| File | What It Does |
-|------|-------------|
-| `FrontEnd/config/settings.py` | Django config — DEBUG flag, ALLOWED_HOSTS, DB path, static files, middleware |
-| `FrontEnd/config/urls.py` | All URL routes for the entire app |
-| `FrontEnd/services/views.py` | Core logic — page rendering, graph generation, DB queries, location resolution |
-| `FrontEnd/admin_dashboard/views.py` | Admin auth, console log API, data insert API, user management API |
-| `BackEnd/SourceFiles/config.py` | `LOCATION_TO_TABLE` mapping, `SQL_CONVERSION` (display name -> column name), `DB_PATH` |
-| `BackEnd/custom_graph.py` | Graph rendering engine (matplotlib/plotly), `query_data()`, `get_time_format()`, `get_latest_datetime()` |
-| `BackEnd/log.txt` | Activity log read by the admin console |
+| File | Role |
+|------|------|
+| [FrontEnd/config/settings.py](FrontEnd/config/settings.py) | Django config: DEBUG, ALLOWED_HOSTS, DB path, static files, middleware |
+| [FrontEnd/config/urls.py](FrontEnd/config/urls.py) | All URL routes |
+| [FrontEnd/services/views.py](FrontEnd/services/views.py) | Page views, graph endpoints, JSON APIs, `TABLE_SCHEMA` dictionary |
+| [FrontEnd/admin_dashboard/views.py](FrontEnd/admin_dashboard/views.py) | Admin auth, console/log APIs, data-insert API, user CRUD API |
+| [BackEnd/SourceFiles/config.py](BackEnd/SourceFiles/config.py) | `DB_PATH`, `LOCATION_TO_TABLE`, `SQL_CONVERSION`, per-source `*Config` dicts |
+| [BackEnd/custom_graph.py](BackEnd/custom_graph.py) | DB path resolution + `query_data()`, `get_time_format()`, `get_latest_datetime()`, `_prepare_df_for_plot()` |
+| [BackEnd/log.txt](BackEnd/log.txt) | Activity log surfaced in the admin console |
+| [FrontEnd/static/js/admin_dashboard.js](FrontEnd/static/js/admin_dashboard.js) | Admin client (tabs, log polling, data entry, user CRUD) |
+| [FrontEnd/static/js/openModals.js](FrontEnd/static/js/openModals.js) + [updateGraphs.js](FrontEnd/static/js/updateGraphs.js) | Interactive map: build markers, fetch `/api/timeseries/`, render Plotly |
 
 ---
 
-## 3. URL Routes
+## 3. Database Schema
 
-### Public Routes (`FrontEnd/config/urls.py`)
+**`database.db`** contains only three real tables plus a staging table. The public frontend and admin panel both read from this file.
 
-| URL | View Function | Description |
-|-----|--------------|-------------|
-| `/` or `/home/` | `homepage` | Landing page |
-| `/map/` | `interactiveMap` | Interactive Mapbox map with 28 station markers |
-| `/maptabs/` | `maptabs` | Custom graph dashboard |
-| `/about/` | `about` | About page |
-| `/contactus/` | `contactus` | Contact form |
-| `/forecast/` | `forecast` | Placeholder (not implemented) |
-| `/health` | `health` | Returns "OK" (health check) |
-| `/generate_maptab_graph/` | `generate_maptab_graph` | POST — generates graph from maptabs form |
-| `/get_latest_date/` | `get_latest_date` | POST — returns latest available data date for location/metric |
-| `/customgaugegraph/` | `customgaugegraph` | POST — gauge graph |
-| `/customdamgraph/` | `customdamgraph` | POST — dam graph |
-| `/custommesonetgraph/` | `custommesonetgraph` | POST — mesonet graph |
-| `/customcocograph/` | `customcocograph` | POST — CoCoRaHS graph |
-| `/customnoaagraph/` | `customnoaagraph` | POST — NOAA graph |
-| `/customshadehillgraph/` | `customshadehillgraph` | POST — Shadehill graph |
+### `COCORAHS` — Citizen-observer precipitation network
 
-### Admin Routes (`FrontEnd/admin_dashboard/urls.py`, prefixed with `/admin/`)
+| Column | Type | Notes |
+|---|---|---|
+| unique_id | TEXT | Hash of row, used for upsert deduplication |
+| meta.uid | INTEGER | Source-side UID |
+| meta.state | TEXT | |
+| meta.elev | FLOAT | |
+| **meta.name** | **TEXT** | **Location name** (e.g. `BISMARCK 1.3 WNW`) |
+| **date** | **TEXT** | **Datetime** (YYYY-MM-DD) |
+| v1 | TEXT | Max Temperature (degrees F) |
+| v2 | TEXT | Min Temperature |
+| v3 | TEXT | Average Temperature |
+| v4 | TEXT | Observed Temperature |
+| v5 | TEXT | Precipitation (inches) |
+| v6 | TEXT | Snowfall |
+| v7 | TEXT | Snow Depth |
+| latitude | FLOAT | **Stored swapped** — column holds longitude |
+| longitude | FLOAT | **Stored swapped** — column holds latitude |
+| sid1, sid2 | TEXT | Station IDs |
+
+The `v1`–`v7` semantics, the lat/lon swap, and the alternate `meta.name` location column are all handled by `TABLE_SCHEMA['COCORAHS']` in [views.py](FrontEnd/services/views.py).
+
+### `DANR` — South Dakota water quality samples
+
+| Column | Type | Notes |
+|---|---|---|
+| unique_id | TEXT | Upsert hash |
+| id | FLOAT | |
+| station_ID | TEXT | |
+| aU_ID | TEXT | |
+| **sampleDate** | **TEXT** | **Datetime (ISO 8601)** |
+| sampleDepth | TEXT | |
+| transparency, waterTemperature, dissolvedOxygen, pH, specificConductance | TEXT | Field measurements |
+| tss, tkn, ammonia, nitrateNitrite, tp, eColi, chlorophyllAlpha | TEXT | Lab results |
+| station.objectID | INTEGER | |
+| **station.stationId** | **TEXT** | **Location identifier** (e.g. `SWLAZZZ2411A`, `460740`) |
+| station.latitude, station.longitude | FLOAT | Proper ordering (not swapped) |
+| station.auId, station.waterbodyName, station.primaryType, station.type | TEXT | |
+
+Roughly 330 unique stations, 87k+ sample rows. Numeric fields are stored as TEXT and coerced by `pd.to_numeric(..., errors='coerce')` in `_load_direct_series()`.
+
+### `USACE` — Missouri River dam hourly operations
+
+| Column | Type | Notes |
+|---|---|---|
+| unique_id | TEXT | Upsert hash |
+| **DateTime** | **TEXT** | **Datetime (`YYYY-MM-DD HH:MM`)** |
+| Temp_Air, Temp_Water | TEXT | °F |
+| Flow_Out, Flow_Spill, Flow_Powerhouse | TEXT | cfs |
+| Elev, Elev_Tailwater | TEXT | feet |
+| Energy | TEXT | MWh |
+| **Station** | **TEXT** | **Station code** (currently only `GARR` = Garrison Dam) |
+
+Latitude/longitude are **not stored in the table**. Coordinates for the map come from `TABLE_SCHEMA['USACE']['hardcoded_coords']`, which currently only has `GARR: (47.4988, -101.4194)`.
+
+### `temp_staging`
+
+Scratch table used by each source file's `_process()` step. Safe to delete between runs; recreated automatically.
+
+### Key Point on Schemas
+
+The tables use **different column names for the same logical concepts** (location, datetime). This is why [views.py](FrontEnd/services/views.py) declares a `TABLE_SCHEMA` dictionary that maps each real table to its `location_col`, `datetime_col`, `lat_col`, `lon_col`, and `data_cols` (display-name → SQL-column mapping). Any code that needs to query these tables should look up the schema via `_get_location_col(table_name)` / `_get_datetime_col(table_name)` rather than hardcoding `location` / `datetime`.
+
+---
+
+## 4. URL Routes
+
+### Public Routes — [FrontEnd/config/urls.py](FrontEnd/config/urls.py)
+
+| URL | Method | View | Purpose |
+|-----|--------|------|---------|
+| `/` or `/home/` | GET | `homepage` | Landing page |
+| `/about/` | GET | `about` | About page |
+| `/contactus/` | GET | `contactus` | Contact form (no backend handler — see Known Bugs) |
+| `/forecast/` | GET | `forecast` | Placeholder, not implemented |
+| `/map/` | GET | `interactiveMap` | Mapbox map — injects DB-derived location list as `window.mapLocations` |
+| `/maptabs/` | GET | `maptabs` | Custom graph dashboard |
+| `/health` | GET | `health` | Returns `"OK"` — use for uptime checks |
+| `/homep/` | GET | `test` | Legacy test template at `graphing/test.html` |
+| `/generate_maptab_graph/` | POST | `generate_maptab_graph` | Server-rendered Plotly graph + stats table for the maptabs form |
+| `/get_latest_date/` | POST | `get_latest_date` | Returns the most recent DB datetime for a location/metric |
+| `/api/map_locations/` | GET | `api_map_locations` | JSON list of all mappable locations + metadata |
+| `/api/timeseries/?location=X&dataset=Y` | GET | `api_timeseries` | JSON time-series for a location + dataset, used by the map modal |
+
+### Legacy Graph Endpoints
+
+These exist but are broken because the tables they query (`gauge`, `mesonet`, `cocorahs`-lowercase, `shadehill`, `noaa_weather`) **no longer exist in `database.db`**. They will silently return an empty graph:
+
+- `/customgaugegraph/` → `customgaugegraph`
+- `/customcocograph/` → `customcocograph`
+- `/custommesonetgraph/` → `custommesonetgraph`
+- `/customnoaagraph/` → `customnoaagraph`
+- `/customshadehillgraph/` → `customshadehillgraph`
+
+Either re-point these to the current `COCORAHS`/`DANR`/`USACE` tables via `TABLE_SCHEMA`, or remove the routes and views entirely. The custom graph dashboard routes everything through `/generate_maptab_graph/` now.
+
+### Admin Routes — [FrontEnd/admin_dashboard/urls.py](FrontEnd/admin_dashboard/urls.py) (mounted under `/admin/`)
 
 | URL | Method | View | Access |
 |-----|--------|------|--------|
-| `/admin/login/` | GET/POST | `admin_login` | Public |
-| `/admin/logout/` | GET | `admin_logout` | Any logged-in |
+| `/admin/login/` | GET, POST | `admin_login` | Public |
+| `/admin/logout/` | GET | `admin_logout` | Authenticated |
 | `/admin/` | GET | `admin_dashboard` | Admin or Data Moderator |
-| `/admin/api/logs/` | GET | `api_logs` | Admin or Data Moderator |
+| `/admin/api/logs/?lines=N` | GET | `api_logs` | Admin or Data Moderator |
 | `/admin/api/run-script/` | POST | `api_run_script` | Admin only |
 | `/admin/api/tables/` | GET | `api_tables` | Admin or Data Moderator |
 | `/admin/api/tables/<name>/columns/` | GET | `api_table_columns` | Admin or Data Moderator |
 | `/admin/api/insert/` | POST | `api_insert` | Admin or Data Moderator |
-| `/admin/api/users/` | GET/POST | `api_users_list` | Admin only |
-| `/admin/api/users/<id>/` | PUT/DELETE | `api_user_detail` | Admin only |
+| `/admin/api/users/` | GET, POST | `api_users_list` | Admin only |
+| `/admin/api/users/<id>/` | PUT, DELETE | `api_user_detail` | Admin only |
+
+Note: `api_commands` is defined and wired in the frontend (`admin_dashboard.js` calls `/admin/api/commands/`) but the route is **not registered** in `urls.py`. The frontend gracefully falls back to hard-coded commands when this 404s.
 
 ---
 
-## 4. Admin API Endpoints
+## 5. Configuration Files
 
-### `GET /admin/api/logs/?lines=200`
-Returns last N lines from `BackEnd/log.txt` plus any in-memory script output.
-```json
-{"lines": ["[2026-03-15 14:30:00] Data fetched...", ...], "running": false, "exit_code": 0}
-```
+### [FrontEnd/config/settings.py](FrontEnd/config/settings.py)
 
-### `POST /admin/api/run-script/`
-Runs a backend command in a background thread. Body: `{"command": "listAllSources"}`. Returns `{"status": "started"}` or `{"status": "already_running"}`.
+| Setting | What to know |
+|---|---|
+| `DEBUG = True` | Dev default. Set `False` for production. |
+| `ALLOWED_HOSTS` | Lists all Azure domains + `127.0.0.1` + `localhost`. Add any new deploy domain here. |
+| `CSRF_TRUSTED_ORIGINS` | Must include the `https://` form of any production domain. |
+| `DATABASES['default']` | Points to `db.sqlite3` at repo root for **Django auth only** (users, sessions). Not the measurement DB. |
+| `INSTALLED_APPS` | Includes `FrontEnd.services` (public) and `FrontEnd.admin_dashboard`. |
+| `MIDDLEWARE` | Uses `WhiteNoiseMiddleware` — required for serving static files in production. |
+| `STATIC_URL`, `STATICFILES_DIRS`, `STATIC_ROOT` | Source at `FrontEnd/static/`, collected to `FrontEnd/staticfiles/`. Run `collectstatic` before deploying. |
+| `SECRET_KEY` | Hardcoded and insecure. For production, replace with an env-var read. |
+| `LOGIN_URL = '/admin/login/'` | Where `@login_required` redirects unauthenticated users. |
 
-### `GET /admin/api/tables/`
-Lists all tables in `Measurements.db`: `{"tables": ["cocorahs", "dam", "mesonet", ...]}`
+### [FrontEnd/config/info.py](FrontEnd/config/info.py)
 
-### `GET /admin/api/tables/<name>/columns/`
-Returns column metadata: `{"table": "dam", "columns": [{"name": "elevation", "type": "FLOAT", ...}]}`
+Holds Gmail SMTP credentials imported into `settings.py`. Currently committed to the repo with real-looking credentials — **should be moved to environment variables before any public release**.
 
-### `POST /admin/api/insert/`
-Inserts a row. Body: `{"table": "dam", "data": {"location": "Oahe", "elevation": 1615.5, "datetime": "2026-03-15"}}`. Logs the insert to `BackEnd/log.txt`.
+### [BackEnd/SourceFiles/config.py](BackEnd/SourceFiles/config.py)
 
-### `GET /admin/api/users/`
-Lists all users with role, active status, join date.
+Centralized config for backend data pulls and display-name mappings:
 
-### `POST /admin/api/users/`
-Creates a user. Body: `{"username": "jsmith", "password": "...", "email": "...", "role": "admin"|"data_moderator"}`.
+| Symbol | Purpose |
+|---|---|
+| `DB_PATH` | Absolute path to `database.db`, computed relative to this file |
+| `LOCATION_TO_TABLE` | Fallback location → table mapping used when dynamic DB scan can't resolve a posted location |
+| `SQL_CONVERSION` | Display metric name → legacy SQL column name. Primary lookup in `_display_metric_to_sql_column()`; `TABLE_SCHEMA.data_cols` takes precedence for the three current tables |
+| `DANRConfig` | `baseURL`, `stationList` (330+ station IDs), `dateTimeFormat` |
+| `COCORAHSConfig` | `baseURL`, `stationList` (54 station→code+start-date dict), `Elements` (7 data fields) |
+| `USACEConfig` | `baseURL`, `stationList` (currently only `["GARR"]`), `ColumnNames` (9 columns) |
 
-### `PUT /admin/api/users/<id>/`
-Updates email, role, password, active status. Cannot change your own role or deactivate yourself.
+**To add a station**, edit the appropriate `*Config['stationList']` and re-run that source file's `update()`.
 
-### `DELETE /admin/api/users/<id>/`
-Deletes a user. Cannot delete yourself.
+### [FrontEnd/services/views.py](FrontEnd/services/views.py) — `TABLE_SCHEMA`
 
----
+This is the single most important schema-mapping dictionary in the codebase. Every schema-aware query in `views.py` looks up table metadata here:
 
-## 5. Configuration Deep Dive
-
-### `settings.py` — Key Settings to Modify
-
-**`DEBUG`** — Set to `True` for local dev (shows tracebacks). Set to `False` for production.
-
-**`ALLOWED_HOSTS`** — Must include any domain/IP the server runs on:
 ```python
-ALLOWED_HOSTS = [
-    'standing-rock-dev-buduamfpfuafaqdw.eastus-01.azurewebsites.net',
-    '127.0.0.1', 'localhost',
-    'standingrock-demo.azurewebsites.net',
-    'standingrock-dashboard.azurewebsites.net',
-]
+TABLE_SCHEMA = {
+    'COCORAHS': {
+        'location_col': 'meta.name',
+        'datetime_col': 'date',
+        'lat_col': 'latitude',   # Note: physically swapped in DB
+        'lon_col': 'longitude',
+        'lat_lon_swapped': True,
+        'data_cols': {
+            'Max Temperature': 'v1', 'Min Temperature': 'v2',
+            'Average Temperature': 'v3', 'Observed Temperature': 'v4',
+            'Precipitation': 'v5', 'Snowfall': 'v6', 'Snow Depth': 'v7',
+        },
+    },
+    'DANR': { ... 'location_col': 'station.stationId', 'datetime_col': 'sampleDate', ... },
+    'USACE': { ... 'location_col': 'Station', 'datetime_col': 'DateTime',
+               'hardcoded_coords': {'GARR': (47.4988, -101.4194)}, ... },
+}
 ```
-If you deploy to a new domain, add it here AND to `CSRF_TRUSTED_ORIGINS`.
 
-**`DATABASES`** — Django auth uses `db.sqlite3` at repo root. Measurement data is in `Measurements.db` (separate, accessed directly via `sqlite3` module in views).
-
-**`STATIC_ROOT` / `STATICFILES_STORAGE`** — Uses WhiteNoise for serving static files in production. Run `python manage.py collectstatic` before deploying.
-
-**`SECRET_KEY`** — Currently hardcoded and insecure. For production, use an environment variable.
-
-### `BackEnd/SourceFiles/config.py` — Data Mappings
-
-Three critical dictionaries:
-
-- **`LOCATION_TO_TABLE`** — Maps location names to DB table names (e.g., `"Oahe" -> "dam"`, `"Fort Yates" -> "mesonet"`)
-- **`SQL_CONVERSION`** — Maps display metric names to DB column names (e.g., `"Gauge Height" -> "gauge_height"`, `"Average Air Temperature" -> "avg_air_temp"`)
-- **`DB_PATH`** — Path to `Measurements.db`
-
-**To add a new location:** Add it to `LOCATION_TO_TABLE` and ensure its data exists in the corresponding DB table. The app also dynamically scans tables via `_scan_location_table_map()`, so if the table has a `location` column, new locations may appear automatically.
-
-**To add a new metric:** Add the display name -> column name mapping to `SQL_CONVERSION`, and ensure the column exists in the DB table.
+Adding a new table without `location` / `datetime` columns? Add an entry here. Helpers `_get_location_col(table)` and `_get_datetime_col(table)` default to `'location'` / `'datetime'` when no entry exists.
 
 ### User Roles
 
 Implemented via Django's built-in auth:
-- **Admin** — `is_staff=True` on the User model. Full access.
-- **Data Moderator** — Member of the `"Data Moderator"` Django Group. Can view logs and insert data, but no user management or script execution.
+
+| Role | Backed by | Access |
+|---|---|---|
+| **Admin** | `User.is_staff = True` | Everything: console, data entry, user CRUD, script execution |
+| **Data Moderator** | Member of the `"Data Moderator"` `Group` | Console log + data entry. No user CRUD. No script execution. |
+| **User** (neither) | — | Cannot log into the admin panel. |
+
+Helpers in [admin_dashboard/views.py](FrontEnd/admin_dashboard/views.py):
+- `_get_user_role(user)` returns `'admin'`, `'data_moderator'`, or `None`
+- `_has_dashboard_access(user)` — allows admin + moderator
+- `@_dashboard_required` — decorator for admin + moderator endpoints
+- `@_admin_only` — decorator for admin-only endpoints
 
 ---
 
 ## 6. Frontend Pages
 
-### Home (`/`)
-Landing page with hero section, two service cards (Interactive Map, Custom Graphs), and footer contact email.
+### Home — `/`
+Hero section, "Goals" and "What We Do" sections with CDN-hosted Builder.io images, two service cards (Interactive Map, Custom Graphs), and a footer email link. No dynamic data.
 
-### Interactive Map (`/map/`)
-Full-screen Mapbox map with 28 color-coded markers:
-- **Red** = Water Gauge (USGS) — river levels, flow, temperature
-- **Blue** = Dam (USACE) — reservoir levels, dam flow
-- **Green** = Weather Station (Mesonet) — air temp, humidity, rainfall
+### Interactive Map — `/map/`
+Mapbox map centered on `[-100.5, 46.5]` with bounds locked roughly to ND/SD/MT. The view function `interactiveMap()` in [views.py](FrontEnd/services/views.py):
 
-Clicking a marker opens a modal with tabbed data views (Chart/Table). Graphs are pre-generated HTML files served from `FrontEnd/static/graphs/`. The view function `interactiveMap()` scans that directory and matches filenames to place names.
+1. Calls `_scan_location_table_map(conn)` to find every location present in any DB table with a known location column.
+2. For each location, pulls lat/lon from either:
+   - `TABLE_SCHEMA[table]['hardcoded_coords']` (USACE only), or
+   - the schema's `lat_col` / `lon_col` (applying the lat/lon swap for COCORAHS).
+3. Serializes `{name, lat, lon, table, datasets}` into `window.mapLocations`.
 
-### Custom Graph Dashboard (`/maptabs/`)
-User selects location -> metric -> date range -> Generate. The form POSTs to `/generate_maptab_graph/` which queries `Measurements.db`, builds a Plotly graph, and returns it in an iframe. Also shows a statistics table (mean, SD, median, min, max, range).
+[openModals.js](FrontEnd/static/js/openModals.js) builds a Mapbox marker per location, colored by source table:
 
-**"Recent Data" button** — POSTs to `/get_latest_date/` to find the most recent data point for the selected location/metric, then auto-fills a 30-day window.
+| Table | Marker color | Hex |
+|---|---|---|
+| DANR | red | `#f91d1d` |
+| COCORAHS | green | `#057c37` |
+| USACE | blue | `#140ceb` |
 
-**Date quick-ranges:** Last 7 Days, Last 30 Days, YTD, Last 1 Year, Clear.
+**Note:** The on-screen legend in [interactiveMap.html](FrontEnd/services/templates/HTML/interactiveMap.html) only shows two entries (DANR, COCORAHS). USACE markers appear on the map but are missing from the legend.
 
-### About (`/about/`)
-Two sections: Standing Rock Sioux Tribe info and EPICS HDR Purdue team info, with external links.
+Clicking a marker:
+- Opens a modal containing a heading, a dataset `<select>` (if the station has multiple datasets), and a graph container.
+- Calls `fetchAndUpdateGraph(loc, dataset, modalId)` from [updateGraphs.js](FrontEnd/static/js/updateGraphs.js), which fetches `/api/timeseries/` and renders a Plotly `scatter` chart inside the modal.
+- Scrolls the modal into view.
 
-### Contact Us (`/contactus/`)
-Form with Name, Email, Category (Comment/Concern), Message. Submit button enables only when all fields are filled. **Note: no backend handler exists — form submission does nothing.**
+The 200+ pre-generated HTML files in [static/graphs/](FrontEnd/static/graphs/) are **leftover from an older rendering model** and are not used by the current map.
+
+### Custom Graph Dashboard — `/maptabs/`
+Location chips populated from `_scan_location_table_map()`, filtered to skip purely numeric location codes. Clicking a chip populates the data-type dropdown from `TABLE_SCHEMA[table]['data_cols']` (for the 3 real tables) or a heuristic column scan otherwise.
+
+Workflow:
+1. User selects location → metric → date range.
+2. Form POSTs to `/generate_maptab_graph/` (which calls `_render_posted_graph()` → `_render_graph_response()`).
+3. Response is an HTML fragment ([graphdisplay.html](FrontEnd/services/templates/HTML/graphdisplay.html)) containing a Plotly `div` + a statistics table (mean, SD, median, min, max, range).
+4. Client-side JS in [maptabs.html](FrontEnd/services/templates/HTML/maptabs.html) sandboxes the response in an iframe and auto-resizes.
+
+Quick-range chips: `Last 7 days`, `Last 30 days`, `YTD`, `Last 1 year`, `Clear`. The "Recent Data" button POSTs to `/get_latest_date/` to pick up the newest available data for a location/metric, then auto-generates a graph.
+
+### About — `/about/`
+Two sections (Standing Rock Sioux Tribe and EPICS HDR team at Purdue) with external links. Static content only.
+
+### Contact Us — `/contactus/`
+Name, Email, Category (`Comment`/`Concern`), Message. Submit button enables only when all fields are filled. **The form has no action URL and no backend handler — submitting does nothing.** See Known Bugs.
 
 ---
 
 ## 7. Admin Dashboard
 
-### Login (`/admin/login/`)
-Username + password authentication. Redirects to `/admin/` on success. Shows error on invalid credentials.
+### Login Page — `/admin/login/`
+Simple username + password form. On success, redirects to `/admin/` (or `?next=` URL). Rejects users who lack both `is_staff=True` and `Data Moderator` group membership.
 
-### Console Log Tab
-Displays contents of `BackEnd/log.txt` plus any in-memory script output. Updates on manual "Update Log" click (no auto-polling).
+### Dashboard — `/admin/`
+Three-tab SPA, all logic in [admin_dashboard.js](FrontEnd/static/js/admin_dashboard.js). The current role is passed in via the `data-role` attribute on `.dash-content` (read into `USER_ROLE` on boot). Moderators don't see the "Run Updates" button or the "User Control" tab.
 
-- **"Run Updates" button** (Admin only) — Executes backend data-fetch commands via `BackEnd/commands.py` in a background thread. Shows "Script running..." status with animated indicator.
-- **"Clear" button** — Clears the console display (not the log file).
-- Error lines containing "error" or "exception" are highlighted.
+#### Console Log Tab
+- Auto-polls `/admin/api/logs/` every 2 seconds (`setInterval(fetchLogs, 2000)`) — this is NOT manual-only despite what older docs claimed.
+- Displays the last 200 lines of [BackEnd/log.txt](BackEnd/log.txt) + any in-memory script output buffered since the last run.
+- Error lines (matching `/error|✗|exception|traceback/i`) get a highlight class.
+- Status dot: grey "Idle" → green "Finished Successfully" → red "Finished with Errors (Exit N)" → blue "Script running…".
+- **Command dropdown** is populated from `/admin/api/commands/`, which **does not exist** as a URL route. The frontend catches this, falls back to hard-coded `listAllSources` and `listStations`. The `dashboard.html` template also statically lists `"Sync All Sources"` as an option — these three IDs must match functions in `BackEnd/commands.py` for Run to work.
+- **Run Updates** (admin only): POSTs `{command: <id>}` to `/admin/api/run-script/`, which spawns a subprocess `python -c "import BackEnd.commands as cmds; cmds.<id>()"`. Output streams into the in-memory buffer.
 
-### Data Entry Tab
-Select a database table from dropdown -> dynamic form fields appear matching that table's columns (with type hints: FLOAT, INTEGER, TEXT). Click "Insert Row" to write to `Measurements.db`. All inserts are logged.
+#### Data Entry Tab
+1. Dropdown populated from `/admin/api/tables/` — lists every table in `database.db` except `sqlite_*` and `temp_*`.
+2. Selecting a table fetches `/admin/api/tables/<name>/columns/` and renders an input per column (with an inferred HTML input type: number for INT/REAL/FLOAT, `datetime-local` for a column literally named `datetime`, text otherwise).
+3. `Insert Row` POSTs to `/admin/api/insert/` with `{table, data}`. Only non-empty fields are sent. The backend filters to known columns and `INSERT`s. Success and errors are logged to `log.txt`.
+4. Feedback banner auto-dismisses after 6 seconds.
 
-**Date format:** `YYYY-MM-DD` or `YYYY-MM-DD HH:MM:SS`
+**Caveats:**
+- No edit/delete from the UI. Corrections require direct SQL.
+- Column types shown are whatever SQLite has stored (often `TEXT` for everything since `_DANR.py` / `_COCORAHS.py` don't cast values).
+- The form lets you insert into `temp_staging` or other internal tables if they aren't filtered — `api_tables` excludes names starting with `temp_`, so you should be safe.
 
-### User Control Tab (Admin Only)
-Full CRUD for user accounts. Shows username, email, role badge (purple=Admin, blue=Data Moderator), active status, join date. Supports Add/Edit/Delete with modal dialogs. Safety constraints: cannot delete/deactivate yourself, cannot change your own role.
-
----
-
-## 8. Data Sources & Database Schema
-
-### `Measurements.db` Tables
-
-| Table | Source | Key Columns |
-|-------|--------|-------------|
-| `gauge` | USGS | location, datetime, gauge_height, elevation, discharge, water_temp |
-| `dam` | USACE | location, datetime, elevation, flow_spill, flow_power, flow_out, tail_ele, energy |
-| `mesonet` | ND Mesonet | location, datetime, avg_air_temp, avg_rel_hum, total_rainfall, avg_bare_soil_temp, max_wind_speed, avg_dew_point |
-| `noaa_weather` | NOAA | location, datetime, temperature, dew_point, rel_humidity, wind_chill |
-| `cocorahs` | CoCoRaHS | location, datetime, precipitation, snowfall, snow_depth |
-| `shadehill` | USACE | datetime, res_forebay_elev, daily_mean_tot_dis, daily_mean_air_temp, tot_precip_daily |
-| `water_quality` | Various | location, datetime, ph, e_coli, total_nitrogen, total_phosphorus, etc. |
-| `DANR` | SD DANR | location, datetime, various water quality metrics |
-
-All tables use `location` (TEXT) + `datetime` (TEXT or epoch INTEGER) as the primary query dimensions.
-
-### Datetime Storage
-
-Tables store datetime in mixed formats — some as ISO strings (`2026-03-15T14:00:00`), some as Unix epoch integers. The code handles both via `get_time_format()` (checks if values are numeric) and `_parse_db_datetime()` (tries multiple parse strategies).
+#### User Control Tab (admin only)
+Full CRUD for Django users. Roles, active status, join date. Modal dialogs for Add/Edit. Self-mutation guards:
+- Cannot change **your own** role (`api_user_detail` PUT returns 400).
+- Cannot deactivate or delete **yourself**.
+- Role `admin` maps to `is_staff=True`, role `data_moderator` maps to `is_staff=False` + Data Moderator Group membership.
 
 ---
 
-## 9. Custom Graph System
+## 8. Admin API Reference
 
-### Flow
+All admin APIs accept JSON bodies and return JSON responses. CSRF token required for POST/PUT/DELETE (the frontend reads it from the `csrftoken` cookie automatically).
 
-1. User selects location + metric + dates on `/maptabs/`
-2. Form POSTs to `/generate_maptab_graph/`
-3. `_render_posted_graph()` is called, which calls `_render_graph_response()`
-4. Location is resolved: first checks `_scan_location_table_map()` (dynamic DB scan), then falls back to `LOCATION_TO_TABLE` from config
-5. Metric display name is converted to SQL column via `SQL_CONVERSION`
-6. Data is queried via `custom_graph.query_data(conn, table, start_epoch, end_epoch)`
-7. If no data found, it tries `_closest_window_epochs()` to find the nearest available data
-8. Results are filtered by location, cleaned via `custom_graph._prepare_df_for_plot()`
-9. Plotly `go.Scatter` trace is built and rendered as an HTML div
-10. Stats table (mean, SD, median, min, max, range) is computed and appended
+### `GET /admin/api/logs/?lines=N`
+```json
+{
+  "lines": ["[2026-04-09 10:22:01] DATA INSERT by admin: table=\"DANR\" …", …],
+  "running": false,
+  "exit_code": 0
+}
+```
+Defaults to `lines=200`. Combines file log + in-memory script buffer.
 
-### Adding a New Graph Type
+### `POST /admin/api/run-script/`
+Body: `{"command": "<id>"}`. If a script is already running, returns `{"status": "already_running"}`. Otherwise spawns a subprocess and returns `{"status": "started", "command": "<id>", "label": "<human-readable>"}`.
 
-1. Add the metric column to the relevant DB table
-2. Add the display name -> column name mapping to `SQL_CONVERSION` in `BackEnd/SourceFiles/config.py`
-3. The metric will automatically appear in the Custom Graph Dashboard dropdown for locations in that table
+### `GET /admin/api/tables/`
+```json
+{ "tables": ["COCORAHS", "DANR", "USACE"] }
+```
 
-### Adding a New Location
+### `GET /admin/api/tables/<name>/columns/`
+```json
+{
+  "table": "DANR",
+  "columns": [
+    {"name": "unique_id", "type": "TEXT", "notnull": false, "pk": false},
+    {"name": "pH", "type": "TEXT", "notnull": false, "pk": false},
+    …
+  ]
+}
+```
 
-1. Insert data rows into the appropriate table in `Measurements.db` with the new location name in the `location` column
-2. Optionally add it to `LOCATION_TO_TABLE` in config (the dynamic scanner will also pick it up)
-3. For the interactive map: add the marker coordinates in `FrontEnd/static/js/map.js` and generate graph HTML files in `FrontEnd/static/graphs/`
+### `POST /admin/api/insert/`
+Body: `{"table": "DANR", "data": {"pH": "7.2", "station_ID": "SWLAZZZ2411A", ...}}`.
+Returns `{"status": "ok", "inserted": {...filtered...}}` on success. Every insert (and every failure) is logged to `log.txt`.
+
+### `GET /admin/api/users/`
+```json
+{ "users": [{"id": 1, "username": "admin", "email": "", "role": "admin", "is_active": true, "date_joined": "2026-01-01T…"}, …] }
+```
+
+### `POST /admin/api/users/`
+Body: `{"username": "...", "password": "...", "email": "...", "role": "admin"|"data_moderator"}`. Password required; email optional.
+
+### `PUT /admin/api/users/<id>/`
+Body may include any of `email`, `role`, `is_active`, `password`. Leaving `password` blank preserves the current hash.
+
+### `DELETE /admin/api/users/<id>/`
+Returns `{"status": "deleted"}`. 400 if the target is yourself.
 
 ---
 
-## 10. Debugging & Troubleshooting
+## 9. Data Pipeline (Source Files)
 
-### Turning on Debug Mode
+Each source file in `BackEnd/SourceFiles/` follows the same four-function pattern:
 
-In `FrontEnd/config/settings.py`, set `DEBUG = True`. This shows full Django tracebacks in the browser instead of generic 500 pages. **Never leave this on in production.**
+```python
+def _pull(debug=False)   # fetch from external API, return raw data
+def _process(data)       # parse into pandas DataFrame, write to temp_staging
+def _push()              # upsert from temp_staging into the real table via sqlite_utils
+def update()             # orchestrate _pull → _process → _push
+```
 
-### Django Shell
+`sqlite_utils.upsert_all(..., hash_id="unique_id")` hashes each row and inserts only new ones, enabling idempotent re-runs.
+
+### [_COCORAHS.py](BackEnd/SourceFiles/_COCORAHS.py)
+- Source: RCC-ACIS StnData API (`data.rcc-acis.org`)
+- Per-station GET with JSON params. 10-second sleep between calls to avoid rate limiting. 3 / 27 s connect / read timeouts.
+- Writes to table `COCORAHS`.
+
+### [_DANR.py](BackEnd/SourceFiles/_DANR.py)
+- Source: `apps.sd.gov/NR92WQMAP/api/station/<id>` (SD DANR Water Quality Map)
+- GET per station, JSON response is normalized with `pd.json_normalize(..., record_path='parameters', meta=...)`.
+- Writes to table `DANR`. ~330 stations currently configured.
+
+### [_USACE.py](BackEnd/SourceFiles/_USACE.py)
+- Source: `nwd-mr.usace.army.mil/rcc/programs/data/<CODE>`
+- Uses `curl` via `subprocess.run` (their SSL cert may fail Python's verification). Parses fixed-width tabular response with pandas (skipping 4 lines, regex separator).
+- Writes to table `USACE`. Currently only pulls `GARR` but the endpoint supports `GARR, OAHE, BEND, FTRA, GAPT, FTPK`.
+
+### [commands.py](BackEnd/commands.py)
+Command stubs that the admin "Run Updates" button invokes:
+
+```python
+def listAllSources():  # returns list of _*.py files in SourceFiles (has a bug — see below)
+def listStations(source):  # stub — pass
+def updateAll():  # stub — pass
+```
+
+**Bug:** `listAllSources` does `sources += file.name.replace('.py','')`, which **iterates characters** rather than appending strings, producing junk output. It should be `sources.append(file.name.replace('.py',''))`. Also, `os.chdir` is a global side effect that breaks subsequent code. Rewrite this function before relying on it.
+
+To wire a real data-refresh command into the admin UI:
+1. Add a function like `sync_all_sources()` in `commands.py` that calls each source file's `update()`.
+2. Optionally add a `get_command_catalog()` function returning `[{'id', 'label', 'description'}, ...]` for a nicer UI listing (the frontend already probes `/admin/api/commands/` and falls back gracefully).
+
+---
+
+## 10. Custom Graph Rendering System
+
+Entry point: `/generate_maptab_graph/` → `generate_maptab_graph()` → `_render_posted_graph()` → `_render_graph_response()`.
+
+### Algorithm
+
+1. **Parse form inputs:** `location` list, `data2see` (display metric name), `start-date`, `end-date`.
+2. **Resolve each location name:** `_normalize_posted_location()` strips trailing state abbreviations (`ND`/`SD`). `_resolve_location_name()` does case-insensitive matching against the dynamic location → table map.
+3. **Look up the table:** via `location_table_map[loc]` or fallback to `LOCATION_TO_TABLE.get(loc, 'gauge')`.
+4. **Convert display metric → SQL column:** `_display_metric_to_sql_column()` checks `SQL_CONVERSION` first, then every table's `TABLE_SCHEMA.data_cols`, then falls back to `metric.lower().replace(' ', '_')`.
+5. **Load data:**
+   - If `table_name in TABLE_SCHEMA`, call `_load_direct_series()` (schema-aware, uses the alt `datetime_col`/`location_col`, renames them to `datetime`/`location` for downstream code).
+   - Otherwise call `custom_graph.query_data()` (generic, assumes `location`/`datetime` column names).
+6. **Fallback windows** (in order):
+   - If the user's window has no data and `fallback_to_closest_window` is enabled, `_closest_window_epochs()` finds the nearest available 30-day window for that location+metric and re-queries.
+   - If `fallback_to_recent_window` is enabled (the maptabs endpoint uses this), missing dates trigger a 30-day window ending at `get_latest_datetime()`.
+7. **Clean:** `custom_graph._prepare_df_for_plot()` normalizes datetimes (handles `YYYY-MM-DDTHH:MM:SS 00:00:00` duplicated suffixes and Mesonet `24:00:00` rollover), drops NaNs, de-dupes datetimes, sorts ascending.
+8. **Render:** Build `plotly.graph_objs.Scatter` traces, wrap in an offline Plotly `div`, compute stats table, return [graphdisplay.html](FrontEnd/services/templates/HTML/graphdisplay.html).
+
+### Key Helpers
+
+| Helper | Purpose |
+|---|---|
+| `_scan_location_table_map(conn)` | Scans every non-internal table for its location column and builds `{loc: table_name}`. Handles both `location` and `TABLE_SCHEMA[*]['location_col']`. Deterministic (keeps first table encountered per location). |
+| `_canonical_location_name(s)` | Lowercase + strip commas + strip trailing state names, for fuzzy matching. |
+| `_parse_db_datetime(v)` | Handles epoch ints, ISO strings, duplicated time fragments, and `24:00:00` → next day. |
+| `_closest_window_epochs(conn, table, col, loc, target)` | Finds the nearest existing datetime to a target, returns a 30-day window ending there. |
+| `_load_direct_series(conn, table, col, loc, start, end)` | Schema-aware query; renames alt columns back to `datetime`/`location` for consistency downstream. |
+| `custom_graph.query_data(conn, table, start_epoch, end_epoch)` | Simple `SELECT *` with a `datetime BETWEEN` clause. Detects epoch vs string format by sampling the first row. Returns pandas DataFrame. |
+| `custom_graph.get_latest_datetime(conn, table, col)` | Returns newest datetime where `col IS NOT NULL`. |
+
+---
+
+## 11. Interactive Map Rendering System
+
+Two-part flow:
+
+1. **Server side ([views.py::interactiveMap](FrontEnd/services/views.py)):** builds `window.mapLocations` — a list of `{name, lat, lon, table, datasets}` objects for every location with resolvable coordinates. Also serves as a JSON endpoint at `/api/map_locations/` for clients that prefer to fetch dynamically.
+2. **Client side ([openModals.js](FrontEnd/static/js/openModals.js)):** creates a Mapbox marker per entry. On click, builds (once) a modal with a dataset selector, then calls `fetchAndUpdateGraph(loc, dataset, modalId)` from [updateGraphs.js](FrontEnd/static/js/updateGraphs.js), which hits `/api/timeseries/?location=X&dataset=Y` and renders a Plotly scatter in the modal's graph container.
+
+### `/api/timeseries/` response shape
+
+```json
+{
+  "times": ["2025-10-01T00:00:00", "2025-10-02T00:00:00", ...],
+  "values": [12.3, 14.7, ...],
+  "location": "BISMARCK 1.3 WNW",
+  "dataset": "Max Temperature"
+}
+```
+
+Non-numeric values (e.g. CoCoRaHS's `"M"` for missing, `"T"` for trace) are silently dropped via `float()` try/except. Dates unparseable by `_parse_db_datetime` are also dropped.
+
+### Hardcoded Mapbox Access Token
+
+Located in [map.js:7](FrontEnd/static/js/map.js). If the token expires or is revoked, the map will silently fail to load. Move to an env var + Django template variable if this becomes a problem.
+
+---
+
+## 12. Common Tasks
+
+### Add a new station to an existing source (COCORAHS / DANR / USACE)
+
+1. Open [BackEnd/SourceFiles/config.py](BackEnd/SourceFiles/config.py).
+2. Add the station ID to the appropriate `*Config['stationList']`.
+3. Re-run that source's `update()` — either directly (`cd BackEnd/SourceFiles && python _COCORAHS.py`) or via the admin dashboard once `commands.py` is wired up.
+4. Verify the new rows appear: `sqlite3 database.db "SELECT COUNT(*) FROM COCORAHS WHERE \"meta.name\" = 'NEW STATION';"`.
+
+### Add a new dataset / metric to an existing table
+
+1. Ensure the column exists in the DB (add via `ALTER TABLE` or through the source file's upsert — `sqlite_utils.upsert_all(alter=True, ...)` auto-adds new columns).
+2. Add a display-name → SQL-column entry to the relevant `TABLE_SCHEMA[table]['data_cols']` in [views.py](FrontEnd/services/views.py).
+3. The metric will automatically appear in the Custom Graph Dashboard dropdown for locations in that table, and in the map modal's dataset selector.
+
+### Add a brand-new data source (new table)
+
+1. Create `BackEnd/SourceFiles/_NEWSOURCE.py` mirroring the `_pull / _process / _push / update` pattern.
+2. Add the `NEWSOURCECONFIG` dict to [config.py](BackEnd/SourceFiles/config.py).
+3. In [views.py](FrontEnd/services/views.py), add a `TABLE_SCHEMA['NEWSOURCE'] = { ... }` entry with `location_col`, `datetime_col`, `lat_col`, `lon_col`, `lat_lon_swapped`, `data_cols`, and optionally `hardcoded_coords` if lat/lon aren't stored per row.
+4. Add a marker color to `markerColor()` in [openModals.js](FrontEnd/static/js/openModals.js) and a legend entry in [interactiveMap.html](FrontEnd/services/templates/HTML/interactiveMap.html).
+5. Run `update()` once to populate the DB.
+
+### Reset an admin password from the command line
+
+```bash
+python manage.py changepassword <username>
+```
+
+Or via shell:
+
+```python
+python manage.py shell
+>>> from django.contrib.auth.models import User
+>>> u = User.objects.get(username='admin'); u.set_password('new'); u.save()
+```
+
+### Create a Data Moderator
+
+```python
+python manage.py shell
+>>> from django.contrib.auth.models import User, Group
+>>> u = User.objects.create_user('moderator1', password='secure!')
+>>> g, _ = Group.objects.get_or_create(name='Data Moderator')
+>>> u.groups.add(g); u.save()
+```
+
+### Inspect the measurement database
+
+```bash
+sqlite3 database.db
+
+.tables
+.schema COCORAHS
+
+SELECT DISTINCT "meta.name" FROM COCORAHS;
+SELECT DISTINCT "station.stationId" FROM DANR;
+SELECT MIN("DateTime"), MAX("DateTime") FROM USACE WHERE "Station" = 'GARR';
+SELECT COUNT(*) FROM DANR WHERE "pH" IS NOT NULL;
+```
+
+---
+
+## 13. Debugging & Troubleshooting
+
+### Server won't start
+
+| Symptom | Cause & fix |
+|---|---|
+| `ImportError: No module named 'django'` | Activate your venv first |
+| `SyntaxError` in `config.py` during import | Git merge conflict in [BackEnd/SourceFiles/config.py](BackEnd/SourceFiles/config.py). [views.py](FrontEnd/services/views.py) has a `try/except SyntaxError` fallback that loads a hardcoded mock config — the app will still run, but metric mappings may be incomplete. Fix the conflict markers. |
+| Port 8000 already in use | `lsof -ti:8000 \| xargs kill` |
+| `OperationalError: no such table: auth_user` | Run `python manage.py migrate` |
+
+### Admin Data Entry tab is empty / inserts go nowhere
+
+This was a real bug. [admin_dashboard/views.py](FrontEnd/admin_dashboard/views.py) used to point at `Measurements.db`, which was deleted when the DB was consolidated into `database.db`. The code now honours `MEASUREMENTS_DB_PATH` env var or defaults to `REPO_ROOT/database.db`. If you still see no tables, check:
 
 ```bash
 python manage.py shell
-```
-Useful for inspecting the DB, testing queries, or resetting passwords:
-```python
-from django.contrib.auth.models import User
-u = User.objects.get(username='admin')
-u.set_password('newpassword')
-u.save()
+>>> from FrontEnd.admin_dashboard.views import MEASUREMENTS_DB
+>>> import os
+>>> print(MEASUREMENTS_DB, os.path.exists(MEASUREMENTS_DB))
 ```
 
-### Database Inspection
+### Graph is empty or says "No data available"
 
-```bash
-# Open Measurements.db directly
-sqlite3 Measurements.db
+Run through this checklist in order:
 
-# List tables
-.tables
+1. **Does the location name match the DB exactly?**
+   ```bash
+   sqlite3 database.db 'SELECT DISTINCT "meta.name" FROM COCORAHS LIMIT 20;'
+   ```
+   Location names in COCORAHS look like `BISMARCK 1.3 WNW`, which the client may post differently.
 
-# Check a table's schema
-.schema dam
+2. **Does the metric column exist?**
+   Confirm the entry in `TABLE_SCHEMA['<TABLE>']['data_cols']` maps to an actual column in the table. If not, `_display_metric_to_sql_column` falls back to a slugified guess that likely doesn't exist.
 
-# Sample data
-SELECT * FROM dam WHERE location='Oahe' ORDER BY datetime DESC LIMIT 5;
+3. **Does the column have data in your date range?**
+   ```sql
+   SELECT COUNT(*) FROM COCORAHS
+   WHERE "meta.name" = 'BISMARCK 1.3 WNW' AND "v5" IS NOT NULL
+     AND "date" BETWEEN '2025-10-01' AND '2025-10-31';
+   ```
 
-# Check what locations exist
-SELECT DISTINCT location FROM gauge;
+4. **Datetime format mismatches.** COCORAHS stores `YYYY-MM-DD`, DANR stores ISO 8601, USACE stores `YYYY-MM-DD HH:MM`. The `_closest_window_epochs` helper compares against a `YYYY-MM-DD HH:MM:SS` formatted string, which works for all three but can silently fail for weird entries. Sample your datetime values directly.
 
-# Check date range for a location/metric
-SELECT MIN(datetime), MAX(datetime) FROM mesonet WHERE location='Fort Yates' AND avg_air_temp IS NOT NULL;
-```
+5. **COCORAHS missing-value codes.** Raw values can be `"M"` (missing), `"T"` (trace), or `"S"` (snow). These get dropped by `pd.to_numeric(errors='coerce')` in `_load_direct_series` — correct behavior but the DataFrame may end up empty.
 
-### Common Issues
+### Map markers don't appear for a location
 
-#### "No data found" on graph generation
-1. Check the location name matches exactly what's in the DB: `SELECT DISTINCT location FROM <table>;`
+- Confirm the location's row has non-null lat/lon in its `lat_col`/`lon_col`, OR add an entry to `TABLE_SCHEMA[table]['hardcoded_coords']`.
+- Check `/api/map_locations/` in the browser — the JSON is the authoritative data feed for `openModals.js`.
+- Remember COCORAHS has `lat_lon_swapped=True`: the column named `latitude` actually holds the longitude value, and vice versa.
 
----
+### Mapbox map doesn't render
 
-## Changelog
+- Check the browser console for a 401/403 from `api.mapbox.com`. The access token in [map.js:7](FrontEnd/static/js/map.js) may have been revoked.
+- Check network connectivity — Mapbox tiles are fetched on demand.
 
-### 2026-04-17 — Refactor: DB naming, schema-aware API, and frontend improvements
+### Admin "Run Updates" stuck on "Script running…"
 
-- **High-level summary:** Standardized database naming (switched references from `Measurements.db` to `database.db`), added schema-aware table mappings and two new JSON API endpoints (`/api/map_locations/`, `/api/timeseries/`), refactored map/front-end templates to use Django `static` and `include`, replaced client-side navbar loader with a template partial, rewrote map/modal JS to fetch time series via the new API and render Plotly graphs in modals, and removed stale binary DB files.
+- The process runs in a daemon thread with module-level `_script_running` flag. If the subprocess hangs, restart the Django server to reset the flag.
+- The subprocess is spawned with `cwd=REPO_ROOT` but imports with `sys.path.insert(0, REPO_ROOT)`, so imports inside the command function need to be relative to the repo root. Check stdout captured in the admin console.
+- `commands.listAllSources` has the `sources += file.name...` bug that iterates characters. Either fix it (`append`) or don't run it.
 
-- **BackEnd/SourceFiles/config.py**: fixed leftover merge markers and added a `DB_PATH` computed from the repository layout using `os.path`.
+### Admin login returns "Invalid credentials or insufficient permissions"
 
-- **BackEnd/custom_graph.py**: updated candidate DB filenames and messages to use `database.db` and improved DB path detection.
+- Wrong password → `python manage.py changepassword <user>`.
+- Password correct but rejected → user exists but has neither `is_staff=True` nor Data Moderator group membership. Fix via shell:
+  ```python
+  u = User.objects.get(username='...')
+  u.is_staff = True   # or: u.groups.add(Group.objects.get(name='Data Moderator'))
+  u.save()
+  ```
+- User disabled → `u.is_active = True; u.save()`.
 
-- **FrontEnd/config/urls.py**: registered two new API routes: `api/map_locations` and `api/timeseries`.
+### Static files (CSS/JS) 404 in production
 
-- **FrontEnd/services/views.py**: major refactor — introduced `TABLE_SCHEMA` to describe non-standard table column names and mappings; added helpers to resolve location/datetime/lat/lon columns; made query functions schema-aware; added `api_map_locations` and `api_timeseries` endpoints; fixed many SQL queries to use quoted identifiers and proper datetime columns; replaced hardcoded `Measurements.db` fallbacks with `database.db`.
+- `python manage.py collectstatic --noinput`
+- Make sure `WhiteNoiseMiddleware` is in `MIDDLEWARE` (it is by default in this project).
+- `STATIC_ROOT` is `FrontEnd/staticfiles/` — your deployment must include this directory.
 
-- **Templates (about, homepage, interactiveMap, navbar)**: added `{% load static %}` where needed, converted static asset references to `{% static '...' %}`, replaced JS-based navbar injection with `{% include "HTML/navbar.html" %}`, and converted `navbar.html` into a proper Django partial (removed full HTML wrapper).
+### Data inserted via admin doesn't appear in graphs
 
-- **Frontend JS/CSS**: rewrote `map.js`, `openModals.js`, and added `updateGraphs.js` to drive map markers, dynamic modals, and Plotly graph rendering from `/api/timeseries/`; updated CSS (`Heading.css`, `map.css`) to support responsive hamburger menu and map legend styling.
-
-- **Removed files**: deleted legacy binary DB files (`Measurements.db`, `mydatabase.db`) from the repo to avoid confusion — ensure your local/production DB is pointed via `DB_PATH` or `MEASUREMENTS_DB_PATH` setting if needed.
-
-- **Notes / Recommended follow-ups:**
-    - Verify `FrontEnd/config/settings.py` or environment variable `MEASUREMENTS_DB_PATH` points to your actual `database.db` path.
-    - Run `python manage.py collectstatic` after deploying templates/static changes.
-    - Run a quick smoke test: start dev server and visit `/map/` and `/maptabs/` to ensure API endpoints return expected JSON and graphs render.
-
----
-2. Check the metric column exists and has data: `SELECT COUNT(*) FROM <table> WHERE location='X' AND <column> IS NOT NULL;`
-3. Check the date range overlaps with available data
-4. Look for location name normalization issues — the app strips trailing state abbreviations (ND, SD) and does case-insensitive matching
-
-#### Graph shows but is empty or has gaps
-- Some tables store datetime as epoch, others as strings. Check `custom_graph.get_time_format()` is detecting correctly
-- The `_parse_db_datetime()` function handles many formats but may fail on malformed entries. Check for entries like `2025-05-21T00:00:00 00:00:00` (duplicated time segments — the parser handles this but log it)
-- Mesonet data can emit `24:00:00` timestamps — the parser rolls these to midnight of the next day
-
-#### Admin "Run Script" stuck on "Running"
-- The script runs in a background thread. If it hangs, the `_script_running` global stays `True`
-- Restart the Django server to reset the flag
-- Check `BackEnd/log.txt` for the last logged message to see where it got stuck
-
-#### Admin login fails
-- Verify the user exists: `python manage.py shell` -> `from django.contrib.auth.models import User; User.objects.all()`
-- Check `is_staff=True` (for Admin) or membership in "Data Moderator" group
-- Reset password via shell (see above)
-
-#### Static files not loading (CSS/JS broken)
-- In development: `DEBUG = True` handles static files automatically
-- In production: run `python manage.py collectstatic` and ensure WhiteNoise middleware is in `MIDDLEWARE`
-- Hard refresh browser: `Cmd+Shift+R` (Mac) / `Ctrl+Shift+R` (Windows)
-
-#### Map not loading
-- Mapbox requires an API access token hardcoded in `FrontEnd/static/js/map.js`. If the token expires, the map won't render — get a new one from Mapbox and update the JS file
-- Requires internet access for map tiles
-
-#### Config.py SyntaxError on import
-- `BackEnd/SourceFiles/config.py` has (or had) a git merge conflict
-- The app catches this with a `try/except SyntaxError` in `FrontEnd/services/views.py` and falls back to a hardcoded mock config
-- Fix: resolve the merge conflict markers in config.py
-
-#### Data insert logged but not visible on frontend
-- The frontend queries `Measurements.db` directly. Data should appear after a page refresh
-- If you inserted with wrong date format, the graph's date filter may exclude it. Use `YYYY-MM-DD` or `YYYY-MM-DD HH:MM:SS`
-- Check the data availability indicator on the Custom Graph Dashboard — it shows the actual date range
-
-#### "Cannot delete yourself" / "Cannot change your own role"
-- These are intentional safety constraints in `api_user_detail()`. Use another admin account to modify your own.
+- `api_insert` writes to `database.db` via `sqlite3.connect`, then returns. If the Django server is running with a cached connection elsewhere, a hard refresh should still see the new row since the frontend opens its own connection per request.
+- Confirm the row went in:
+  ```bash
+  sqlite3 database.db 'SELECT * FROM DANR ORDER BY rowid DESC LIMIT 3;'
+  ```
+- If the date format is off, the graph's date filter will exclude the row. Use `YYYY-MM-DD` (or `YYYY-MM-DD HH:MM:SS`).
 
 ### Logging
 
-All admin actions are logged to `BackEnd/log.txt` with timestamps:
-- `DATA INSERT by <username>: table="...", data={...}`
-- `DATA INSERT ERROR by <username>: ...`
-- `SCRIPT RUN by <username>: <command> started`
+Every admin action appends a timestamped line to [BackEnd/log.txt](BackEnd/log.txt):
 
-View logs in the admin Console Log tab or directly: `cat BackEnd/log.txt`
-
-### Adding a New Admin User via Command Line
-
-```bash
-python manage.py createsuperuser
-# Follow prompts for username, email, password
-# This creates a user with is_staff=True (Admin role)
+```
+[2026-03-26 13:58:07] DATA INSERT by admin: table="DANR", data={'id': 6767, 'station_ID': 'skibidi'}
+[2026-03-28 10:01:54] SCRIPT RUN by admin: Sync All Sources started
+[2026-04-09 12:00:00] DATA INSERT ERROR by admin: table="DANR", error=...
 ```
 
-To create a Data Moderator via command line:
-```python
-# In python manage.py shell
-from django.contrib.auth.models import User, Group
-u = User.objects.create_user('moderator1', password='securepass')
-g, _ = Group.objects.get_or_create(name='Data Moderator')
-u.groups.add(g)
-u.save()
-```
+- Tail live: `tail -f BackEnd/log.txt`
+- Clear without deleting: `> BackEnd/log.txt`
+- The admin "Clear" button **does not** clear the file — it only clears the client display for 5 seconds.
 
 ---
 
-## 11. Deployment
+## 14. Deployment
 
 ### Azure Web Apps
-
-The app is deployed to Azure. Key settings:
-- `ALLOWED_HOSTS` must include the Azure domain
-- `CSRF_TRUSTED_ORIGINS` must include `https://` prefixed Azure domain
-- `DEBUG = False`
-- Run `python manage.py collectstatic` for WhiteNoise to serve static files
-- WSGI entry point: `FrontEnd.config.wsgi.application`
-
-Current Azure hosts:
-- `standing-rock-dev-buduamfpfuafaqdw.eastus-01.azurewebsites.net`
-- `standingrock-demo.azurewebsites.net`
+Current production hosts (already in `ALLOWED_HOSTS` + `CSRF_TRUSTED_ORIGINS`):
 - `standingrock-dashboard.azurewebsites.net`
+- `standingrock-demo.azurewebsites.net`
+- `standing-rock-dev-buduamfpfuafaqdw.eastus-01.azurewebsites.net`
 
-### Firebase
+WSGI entry point: `FrontEnd.config.wsgi.application`.
 
-Firebase config exists (`firebase.json`, `.firebaserc`) with project ID `standingrock-dashboard`, serving from `FrontEnd/` as public directory.
+### Firebase Hosting
+[firebase.json](firebase.json) is configured to serve `FrontEnd/` as static content. This is used for a static preview / landing mirror — the full Django app lives on Azure.
 
 ### Production Checklist
 
-1. Set `DEBUG = False` in `settings.py`
-2. Set a secure `SECRET_KEY` (use env variable)
-3. Run `python manage.py collectstatic`
-4. Verify `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` include your domain
-5. Ensure `Measurements.db` is deployed alongside the code
-6. Ensure `BackEnd/log.txt` directory is writable
+1. Set `DEBUG = False` in [settings.py](FrontEnd/config/settings.py).
+2. Replace the hardcoded `SECRET_KEY` with `os.environ['SECRET_KEY']`.
+3. Move the SMTP credentials in [info.py](FrontEnd/config/info.py) to environment variables.
+4. Add your domain to `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`.
+5. `python manage.py collectstatic --noinput`.
+6. `python manage.py migrate`.
+7. Ensure `database.db` is deployed alongside the code, or set `MEASUREMENTS_DB_PATH`.
+8. Ensure `BackEnd/log.txt` is writable by the app user.
+9. Create at least one admin account (`createsuperuser`).
+10. Verify: `/health` returns `OK`, `/map/` renders markers, `/admin/login/` accepts credentials.
 
 ---
 
-## 12. Known Bugs & Limitations
+## 15. Known Bugs & Limitations
 
-- **Search typo in map.js** — Line 49 uses `searhTerm` instead of `searchTerm`. Searching for certain station names will throw a JS error.
-- **Contact form has no backend** — The form renders but submission doesn't send data anywhere (no form action or email handler).
-- **Forecast & Favorites pages** — Placeholder templates with no functionality.
-- **Homepage/About images rely on external CDN** (`cdn.builder.io`). If CDN is down, images break.
-- **Hardcoded Mapbox token** in `map.js` — will break if the token expires.
-- **No "undo" for data entry** — Inserted data cannot be edited or deleted from the admin UI. Requires direct DB access.
-- **SECRET_KEY is hardcoded** in `settings.py` — insecure for production.
-- **`config.py` merge conflict fallback** — The app uses a mock config when the real one has syntax errors. This works but means some location/metric mappings may be incomplete.
+### Actionable Bugs
+
+| Severity | Bug | File / Line | Fix |
+|---|---|---|---|
+| High | `commands.listAllSources()` iterates characters into a list instead of appending filenames | [BackEnd/commands.py:13-15](BackEnd/commands.py) | Replace `sources +=` with `sources.append(...)`. Also remove the `os.chdir` side effect. |
+| Medium | Legacy routes `/customgaugegraph/`, `/customcocograph/`, `/custommesonetgraph/`, `/customnoaagraph/`, `/customshadehillgraph/` target tables that no longer exist (`gauge`, `cocorahs` lowercase, `mesonet`, `noaa_weather`, `shadehill`) | [FrontEnd/config/urls.py](FrontEnd/config/urls.py), [views.py](FrontEnd/services/views.py) | Either remove these routes, or re-point the views to the new `COCORAHS`/`DANR`/`USACE` tables through `TABLE_SCHEMA`. |
+| Medium | USACE markers appear on the map but have no legend entry | [interactiveMap.html](FrontEnd/services/templates/HTML/interactiveMap.html) | Add a third `<li>` with `#140ceb` color and label "USACE Dams" |
+| Medium | `/admin/api/commands/` URL is referenced by the frontend but not registered in `admin_dashboard/urls.py` | [admin_dashboard/urls.py](FrontEnd/admin_dashboard/urls.py) | Register `path('api/commands/', views.api_commands, name='api_commands')`. The view already exists. |
+| Low | `commands.listStations()` and `updateAll()` are empty stubs | [BackEnd/commands.py](BackEnd/commands.py) | Implement real logic once the admin "Run Updates" flow is wired for production use. |
+| Low | Gmail SMTP credentials are committed to the repo | [FrontEnd/config/info.py](FrontEnd/config/info.py) | Move to env vars. Rotate the password (the committed one should be treated as leaked). |
+| Low | `SECRET_KEY` is committed | [FrontEnd/config/settings.py](FrontEnd/config/settings.py) | Read from env. |
+| Low | Contact form has no backend handler | [FrontEnd/services/templates/HTML/contactus.html](FrontEnd/services/templates/HTML/contactus.html) | Add an `action=` and a view that emails submissions using `django.core.mail.send_mail` (SMTP is already configured). |
+
+### Structural / Cleanup Items
+
+- **Unused JS files**: `maptabs.js`, `mapgraphs.js`, `statistics.js`, `selectchecks.js`, `checkboxes.js`, `service-worker.js` are not referenced by any template. Safe to delete.
+- **Unused pre-generated graphs**: 200+ HTML files in [FrontEnd/static/graphs/](FrontEnd/static/graphs/) are from the old rendering model and add ~MB to every `collectstatic`. Safe to delete.
+- **Unused templates**: [FrontEnd/services/templates/graphing/test.html](FrontEnd/services/templates/graphing/test.html) is the only remaining graphing template, wired to `/homep/`. Remove if no longer needed.
+- **Unused `forecast` and `favorites` routes**: Stubs in views. Remove or finish.
+- **DEBUG flag** is currently `True` in production settings.
+
+### External Dependencies that can fail
+
+- **Mapbox API**: hardcoded token in [map.js:7](FrontEnd/static/js/map.js). If revoked, the map fails silently.
+- **Builder.io CDN**: homepage and about-page images. If the CDN is down, images break.
+- **External data sources**: USACE's nwd-mr server has a weak SSL cert — `_USACE.py` uses `curl` specifically to bypass Python's strict validation. The COCORAHS/DANR endpoints are more stable but can still time out.
 
 ---
 
-*Last updated: April 9, 2026*
+*Last updated: 2026-04-20. Schema and bug findings verified against commit `df6bc35e`.*

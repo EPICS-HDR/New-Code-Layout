@@ -420,7 +420,7 @@ def main():
     """
     if not DB_PATH:
         print("[custom_graph] ERROR: DB_PATH is not set. "
-              "Set MEASUREMENTS_DB_PATH or ensure Measurements.db exists under BASE_DIR/repo root.")
+              "Set MEASUREMENTS_DB_PATH or ensure database.db exists under BASE_DIR/repo root.")
         return
 
     conn = sqlite3.connect(DB_PATH)

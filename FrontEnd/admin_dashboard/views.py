@@ -22,7 +22,7 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 # ── paths ──────────────────────────────────────────────────────────────
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-MEASUREMENTS_DB = os.path.join(REPO_ROOT, 'Measurements.db')
+MEASUREMENTS_DB = os.environ.get('MEASUREMENTS_DB_PATH') or os.path.join(REPO_ROOT, 'database.db')
 LOG_FILE = os.path.join(REPO_ROOT, 'BackEnd', 'log.txt')
 COMMANDS_SCRIPT = os.path.join(REPO_ROOT, 'BackEnd', 'commands.py')
 
@@ -250,7 +250,7 @@ def api_run_script(request):
 @_dashboard_required
 @require_GET
 def api_tables(request):
-    """List all tables in Measurements.db (excluding internal tables)."""
+    """List all tables in database.db (excluding internal tables)."""
     try:
         conn = sqlite3.connect(MEASUREMENTS_DB)
         cur = conn.cursor()
@@ -286,7 +286,7 @@ def api_table_columns(request, table_name):
 @_dashboard_required
 @require_POST
 def api_insert(request):
-    """Insert a row into a Measurements.db table."""
+    """Insert a row into a database.db table."""
     try:
         body = json.loads(request.body)
         table_name = body.get('table', '')
