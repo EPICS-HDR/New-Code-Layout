@@ -428,6 +428,26 @@ Name, Email, Category (`Comment`/`Concern`), Message. Submit button enables only
 
 ## 7. Admin Dashboard
 
+### Password Storage & Encryption
+
+Django's built-in authentication handles all password storage. **No plaintext passwords are ever stored.**
+
+- **Algorithm:** PBKDF2 with SHA-256 (Django default — no custom `PASSWORD_HASHERS` configured in `settings.py`)
+- **Format stored in DB:** `<algorithm>$<iterations>$<salt>$<hash>` (e.g. `pbkdf2_sha256$870000$<salt>$<hash>`)
+- **Iterations:** Django 4.x defaults to 870,000 rounds — automatically increased on each Django upgrade
+- **Salt:** Randomly generated per password; stored alongside the hash in the same field
+- **Where stored:** `auth_user.password` column in `database.db` (Django's built-in user table)
+- **How passwords are set:** `user.set_password(raw_password)` ([views.py:453](FrontEnd/admin_dashboard/views.py#L453)) — Django hashes before saving; the raw password is never written to disk
+- **How passwords are checked:** `django.contrib.auth.authenticate()` ([views.py:93](FrontEnd/admin_dashboard/views.py#L93)) — Django re-hashes the submitted password and compares; the stored hash is never decrypted
+
+**Password validators** (configured in `settings.py` lines 101–112):
+- Must not be too similar to the username
+- Minimum length enforced
+- Must not be a commonly-used password
+- Must not be entirely numeric
+
+To create or change a password outside the admin UI: `python manage.py createsuperuser` or `python manage.py changepassword <username>`.
+
 ### Login Page — `/admin/login/`
 Simple username + password form. On success, redirects to `/admin/` (or `?next=` URL). Rejects users who lack both `is_staff=True` and `Data Moderator` group membership.
 
