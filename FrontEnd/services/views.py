@@ -134,9 +134,15 @@ def _table_columns(conn, table_name):
     return [r[1] for r in curr.fetchall() if len(r) > 1]
 
 
+_location_table_map_cache = None
+
+
 def _scan_location_table_map(conn):
     """Discover location->table mapping. Handles both standard 'location' column
     and the alternate location columns defined in TABLE_SCHEMA."""
+    global _location_table_map_cache
+    if _location_table_map_cache is not None:
+        return _location_table_map_cache
     location_table_map = {}
     tables = []
     ignored_tables = {'temp_staging'}
@@ -176,6 +182,7 @@ def _scan_location_table_map(conn):
                     location_table_map[loc] = table_name
         except Exception:
             continue
+    _location_table_map_cache = (location_table_map, tables)
     return location_table_map, tables
 
 def health(request):
@@ -743,79 +750,107 @@ def maptabs(request):
                                'station.latitude', 'station.longitude', 'station.auId',
                                'station.waterbodyName', 'station.primaryType', 'station.type',
                                'Station', 'id', 'station_ID'}
+
+    # Batch availability queries: one per (table, metric) via GROUP BY instead of
+    # one per (location, metric). Reduces ~3600+ queries to ~26 for typical data.
+    # table_metric_availability[table][metric_key] = {location_value: {start, end}}
+    table_metric_availability = {}
+    non_schema_table_cols = {}
+
+    tables_used = set()
     for loc in locations:
-        base = loc
-        table_name = location_table_map.get(base, LOCATION_TO_TABLE.get(base, 'gauge'))
-        loc_col = _get_location_col(table_name)
-        dt_col = _get_datetime_col(table_name)
+        tables_used.add(location_table_map.get(loc, LOCATION_TO_TABLE.get(loc, 'gauge')))
 
-        # For tables with known schema, use pre-defined data_cols mapping.
-        if table_name in TABLE_SCHEMA and 'data_cols' in TABLE_SCHEMA[table_name]:
-            data_cols = TABLE_SCHEMA[table_name]['data_cols']
-            opts = list(data_cols.keys())
-            availability_for_loc = {}
-            for display_name, sql_col in data_cols.items():
-                earliest = None
-                latest = None
-                if curr:
-                    try:
-                        curr.execute(
-                            f"SELECT MIN({_quote_ident(dt_col)}), MAX({_quote_ident(dt_col)}) "
-                            f"FROM {_quote_ident(table_name)} "
-                            f"WHERE {_quote_ident(loc_col)} = ? AND {_quote_ident(sql_col)} IS NOT NULL",
-                            (loc,),
-                        )
-                        min_max = curr.fetchone() or (None, None)
-                        earliest_dt = _parse_db_datetime(min_max[0])
-                        latest_dt = _parse_db_datetime(min_max[1])
-                        if earliest_dt:
-                            earliest = earliest_dt.date().isoformat()
-                        if latest_dt:
-                            latest = latest_dt.date().isoformat()
-                    except Exception:
-                        pass
-                availability_for_loc[display_name] = {'start': earliest, 'end': latest}
-        else:
-            cols = []
-            if curr:
+    if curr:
+        for table_name, schema in TABLE_SCHEMA.items():
+            if table_name not in tables_used:
+                continue
+            loc_col = schema['location_col']
+            dt_col = schema['datetime_col']
+            table_metric_availability[table_name] = {}
+            for display_name, sql_col in schema.get('data_cols', {}).items():
+                per_loc = {}
                 try:
-                    curr.execute(f"PRAGMA table_info({_quote_ident(table_name)})")
-                    cols = [r[1] for r in curr.fetchall()]
+                    curr.execute(
+                        f"SELECT {_quote_ident(loc_col)}, "
+                        f"MIN({_quote_ident(dt_col)}), MAX({_quote_ident(dt_col)}) "
+                        f"FROM {_quote_ident(table_name)} "
+                        f"WHERE {_quote_ident(sql_col)} IS NOT NULL "
+                        f"GROUP BY {_quote_ident(loc_col)}"
+                    )
+                    for row in curr.fetchall():
+                        lv = (row[0] or '').strip()
+                        if not lv:
+                            continue
+                        ed = _parse_db_datetime(row[1])
+                        ld = _parse_db_datetime(row[2])
+                        per_loc[lv] = {
+                            'start': ed.date().isoformat() if ed else None,
+                            'end': ld.date().isoformat() if ld else None,
+                        }
                 except Exception:
-                    cols = []
+                    pass
+                table_metric_availability[table_name][display_name] = per_loc
 
+        for table_name in tables_used:
+            if table_name in TABLE_SCHEMA:
+                continue
+            loc_col = _get_location_col(table_name)
+            dt_col = _get_datetime_col(table_name)
+            cols = []
+            try:
+                curr.execute(f"PRAGMA table_info({_quote_ident(table_name)})")
+                cols = [r[1] for r in curr.fetchall()]
+            except Exception:
+                pass
+            non_schema_table_cols[table_name] = cols
+            table_metric_availability[table_name] = {}
+            for c in cols:
+                if c in ignored_metric_columns:
+                    continue
+                per_loc = {}
+                try:
+                    curr.execute(
+                        f"SELECT {_quote_ident(loc_col)}, "
+                        f"MIN({_quote_ident(dt_col)}), MAX({_quote_ident(dt_col)}) "
+                        f"FROM {_quote_ident(table_name)} "
+                        f"WHERE {_quote_ident(c)} IS NOT NULL "
+                        f"GROUP BY {_quote_ident(loc_col)}"
+                    )
+                    for row in curr.fetchall():
+                        lv = (row[0] or '').strip()
+                        if not lv:
+                            continue
+                        ed = _parse_db_datetime(row[1])
+                        ld = _parse_db_datetime(row[2])
+                        per_loc[lv] = {
+                            'start': ed.date().isoformat() if ed else None,
+                            'end': ld.date().isoformat() if ld else None,
+                        }
+                except Exception:
+                    pass
+                table_metric_availability[table_name][c] = per_loc
+
+    for loc in locations:
+        table_name = location_table_map.get(loc, LOCATION_TO_TABLE.get(loc, 'gauge'))
+        tbl_avail = table_metric_availability.get(table_name, {})
+
+        if table_name in TABLE_SCHEMA and 'data_cols' in TABLE_SCHEMA[table_name]:
+            opts = list(TABLE_SCHEMA[table_name]['data_cols'].keys())
+            availability_for_loc = {
+                dn: tbl_avail.get(dn, {}).get(loc, {'start': None, 'end': None})
+                for dn in opts
+            }
+        else:
+            cols = non_schema_table_cols.get(table_name, [])
             opts = []
             availability_for_loc = {}
             for c in cols:
                 if c in ignored_metric_columns:
                     continue
-                earliest = None
-                latest = None
-                if curr:
-                    try:
-                        curr.execute(
-                            f"SELECT MIN({_quote_ident(dt_col)}), MAX({_quote_ident(dt_col)}) "
-                            f"FROM {_quote_ident(table_name)} "
-                            f"WHERE {_quote_ident(loc_col)} = ? AND {_quote_ident(c)} IS NOT NULL",
-                            (loc,),
-                        )
-                        min_max = curr.fetchone() or (None, None)
-                        earliest_dt = _parse_db_datetime(min_max[0])
-                        latest_dt = _parse_db_datetime(min_max[1])
-                        if earliest_dt:
-                            earliest = earliest_dt.date().isoformat()
-                        if latest_dt:
-                            latest = latest_dt.date().isoformat()
-                    except Exception:
-                        earliest = None
-                        latest = None
-                if c in rev:
-                    display_name = rev[c]
-                else:
-                    display_name = c.replace('_', ' ').title()
-                opts.append(display_name)
-                availability_for_loc[display_name] = {'start': earliest, 'end': latest}
-
+                dn = rev.get(c, c.replace('_', ' ').title())
+                opts.append(dn)
+                availability_for_loc[dn] = tbl_avail.get(c, {}).get(loc, {'start': None, 'end': None})
             if not opts:
                 opts = default_options.get(table_name, ['Value'])
 
