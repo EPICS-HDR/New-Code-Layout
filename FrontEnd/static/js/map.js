@@ -16,3 +16,18 @@ const map = new mapboxgl.Map({
     [-90.3084, 49.0014],
   ],
 });
+
+// Zoom threshold at which pin name labels become visible.
+// Below this zoom the labels would be illegible and massively overlap
+// (there are ~350 markers); above it pins are typically far enough apart
+// that overlap is manageable (users can zoom further to separate them).
+const PIN_LABEL_MIN_ZOOM = 9;
+
+function _applyPinLabelVisibility() {
+  const el = document.getElementById('map');
+  if (!el) return;
+  el.classList.toggle('zoom-high', map.getZoom() >= PIN_LABEL_MIN_ZOOM);
+}
+
+map.on('zoom', _applyPinLabelVisibility);
+map.on('load', _applyPinLabelVisibility);

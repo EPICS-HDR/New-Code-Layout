@@ -40,6 +40,7 @@ except SyntaxError:
     SQL_CONVERSION = mock_config.SQL_CONVERSION
 
 from BackEnd import custom_graph
+from FrontEnd.services import cache as map_cache
 
 DB_PATH = os.fspath(getattr(settings, 'MEASUREMENTS_DB_PATH', CONFIG_DB_PATH))
 
@@ -702,6 +703,18 @@ def get_latest_date(request):
         return JsonResponse({'error': str(e), 'trace': traceback.format_exc()}, status=500)
 
 def maptabs(request):
+    cached = map_cache.get_maptabs_payload()
+    if cached:
+        return render(request, 'HTML/maptabs.html', {
+            'location_entries': cached.get('location_entries', []),
+            'location_options_json': json.dumps(cached.get('display_location_options', {})),
+            'location_table_map_json': json.dumps(cached.get('display_location_table_map', {})),
+            'location_availability_json': json.dumps(cached.get('location_availability', {})),
+            'graph_index_json': json.dumps({}),
+            'default_start': cached.get('default_start'),
+            'default_end': cached.get('default_end'),
+        })
+
     try:
         conn = sqlite3.connect(DB_PATH)
         curr = conn.cursor()
@@ -957,6 +970,10 @@ def generate_maptab_graph(request):
 
 def api_map_locations(request):
     """Return JSON list of all locations with lat/lon from the database."""
+    cached = map_cache.get_map_locations()
+    if cached is not None:
+        return JsonResponse({'locations': cached})
+
     locations = []
     try:
         with sqlite3.connect(DB_PATH) as conn:
@@ -1015,7 +1032,11 @@ def api_timeseries(request):
 
     try:
         with sqlite3.connect(DB_PATH) as conn:
-            location_table_map, _ = _scan_location_table_map(conn)
+            cached_map = map_cache.get_location_table_map()
+            if cached_map is not None:
+                location_table_map = cached_map
+            else:
+                location_table_map, _ = _scan_location_table_map(conn)
             loc = _resolve_location_name(location, location_table_map)
             table = location_table_map.get(loc)
             if not table:

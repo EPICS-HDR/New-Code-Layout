@@ -8,6 +8,7 @@ urlpatterns = [
     path('logout/', views.admin_logout, name='logout'),
     path('', views.admin_dashboard, name='dashboard'),
     # Console log APIs
+    path('api/commands/', views.api_commands, name='api_commands'),
     path('api/logs/', views.api_logs, name='api_logs'),
     path('api/run-script/', views.api_run_script, name='api_run_script'),
     # Data insertion APIs
