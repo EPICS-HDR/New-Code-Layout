@@ -1,12 +1,17 @@
+<!--
+Author: Fenix Do, Previous EPICS HDR Team
+Date: 03/28/2026
+Purpose: A generalized template to display and embed generated data graphs.
+-->
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name ="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=yes">
 
     <title>Your Generated Graph</title>
-
-    <link rel="stylesheet" href="css/Heading.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/Heading.css' %}">
 </head>
 
 <style>
@@ -60,12 +65,13 @@
 </style>
 
 <body>
+  <center>
+    {% autoescape off %}
+    {{ plot }}
 
-  <!-- Placeholder since Django backend is removed -->
-  <div style="text-align:center; margin-top:50px;">
-    <h2>Graph will appear here</h2>
-    <p>This page requires backend processing (not supported on Firebase).</p>
-  </div>
-
+    <br><br/>
+    {{ table }}
+    {% endautoescape %}
+  </center>
 </body>
 </html>

@@ -660,13 +660,21 @@ Located in [map.js:7](FrontEnd/static/js/map.js). If the token expires or is rev
 
 ### Server-side cache
 
-Both `/api/map_locations/` and `/api/timeseries/` read from the JSON cache at `BackEnd/cache/map_cache.json` when it's available. Details: Section 12.
+`/map/`, `/maptabs/`, `/api/map_locations/`, and `/api/timeseries/` all consult the JSON cache at `BackEnd/cache/map_cache.json` when it's available. Details: Section 12.
 
 ---
 
 ## 12. Server-Side Cache
 
-The Map and Custom Graph pages used to scan the whole `database.db` on every request — listing tables, running `SELECT DISTINCT` per location column, and issuing a `MIN(datetime) / MAX(datetime)` query for every (location, metric) pair on the maptabs page. Cold loads of `/maptabs/` took ~21 seconds. They now read pre-computed metadata from a JSON file on disk, which drops that to ~15 ms — about **1,400× faster** — with byte-for-byte identical response shapes.
+The Map and Custom Graph pages used to scan the whole `database.db` on every request — listing tables, running `SELECT DISTINCT` per location column, and issuing a `MIN(datetime) / MAX(datetime)` query for every (location, metric) pair on the maptabs page. Cold loads of `/maptabs/` took ~21 seconds before any optimization.
+
+There are now three complementary layers:
+
+1. **File-based metadata cache** — `BackEnd/cache/map_cache.json` holds precomputed per-page payloads. Cache-hit serves `/maptabs/` in ~7 ms and `/map/` + `/api/map_locations/` in ~2 ms (byte-for-byte identical to the live output).
+2. **In-memory memoization** — `_location_table_map_cache` in [views.py](FrontEnd/services/views.py) memoizes `_scan_location_table_map()` for the lifetime of the Python process, so even the fallback path only scans once per server restart.
+3. **Batched `GROUP BY` in the maptabs fallback** — when the cache file is missing, `maptabs()` runs one `GROUP BY loc_col` query per metric instead of one per `(location, metric)` pair (down from ~3,600 queries to ~26). Fallback load is ~250 ms.
+
+Net: cache hit is ~33× faster than the optimized fallback and ~1,400× faster than the original unoptimized code. If the cache file ever disappears the site still works, just a bit slower.
 
 ### What gets cached
 
@@ -680,9 +688,10 @@ Raw time-series data is **not** cached. Individual graph clicks still hit `/api/
 
 ### How the views use it
 
-- [views.py::maptabs](FrontEnd/services/views.py) — reads the cached maptabs payload first; falls back to the live DB scan if the cache is missing or unreadable.
-- [views.py::api_map_locations](FrontEnd/services/views.py) — same pattern.
-- [views.py::api_timeseries](FrontEnd/services/views.py) — uses the cached `location_table_map` to skip `_scan_location_table_map()`; still queries the DB live for actual points.
+- [views.py::interactiveMap](FrontEnd/services/views.py) — reads the cached `map_locations` list first; falls back to the live scan only if the cache is missing.
+- [views.py::maptabs](FrontEnd/services/views.py) — reads the cached maptabs payload first; falls back to the batched-`GROUP BY` live path otherwise.
+- [views.py::api_map_locations](FrontEnd/services/views.py) — same pattern as `interactiveMap`.
+- [views.py::api_timeseries](FrontEnd/services/views.py) — uses the cached `location_table_map` to skip `_scan_location_table_map()`; still queries the DB live for the actual time-series points.
 
 No cache file = slow, not broken. Nothing crashes if the file is missing; users will just notice the pages feel sluggish until someone refreshes.
 
@@ -852,15 +861,17 @@ Run through this checklist in order:
 - Check the browser console for a 401/403 from `api.mapbox.com`. The access token in [map.js:7](FrontEnd/static/js/map.js) may have been revoked.
 - Check network connectivity — Mapbox tiles are fetched on demand.
 
-### Map or Custom Graph page is slow to load (feels like ~20 seconds)
+### Map or Custom Graph page feels sluggish (~1 s for `/map/`, a few hundred ms for `/maptabs/`)
 
-The server-side cache file is probably missing. Check it:
+The server-side cache file is probably missing and the pages are running on the fallback path. Check it:
 
 ```bash
 ls -l BackEnd/cache/map_cache.json
 ```
 
-If it's absent or ancient, admin → Console Log → **Refresh Map Cache** → **Run Updates**. The views will keep working while the file is missing — they fall back to live DB scans — so this is a performance issue, not a correctness issue. See Section 12.
+If it's absent or stale, admin → Console Log → **Refresh Map Cache** → **Run Updates**. The views keep working while the file is missing — they fall back to the batched live-scan path — so this is a performance issue, not a correctness issue. See Section 12.
+
+If the page load is multiple **seconds** rather than sub-second, something is wrong beyond the cache. Likely suspects: the in-memory `_location_table_map_cache` is not being populated (check for tracebacks in the Django log), or the DB file moved and `DB_PATH` is pointing somewhere stale.
 
 ### New station / metric / data not showing up on the map or Custom Graph page
 
@@ -975,4 +986,4 @@ WSGI entry point: `FrontEnd.config.wsgi.application`.
 
 ---
 
-*Last updated: 2026-04-22. Adds Section 12 (Server-Side Cache), documents the new admin commands (Refresh Map Cache, Update All/USACE/DANR/COCORAHS), and records the pin labels + USACE legend entry added to the map page.*
+*Last updated: 2026-04-22. Adds Section 12 (Server-Side Cache) and documents the two complementary fallback optimizations (in-memory `_location_table_map_cache` and batched `GROUP BY` in `maptabs`), the new admin commands (Refresh Map Cache, Update All/USACE/DANR/COCORAHS), and the pin labels + USACE legend entry on the map page.*

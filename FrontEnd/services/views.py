@@ -310,7 +310,12 @@ def _parse_db_datetime(value):
 
 
 def _closest_window_epochs(conn, table_name, col, loc, target_end_epoch):
-    """Find a closest available datetime for location/metric and return a 30-day epoch window."""
+    """Find a closest available datetime for location/metric and return a 180-day epoch window.
+
+    180 days (not 30) because sources like DANR sample roughly monthly, so a
+    30-day window often catches only one point — which is invisible with a
+    lines-only trace and unhelpful with lines+markers.
+    """
     try:
         table_cols = _table_columns(conn, table_name)
         loc_col = _get_location_col(table_name)
@@ -358,7 +363,7 @@ def _closest_window_epochs(conn, table_name, col, loc, target_end_epoch):
             return None, None
 
         end_e = int(anchor_dt.timestamp())
-        start_e = end_e - 30 * 24 * 3600
+        start_e = end_e - 180 * 24 * 3600
         return start_e, end_e
     except Exception:
         return None, None
@@ -385,10 +390,14 @@ def _load_direct_series(conn, table_name, col, loc, *, start_epoch=None, end_epo
             params.append(loc)
 
         if start_epoch is not None and end_epoch is not None:
-            start_dt = datetime.fromtimestamp(start_epoch).strftime('%Y-%m-%d %H:%M:%S')
-            end_dt = datetime.fromtimestamp(end_epoch).strftime('%Y-%m-%d %H:%M:%S')
-            where_parts.append(f"{_quote_ident(dt_col)} BETWEEN ? AND ?")
-            params.extend([start_dt, end_dt])
+            # Use DATE() so the comparison works regardless of whether the DB
+            # stores datetimes as "YYYY-MM-DD HH:MM:SS" (USACE) or ISO with a T
+            # separator (DANR, COCORAHS). Plain string BETWEEN gets 'T' > ' '
+            # wrong and silently drops rows on the end-date boundary.
+            start_date = datetime.fromtimestamp(start_epoch).strftime('%Y-%m-%d')
+            end_date = datetime.fromtimestamp(end_epoch).strftime('%Y-%m-%d')
+            where_parts.append(f"DATE({_quote_ident(dt_col)}) BETWEEN ? AND ?")
+            params.extend([start_date, end_date])
 
         query = (
             f"SELECT {', '.join(_quote_ident(c) for c in selected_cols)} "
@@ -539,7 +548,10 @@ def _render_graph_response(
 ):
     sites = []
     series_list = []
-    col = _display_metric_to_sql_column(metric_name)
+    # Legacy fallback; the per-table resolution happens inside the loop so that
+    # e.g. "Water Temperature" maps to 'waterTemperature' (DANR) or 'Temp_Water'
+    # (USACE) rather than the legacy 'water_temp' alias.
+    default_col = _display_metric_to_sql_column(metric_name)
 
     conn = sqlite3.connect(DB_PATH)
     try:
@@ -551,6 +563,9 @@ def _render_graph_response(
             sites.append(loc)
             table_name = location_table_map.get(loc, LOCATION_TO_TABLE.get(loc, fallback_table))
             source_tables.append(table_name)
+
+            schema_data_cols = TABLE_SCHEMA.get(table_name, {}).get('data_cols', {})
+            col = schema_data_cols.get(metric_name, default_col)
 
             if fallback_to_recent_window and (start_epoch is None or end_epoch is None):
                 latest_dt = custom_graph.get_latest_datetime(conn, table_name, col)
@@ -621,7 +636,9 @@ def _render_graph_response(
         for idx, (times, values) in enumerate(series_list):
             if times:
                 trace_name = f"{sites[idx]} ({source_tables[idx]})"
-                traces.append(go.Scatter(x=times, y=values, mode='lines', name=trace_name))
+                # lines+markers so sparsely-sampled series (e.g. single-point
+                # fallback windows for DANR monthly samples) still show visibly.
+                traces.append(go.Scatter(x=times, y=values, mode='lines+markers', name=trace_name))
 
         if traces:
             unique_sources = sorted(set(source_tables))
