@@ -33,7 +33,7 @@ This guide is the single source of truth for running, debugging, and modifying t
 
 - Python 3.10+
 - `pip`
-- A copy of `database.db` at the repository root (the DB is gitignored for size reasons; contact the team if missing)
+- A copy of `database.db` at the repository root. It is currently tracked in the repo, so a fresh clone already has it; if you ever see the file missing, re-pull from origin or ask the team for a copy.
 
 ### Local Development
 
@@ -609,7 +609,7 @@ Entry point: `/generate_maptab_graph/` → `generate_maptab_graph()` → `_rende
    - If `table_name in TABLE_SCHEMA`, call `_load_direct_series()` (schema-aware, uses the alt `datetime_col`/`location_col`, renames them to `datetime`/`location` for downstream code).
    - Otherwise call `custom_graph.query_data()` (generic, assumes `location`/`datetime` column names).
 6. **Fallback windows** (in order):
-   - If the user's window has no data and `fallback_to_closest_window` is enabled, `_closest_window_epochs()` finds the nearest available 30-day window for that location+metric and re-queries.
+   - If the user's window has no data and `fallback_to_closest_window` is enabled, `_closest_window_epochs()` finds the nearest available 180-day window for that location+metric and re-queries. (180 days, not 30, so sparsely-sampled sources like DANR — monthly samples — still return enough points to plot.)
    - If `fallback_to_recent_window` is enabled (the maptabs endpoint uses this), missing dates trigger a 30-day window ending at `get_latest_datetime()`.
 7. **Clean:** `custom_graph._prepare_df_for_plot()` normalizes datetimes (handles `YYYY-MM-DDTHH:MM:SS 00:00:00` duplicated suffixes and Mesonet `24:00:00` rollover), drops NaNs, de-dupes datetimes, sorts ascending.
 8. **Render:** Build `plotly.graph_objs.Scatter` traces, wrap in an offline Plotly `div`, compute stats table, return [graphdisplay.html](FrontEnd/services/templates/HTML/graphdisplay.html).
@@ -621,7 +621,7 @@ Entry point: `/generate_maptab_graph/` → `generate_maptab_graph()` → `_rende
 | `_scan_location_table_map(conn)` | Scans every non-internal table for its location column and builds `{loc: table_name}`. Handles both `location` and `TABLE_SCHEMA[*]['location_col']`. Deterministic (keeps first table encountered per location). |
 | `_canonical_location_name(s)` | Lowercase + strip commas + strip trailing state names, for fuzzy matching. |
 | `_parse_db_datetime(v)` | Handles epoch ints, ISO strings, duplicated time fragments, and `24:00:00` → next day. |
-| `_closest_window_epochs(conn, table, col, loc, target)` | Finds the nearest existing datetime to a target, returns a 30-day window ending there. |
+| `_closest_window_epochs(conn, table, col, loc, target)` | Finds the nearest existing datetime to a target, returns a 180-day window ending there. |
 | `_load_direct_series(conn, table, col, loc, start, end)` | Schema-aware query; renames alt columns back to `datetime`/`location` for consistency downstream. |
 | `custom_graph.query_data(conn, table, start_epoch, end_epoch)` | Simple `SELECT *` with a `datetime BETWEEN` clause. Detects epoch vs string format by sampling the first row. Returns pandas DataFrame. |
 | `custom_graph.get_latest_datetime(conn, table, col)` | Returns newest datetime where `col IS NOT NULL`. |
@@ -738,7 +738,7 @@ python -c "from BackEnd.cache_builder import refresh_map_cache; print(refresh_ma
 
 1. Open [BackEnd/SourceFiles/config.py](BackEnd/SourceFiles/config.py).
 2. Add the station ID to the appropriate `*Config['stationList']`.
-3. Re-run that source's `update()` — either directly (`cd BackEnd/SourceFiles && python _COCORAHS.py`) or via the admin dashboard once `commands.py` is wired up.
+3. Re-run that source's `update()` — preferred path is admin dashboard → Console Log tab → **Update COCORAHS** (or the matching command) → **Run Updates**. CLI equivalent: `cd BackEnd/SourceFiles && python _COCORAHS.py`. After a single-source update, also click **Refresh Map Cache** so new stations appear.
 4. Verify the new rows appear: `sqlite3 database.db "SELECT COUNT(*) FROM COCORAHS WHERE \"meta.name\" = 'NEW STATION';"`.
 
 ### Add a new dataset / metric to an existing table
