@@ -144,6 +144,11 @@ Purpose: Client-side scripting responsible for asynchronously fetching logs, det
       // Fallback
       commandSelect.innerHTML = '';
       const fallbackCmds = [
+        { id: 'refreshMapCache', label: 'Refresh Map Cache', desc: 'Rebuild the server-side cache used by the Map and Custom Graph pages.' },
+        { id: 'updateAllSources', label: 'Update All Sources', desc: 'Pull + push every source (USACE, DANR, COCORAHS) and rebuild the map cache.' },
+        { id: 'updateUSACE', label: 'Update USACE', desc: 'Pull latest reservoir data from USACE and write to database.db.' },
+        { id: 'updateDANR', label: 'Update DANR', desc: 'Pull latest water-quality data from DANR and write to database.db.' },
+        { id: 'updateCOCORAHS', label: 'Update COCORAHS', desc: 'Pull latest weather observations from COCORAHS and write to database.db.' },
         { id: 'listAllSources', label: 'List All Sources', desc: 'List all source files in the BackEnd/SourceFiles folder.' },
         { id: 'listStations', label: 'List Stations', desc: 'List all stations for a specified source.' }
       ];

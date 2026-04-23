@@ -39,11 +39,40 @@ Purpose: Main interactive map UI for selecting data layers and station locations
       display: none;
       width: 60%;
       overflow-y: visible;
-      padding: 20px;
+      padding: 20px 20px 60px;
+      margin-bottom: 80px;
       max-height: 400%;
       background-color: #fefefe;
       border: 1px solid #888;
     }
+
+    .modal-graph-container {
+      margin-bottom: 24px;
+    }
+
+    #modal-container:not(:empty) {
+      padding-bottom: 120px;
+    }
+
+    /* Pin name labels — hidden until map is zoomed in enough (see map.js) */
+    .marker-label {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f172a;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+    }
+    #map.zoom-high .marker-label { display: block; }
 
     .modal-content {
       width: 100%;
@@ -92,6 +121,7 @@ Purpose: Main interactive map UI for selecting data layers and station locations
   <div id="map-legend">
     <h4>Legend</h4>
     <ul>
+      <li><span class="dot" style="background-color: #140ceb;"></span>USACE Reservoir</li>
       <li><span class="dot" style="background-color: #f91d1d;"></span>DANR Water Quality</li>
       <li><span class="dot" style="background-color: #057c37;"></span>COCORAHS Weather</li>
     </ul>

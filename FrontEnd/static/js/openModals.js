@@ -82,9 +82,16 @@ map.on('load', function () {
       .setLngLat([loc.lon, loc.lat])
       .addTo(map);
 
-    marker.getElement().style.cursor = 'pointer';
+    const markerEl = marker.getElement();
+    markerEl.style.cursor = 'pointer';
+    markerEl.title = loc.name;  // native hover tooltip at any zoom
 
-    marker.getElement().addEventListener('click', function () {
+    const labelEl = document.createElement('span');
+    labelEl.className = 'marker-label';
+    labelEl.textContent = loc.name;
+    markerEl.appendChild(labelEl);
+
+    markerEl.addEventListener('click', function () {
       closeAllModals();
       modal.style.display = 'block';
 
