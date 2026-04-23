@@ -19,10 +19,11 @@ This guide is the single source of truth for running, debugging, and modifying t
 9. [Data Pipeline (Source Files)](#9-data-pipeline-source-files)
 10. [Custom Graph Rendering System](#10-custom-graph-rendering-system)
 11. [Interactive Map Rendering System](#11-interactive-map-rendering-system)
-12. [Common Tasks: Adding a Location, Metric, or Data Source](#12-common-tasks)
-13. [Debugging & Troubleshooting](#13-debugging--troubleshooting)
-14. [Deployment](#14-deployment)
-15. [Known Bugs & Limitations](#15-known-bugs--limitations)
+12. [Server-Side Cache](#12-server-side-cache)
+13. [Common Tasks: Adding a Location, Metric, or Data Source](#13-common-tasks)
+14. [Debugging & Troubleshooting](#14-debugging--troubleshooting)
+15. [Deployment](#15-deployment)
+16. [Known Bugs & Limitations](#16-known-bugs--limitations)
 
 ---
 
@@ -105,7 +106,10 @@ New-Code-Layout/
 ├── firebase.json / .firebaserc       # Firebase hosting config (static hosting only)
 │
 ├── BackEnd/
-│   ├── commands.py                   # Command stubs called by admin "Run Updates" button
+│   ├── commands.py                   # Admin "Run Updates" command catalog + entry points
+│   ├── cache_builder.py              # Builds BackEnd/cache/map_cache.json (Section 12)
+│   ├── cache/                        # Runtime cache output (gitignored — created on first refresh)
+│   │   └── map_cache.json            # Map + maptabs metadata cache
 │   ├── custom_graph.py               # DB path detection, query helpers, Plotly graph rendering
 │   ├── log.txt                       # System activity log (admin console reads this)
 │   └── SourceFiles/
@@ -125,6 +129,7 @@ New-Code-Layout/
 │   │
 │   ├── services/                     # Public-facing app
 │   │   ├── views.py                  # Page views, graph endpoints, JSON APIs, TABLE_SCHEMA
+│   │   ├── cache.py                  # Reader for the map/maptabs cache (Section 12)
 │   │   └── templates/
 │   │       ├── HTML/                 # Public templates
 │   │       │   ├── homepage.html
@@ -285,6 +290,7 @@ Either re-point these to the current `COCORAHS`/`DANR`/`USACE` tables via `TABLE
 | `/admin/login/` | GET, POST | `admin_login` | Public |
 | `/admin/logout/` | GET | `admin_logout` | Authenticated |
 | `/admin/` | GET | `admin_dashboard` | Admin or Data Moderator |
+| `/admin/api/commands/` | GET | `api_commands` | Admin or Data Moderator |
 | `/admin/api/logs/?lines=N` | GET | `api_logs` | Admin or Data Moderator |
 | `/admin/api/run-script/` | POST | `api_run_script` | Admin only |
 | `/admin/api/tables/` | GET | `api_tables` | Admin or Data Moderator |
@@ -293,7 +299,7 @@ Either re-point these to the current `COCORAHS`/`DANR`/`USACE` tables via `TABLE
 | `/admin/api/users/` | GET, POST | `api_users_list` | Admin only |
 | `/admin/api/users/<id>/` | PUT, DELETE | `api_user_detail` | Admin only |
 
-Note: `api_commands` is defined and wired in the frontend (`admin_dashboard.js` calls `/admin/api/commands/`) but the route is **not registered** in `urls.py`. The frontend gracefully falls back to hard-coded commands when this 404s.
+The command dropdown on the admin dashboard populates itself by calling `/admin/api/commands/`, which returns whatever `BackEnd.commands.get_command_catalog()` lists (see Section 9). If the endpoint is unreachable, the frontend falls back to a built-in list — the app still works, you just won't see any commands that were added to the catalog after deploy.
 
 ---
 
@@ -398,7 +404,9 @@ Mapbox map centered on `[-100.5, 46.5]` with bounds locked roughly to ND/SD/MT. 
 | COCORAHS | green | `#057c37` |
 | USACE | blue | `#140ceb` |
 
-**Note:** The on-screen legend in [interactiveMap.html](FrontEnd/services/templates/HTML/interactiveMap.html) only shows two entries (DANR, COCORAHS). USACE markers appear on the map but are missing from the legend.
+The on-screen legend in [interactiveMap.html](FrontEnd/services/templates/HTML/interactiveMap.html) lists all three sources. To add a new source, add an `<li>` with the matching marker color and also add the color to `markerColor()` in [openModals.js](FrontEnd/static/js/openModals.js).
+
+**Pin name labels.** Every marker carries a native `title` tooltip that reveals the location name on hover at any zoom level. Above a zoom threshold (`PIN_LABEL_MIN_ZOOM = 9` in [map.js](FrontEnd/static/js/map.js)) the map also shows a persistent label above each pin via a `.marker-label` span and a `#map.zoom-high` class toggled on the `zoom` event. Dense clusters can still overlap — the quickest fixes are raising the threshold, or switching to a Mapbox symbol layer with `text-allow-overlap: false` or clustering.
 
 Clicking a marker:
 - Opens a modal containing a heading, a dataset `<select>` (if the station has multiple datasets), and a graph container.
@@ -459,7 +467,12 @@ Three-tab SPA, all logic in [admin_dashboard.js](FrontEnd/static/js/admin_dashbo
 - Displays the last 200 lines of [BackEnd/log.txt](BackEnd/log.txt) + any in-memory script output buffered since the last run.
 - Error lines (matching `/error|✗|exception|traceback/i`) get a highlight class.
 - Status dot: grey "Idle" → green "Finished Successfully" → red "Finished with Errors (Exit N)" → blue "Script running…".
-- **Command dropdown** is populated from `/admin/api/commands/`, which **does not exist** as a URL route. The frontend catches this, falls back to hard-coded `listAllSources` and `listStations`. The `dashboard.html` template also statically lists `"Sync All Sources"` as an option — these three IDs must match functions in `BackEnd/commands.py` for Run to work.
+- **Command dropdown** is populated from `/admin/api/commands/`, which returns `BackEnd.commands.get_command_catalog()`. Currently exposed:
+  - **Refresh Map Cache** — rebuild the JSON cache used by `/map/` and `/maptabs/` (see Section 12).
+  - **Update All Sources** — pull + push every source, then refresh the map cache at the end.
+  - **Update USACE / DANR / COCORAHS** — per-source pulls against `database.db`. These do *not* auto-refresh the map cache, so click **Refresh Map Cache** after running a single source if you want new stations/metrics to show up on the map immediately.
+  - **List All Sources** — lists the `_*.py` files in `BackEnd/SourceFiles/` (leftover from the original API).
+  Each ID in the catalog must match a function name in [BackEnd/commands.py](BackEnd/commands.py) — that's how the runner invokes them. If the endpoint is unreachable the dropdown falls back to a built-in list in [admin_dashboard.js](FrontEnd/static/js/admin_dashboard.js).
 - **Run Updates** (admin only): POSTs `{command: <id>}` to `/admin/api/run-script/`, which spawns a subprocess `python -c "import BackEnd.commands as cmds; cmds.<id>()"`. Output streams into the in-memory buffer.
 
 #### Data Entry Tab
@@ -564,19 +577,21 @@ def update()             # orchestrate _pull → _process → _push
 - Writes to table `USACE`. Currently only pulls `GARR` but the endpoint supports `GARR, OAHE, BEND, FTRA, GAPT, FTPK`.
 
 ### [commands.py](BackEnd/commands.py)
-Command stubs that the admin "Run Updates" button invokes:
 
-```python
-def listAllSources():  # returns list of _*.py files in SourceFiles (has a bug — see below)
-def listStations(source):  # stub — pass
-def updateAll():  # stub — pass
-```
+Everything the admin "Run Updates" dropdown can execute lives here. `get_command_catalog()` returns the `[{id, label, description}, ...]` list the frontend reads from `/admin/api/commands/`; each `id` is the exact name of a top-level function the subprocess runner will call.
 
-**Bug:** `listAllSources` does `sources += file.name.replace('.py','')`, which **iterates characters** rather than appending strings, producing junk output. It should be `sources.append(file.name.replace('.py',''))`. Also, `os.chdir` is a global side effect that breaks subsequent code. Rewrite this function before relying on it.
+| Function | What it does |
+|---|---|
+| `refreshMapCache()` | Calls `BackEnd.cache_builder.refresh_map_cache()` to rebuild `BackEnd/cache/map_cache.json`. See Section 12. |
+| `updateUSACE()` / `updateDANR()` / `updateCOCORAHS()` | Imports the matching `_*.py` source file via `_run_source_update()` and calls its `update()`. Cwd is forced to `REPO_ROOT` so the source file's `sqlite3.connect('database.db')` hits the real DB, and `BackEnd/SourceFiles/` is added to `sys.path` so the source file's `from config import ...` resolves. |
+| `updateAllSources()` | Runs all three source updates sequentially and then rebuilds the map cache. Use this when you want the map and maptabs pages to reflect the new data immediately. |
+| `listAllSources()` | Legacy helper that lists the `_*.py` files in `SourceFiles/`. Known bug: `sources += file.name.replace('.py','')` iterates characters instead of appending strings, and it also chdirs. Use with that caveat in mind. |
+| `listStations(source)` | Empty stub kept for compatibility with the dropdown fallback list. |
 
-To wire a real data-refresh command into the admin UI:
-1. Add a function like `sync_all_sources()` in `commands.py` that calls each source file's `update()`.
-2. Optionally add a `get_command_catalog()` function returning `[{'id', 'label', 'description'}, ...]` for a nicer UI listing (the frontend already probes `/admin/api/commands/` and falls back gracefully).
+To add a new admin command:
+1. Add a function to `commands.py` that takes no arguments (the runner calls `getattr(cmds, command_id)()`).
+2. Add a `{'id', 'label', 'description'}` entry to `get_command_catalog()`.
+3. The dropdown picks it up on the next dashboard load — no frontend change required.
 
 ---
 
@@ -637,9 +652,78 @@ Non-numeric values (e.g. CoCoRaHS's `"M"` for missing, `"T"` for trace) are sile
 
 Located in [map.js:7](FrontEnd/static/js/map.js). If the token expires or is revoked, the map will silently fail to load. Move to an env var + Django template variable if this becomes a problem.
 
+### Pin labels & hover tooltip
+
+- Every marker sets `element.title = loc.name`, so the browser's native tooltip shows the location name on hover at any zoom level.
+- [map.js](FrontEnd/static/js/map.js) listens for `zoom` events and toggles `#map.zoom-high` whenever `getZoom() >= PIN_LABEL_MIN_ZOOM` (currently `9`). The CSS for `.marker-label` in [interactiveMap.html](FrontEnd/services/templates/HTML/interactiveMap.html) hides the label by default and reveals it only inside `#map.zoom-high`.
+- Dense clusters will still collide at high zoom. Mitigations in order of effort: raise `PIN_LABEL_MIN_ZOOM`, remove the persistent label entirely and rely on the hover tooltip, or refactor to a Mapbox symbol layer which can handle collision detection and clustering natively.
+
+### Server-side cache
+
+Both `/api/map_locations/` and `/api/timeseries/` read from the JSON cache at `BackEnd/cache/map_cache.json` when it's available. Details: Section 12.
+
 ---
 
-## 12. Common Tasks
+## 12. Server-Side Cache
+
+The Map and Custom Graph pages used to scan the whole `database.db` on every request — listing tables, running `SELECT DISTINCT` per location column, and issuing a `MIN(datetime) / MAX(datetime)` query for every (location, metric) pair on the maptabs page. Cold loads of `/maptabs/` took ~21 seconds. They now read pre-computed metadata from a JSON file on disk, which drops that to ~15 ms — about **1,400× faster** — with byte-for-byte identical response shapes.
+
+### What gets cached
+
+A single file at `BackEnd/cache/map_cache.json` (gitignored; created on first refresh). Contains:
+
+- `location_table_map` — `{location → table}` mapping, reused across all three endpoints.
+- `map_locations` — the response body for `/api/map_locations/` (pin name, lat, lon, table, dataset list).
+- `maptabs` — location entries, per-metric availability windows (`{start, end}`), default date range.
+
+Raw time-series data is **not** cached. Individual graph clicks still hit `/api/timeseries/` live, so graphs always reflect the current DB contents.
+
+### How the views use it
+
+- [views.py::maptabs](FrontEnd/services/views.py) — reads the cached maptabs payload first; falls back to the live DB scan if the cache is missing or unreadable.
+- [views.py::api_map_locations](FrontEnd/services/views.py) — same pattern.
+- [views.py::api_timeseries](FrontEnd/services/views.py) — uses the cached `location_table_map` to skip `_scan_location_table_map()`; still queries the DB live for actual points.
+
+No cache file = slow, not broken. Nothing crashes if the file is missing; users will just notice the pages feel sluggish until someone refreshes.
+
+### When to refresh
+
+The cache only changes when metadata changes — i.e. when a new station, new metric column, or new date range lands in `database.db`. **Admins should refresh after:**
+
+- Running an individual source update (Update USACE / DANR / COCORAHS)
+- Inserting rows for a brand-new location via the Data Entry tab
+- Any direct SQL change to the measurement DB that adds locations, metrics, or extends a date range
+
+**Update All Sources** already chains a cache refresh at the end, so you don't need a separate click after running it.
+
+### How to refresh
+
+Admin dashboard → Console Log tab → select **Refresh Map Cache** → **Run Updates**. The command runs via the same subprocess pipeline as all other admin commands; output streams to the console. Takes ~20 seconds on the current dataset.
+
+From the command line (if shell access is available):
+
+```bash
+python -c "from BackEnd.cache_builder import refresh_map_cache; print(refresh_map_cache(built_by='cli'))"
+```
+
+### Concurrency & safety
+
+- Writes are atomic: [cache_builder.py](BackEnd/cache_builder.py) writes to a `map_cache.*.tmp` sibling file and then `os.replace`s it over the real file. Readers always see either the previous complete file or the new complete file — never a partial write.
+- The reader ([FrontEnd/services/cache.py](FrontEnd/services/cache.py)) memoizes the parsed JSON keyed on the file's mtime, so requests don't re-parse the ~400 KB payload on every hit. Replacing the file automatically invalidates the memo.
+- Only admins (`@_admin_only`) can trigger a refresh from the UI. Data Moderators cannot.
+
+### Relevant files
+
+| File | Role |
+|---|---|
+| [BackEnd/cache_builder.py](BackEnd/cache_builder.py) | Builds the payload, writes atomically. Reuses helpers from `views.py` so the cached shape always matches the live shape. |
+| [FrontEnd/services/cache.py](FrontEnd/services/cache.py) | Mtime-memoized reader; returns `None` on miss so view code can fall back. |
+| `BackEnd/cache/map_cache.json` | Output file. Gitignored runtime data. |
+| [BackEnd/commands.py](BackEnd/commands.py) | `refreshMapCache()` function + catalog entry. |
+
+---
+
+## 13. Common Tasks
 
 ### Add a new station to an existing source (COCORAHS / DANR / USACE)
 
@@ -661,6 +745,15 @@ Located in [map.js:7](FrontEnd/static/js/map.js). If the token expires or is rev
 3. In [views.py](FrontEnd/services/views.py), add a `TABLE_SCHEMA['NEWSOURCE'] = { ... }` entry with `location_col`, `datetime_col`, `lat_col`, `lon_col`, `lat_lon_swapped`, `data_cols`, and optionally `hardcoded_coords` if lat/lon aren't stored per row.
 4. Add a marker color to `markerColor()` in [openModals.js](FrontEnd/static/js/openModals.js) and a legend entry in [interactiveMap.html](FrontEnd/services/templates/HTML/interactiveMap.html).
 5. Run `update()` once to populate the DB.
+
+### Refresh the map cache after a data update
+
+If you inserted rows or ran a single-source update and the new data isn't showing up on the Map or Custom Graph page, the server-side metadata cache is out of date. Either:
+
+- Admin dashboard → Console Log tab → **Refresh Map Cache** → **Run Updates**, **or**
+- From the shell: `python -c "from BackEnd.cache_builder import refresh_map_cache; print(refresh_map_cache(built_by='cli'))"`
+
+Note: **Update All Sources** already chains a cache refresh, so you don't need this step after running that one. See Section 12 for the full story.
 
 ### Reset an admin password from the command line
 
@@ -702,7 +795,7 @@ SELECT COUNT(*) FROM DANR WHERE "pH" IS NOT NULL;
 
 ---
 
-## 13. Debugging & Troubleshooting
+## 14. Debugging & Troubleshooting
 
 ### Server won't start
 
@@ -759,6 +852,22 @@ Run through this checklist in order:
 - Check the browser console for a 401/403 from `api.mapbox.com`. The access token in [map.js:7](FrontEnd/static/js/map.js) may have been revoked.
 - Check network connectivity — Mapbox tiles are fetched on demand.
 
+### Map or Custom Graph page is slow to load (feels like ~20 seconds)
+
+The server-side cache file is probably missing. Check it:
+
+```bash
+ls -l BackEnd/cache/map_cache.json
+```
+
+If it's absent or ancient, admin → Console Log → **Refresh Map Cache** → **Run Updates**. The views will keep working while the file is missing — they fall back to live DB scans — so this is a performance issue, not a correctness issue. See Section 12.
+
+### New station / metric / data not showing up on the map or Custom Graph page
+
+The page output is served from `BackEnd/cache/map_cache.json`, and the cache only rebuilds when someone clicks **Refresh Map Cache** (or runs **Update All Sources**, which chains the refresh). Per-source updates (Update USACE / DANR / COCORAHS) and Data Entry inserts do **not** auto-refresh. Click Refresh Map Cache and reload the page.
+
+Graphs themselves always hit the DB live via `/api/timeseries/`, so if you click a pin that *is* on the map, its graph will show fresh data even without a cache refresh. The cache only governs which pins appear and which metrics show up in the dropdowns.
+
 ### Admin "Run Updates" stuck on "Script running…"
 
 - The process runs in a daemon thread with module-level `_script_running` flag. If the subprocess hangs, restart the Django server to reset the flag.
@@ -807,7 +916,7 @@ Every admin action appends a timestamped line to [BackEnd/log.txt](BackEnd/log.t
 
 ---
 
-## 14. Deployment
+## 15. Deployment
 
 ### Azure Web Apps
 Current production hosts (already in `ALLOWED_HOSTS` + `CSRF_TRUSTED_ORIGINS`):
@@ -830,22 +939,22 @@ WSGI entry point: `FrontEnd.config.wsgi.application`.
 6. `python manage.py migrate`.
 7. Ensure `database.db` is deployed alongside the code, or set `MEASUREMENTS_DB_PATH`.
 8. Ensure `BackEnd/log.txt` is writable by the app user.
-9. Create at least one admin account (`createsuperuser`).
-10. Verify: `/health` returns `OK`, `/map/` renders markers, `/admin/login/` accepts credentials.
+9. Ensure `BackEnd/cache/` exists and is writable by the app user (the directory is gitignored, so it won't be present on a fresh clone). The refresh command will `os.makedirs` it automatically on first run, but the parent needs to be writable.
+10. Create at least one admin account (`createsuperuser`).
+11. Log into `/admin/`, run **Refresh Map Cache** once before opening the site to users — otherwise the first visit to `/map/` or `/maptabs/` will pay the full ~20 s DB-scan fallback cost.
+12. Verify: `/health` returns `OK`, `/map/` renders markers, `/admin/login/` accepts credentials.
 
 ---
 
-## 15. Known Bugs & Limitations
+## 16. Known Bugs & Limitations
 
 ### Actionable Bugs
 
 | Severity | Bug | File / Line | Fix |
 |---|---|---|---|
-| High | `commands.listAllSources()` iterates characters into a list instead of appending filenames | [BackEnd/commands.py:13-15](BackEnd/commands.py) | Replace `sources +=` with `sources.append(...)`. Also remove the `os.chdir` side effect. |
+| High | `commands.listAllSources()` iterates characters into a list instead of appending filenames | [BackEnd/commands.py](BackEnd/commands.py) | Replace `sources +=` with `sources.append(...)`. Also remove the `os.chdir` side effect. |
 | Medium | Legacy routes `/customgaugegraph/`, `/customcocograph/`, `/custommesonetgraph/`, `/customnoaagraph/`, `/customshadehillgraph/` target tables that no longer exist (`gauge`, `cocorahs` lowercase, `mesonet`, `noaa_weather`, `shadehill`) | [FrontEnd/config/urls.py](FrontEnd/config/urls.py), [views.py](FrontEnd/services/views.py) | Either remove these routes, or re-point the views to the new `COCORAHS`/`DANR`/`USACE` tables through `TABLE_SCHEMA`. |
-| Medium | USACE markers appear on the map but have no legend entry | [interactiveMap.html](FrontEnd/services/templates/HTML/interactiveMap.html) | Add a third `<li>` with `#140ceb` color and label "USACE Dams" |
-| Medium | `/admin/api/commands/` URL is referenced by the frontend but not registered in `admin_dashboard/urls.py` | [admin_dashboard/urls.py](FrontEnd/admin_dashboard/urls.py) | Register `path('api/commands/', views.api_commands, name='api_commands')`. The view already exists. |
-| Low | `commands.listStations()` and `updateAll()` are empty stubs | [BackEnd/commands.py](BackEnd/commands.py) | Implement real logic once the admin "Run Updates" flow is wired for production use. |
+| Low | `commands.listStations()` is an empty stub kept only for the dropdown fallback list | [BackEnd/commands.py](BackEnd/commands.py) | Either implement real logic or remove it from the fallback list in [admin_dashboard.js](FrontEnd/static/js/admin_dashboard.js). |
 | Low | Gmail SMTP credentials are committed to the repo | [FrontEnd/config/info.py](FrontEnd/config/info.py) | Move to env vars. Rotate the password (the committed one should be treated as leaked). |
 | Low | `SECRET_KEY` is committed | [FrontEnd/config/settings.py](FrontEnd/config/settings.py) | Read from env. |
 | Low | Contact form has no backend handler | [FrontEnd/services/templates/HTML/contactus.html](FrontEnd/services/templates/HTML/contactus.html) | Add an `action=` and a view that emails submissions using `django.core.mail.send_mail` (SMTP is already configured). |
@@ -866,4 +975,4 @@ WSGI entry point: `FrontEnd.config.wsgi.application`.
 
 ---
 
-*Last updated: 2026-04-20. Schema and bug findings verified against commit `df6bc35e`.*
+*Last updated: 2026-04-22. Adds Section 12 (Server-Side Cache), documents the new admin commands (Refresh Map Cache, Update All/USACE/DANR/COCORAHS), and records the pin labels + USACE legend entry added to the map page.*
